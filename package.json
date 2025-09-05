@@ -4,8 +4,8 @@
   "description": "Hevy companion Discord bot.",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/index.ts",
-    "deploy-commands": "ts-node src/deploy-commands.ts",
+    "dev": "ts-node bot/index.ts",
+    "deploy-commands": "ts-node bot/deploy-commands.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
