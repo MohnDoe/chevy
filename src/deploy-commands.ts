@@ -7,37 +7,40 @@ const env = process.env.NODE_ENV || "development";
 
 const skipDev = env === "production";
 
-const commandsPath = path.join(__dirname, "commands");
+const commandsFoldersPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(commandsFoldersPath);
 const contextsPath = path.join(__dirname, "contexts");
 
 const commands = [];
-const contexts = [];
-// Grab all the command files from the commands directory you created earlier
-const commandFiles = fs
-  .readdirSync(commandsPath)
-  .filter((file: string) => file.endsWith(".ts"));
 
+for (const folder of commandFolders) {
+  const commandsPath = path.join(commandsFoldersPath, folder);
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file: string) => file.endsWith(".ts"));
+  // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
+  console.log("Building command list :");
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    if (command.wip && skipDev) {
+      console.log(" - SKIPPED : " + file);
+    } else {
+      if (command.wip) {
+        console.log(" - DEV : " + file);
+      } else {
+        console.log(" - READY : " + file);
+      }
+      commands.push(command.data.toJSON());
+      console.debug(command.data.toJSON());
+    }
+  }
+}
+
+const contexts = [];
 const contextFiles = fs
   .readdirSync(contextsPath)
   .filter((file: string) => file.endsWith(".ts"));
-
-// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-console.log("Building command list :");
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  if (command.wip && skipDev) {
-    console.log(" - SKIPPED : " + file);
-  } else {
-    if (command.wip) {
-      console.log(" - DEV : " + file);
-    } else {
-      console.log(" - READY : " + file);
-    }
-    commands.push(command.data.toJSON());
-    console.debug(command.data.toJSON());
-  }
-}
 
 console.log("Building context list :");
 for (const file of contextFiles) {
