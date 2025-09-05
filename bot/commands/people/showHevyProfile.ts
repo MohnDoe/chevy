@@ -47,6 +47,9 @@ module.exports = {
     const secondActionRow =
       new ActionRowBuilder<TextInputBuilder>().addComponents(hobbiesInput);
 
+    // Add inputs to the modal
+    modal.addComponents(firstActionRow, secondActionRow);
+
     // Show the modal to the user
     await interaction.showModal(modal);
   },
