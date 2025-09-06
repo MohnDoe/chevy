@@ -46,11 +46,11 @@ export const embedWorkout = (workout: HevyWorkout) => {
 
   const embed = new EmbedBuilder()
     .setTitle(workout.name)
-    .setURL(`https://wwworkout.hevy.com/workout/${workout.short_id}`)
+    .setURL(`https://hevy.com/workout/${workout.short_id}`)
     .setAuthor({
       name: workout.username,
       iconURL: workout.profile_image,
-      url: `https://wwworkout.hevy.com/user/${workout.username}`,
+      url: `https://hevy.com/user/${workout.username}`,
     })
     .setDescription(
       workout.description

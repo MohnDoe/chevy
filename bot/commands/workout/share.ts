@@ -1,6 +1,7 @@
 import {
   BaseInteraction,
   ChatInputCommandInteraction,
+  InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -9,38 +10,44 @@ import {
 import { getUserLatestWorkout } from "../../hevy/api";
 import { embedWorkout } from "../../hevy/utils/embedder";
 
+const data = new SlashCommandBuilder()
+  .setName("share")
+  .setDescription("Share one of your workouts on this channel now")
+  .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
+  .setContexts([
+    InteractionContextType.BotDM,
+    InteractionContextType.Guild,
+    InteractionContextType.PrivateChannel,
+  ])
+  .addSubcommand((sc) =>
+    sc.setName("latest").setDescription("Share your last finished workout.")
+  )
+  .addSubcommand((sc) =>
+    sc
+      .setName("list")
+      .setDescription("Select one from a list of recent workouts.")
+  );
+
 module.exports = {
   wip: true,
-  data: new SlashCommandBuilder()
-    .setName("share")
-    .setDescription("Share one of your workouts on this channel now")
-    .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
-    .addSubcommand((sc) =>
-      sc.setName("latest").setDescription("Share your last finished workout.")
-    )
-    .addSubcommand((sc) =>
-      sc
-        .setName("list")
-        .setDescription("Select one from a list of recent workouts.")
-    ),
+  data,
   async execute(interaction: ChatInputCommandInteraction) {
     console.log(interaction);
 
     const workout = await getUserLatestWorkout("mohndoe");
 
     if (workout) {
-          const embeds = [embedWorkout(workout)]
+      const embeds = [embedWorkout(workout)];
 
-          await interaction.reply({
-            content: `<@${interaction.user.id}> latest workout.`,
-            embeds,
-            flags: MessageFlags.Ephemeral
-          })
-        } else {
-          await interaction.reply({
-            content: 'No latest workout found.',
-            ephemeral: true,
-          })
-        }
+      await interaction.reply({
+        content: `<@${interaction.user.id}> latest workout.`,
+        embeds,
+      });
+    } else {
+      await interaction.reply({
+        content: "No latest workout found.",
+        ephemeral: true,
+      });
+    }
   },
 };
