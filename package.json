@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "ts-node bot/index.ts",
     "deploy-commands": "ts-node bot/deploy-commands.ts",
-    "build": "tsc",
+    "build": "npx prisma migrate deploy; npx prisma generate;tsc; npm run deploy-commands",
     "start": "node dist/index.js"
   },
   "author": "MohnDoe",
   "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^6.15.0",
     "dayjs": "^1.11.18",
     "discord.js": "^14.0.0",
     "dotenv": "^16.6.1"

@@ -1,0 +1,17 @@
+datasource db {
+  provider = "postgresql"
+  url   = env("DATABASE_URL")
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id
+  discordId    String        @unique
+  hevyUsername String?       @unique
+  hevyApiKey   String?       @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  isVerifiedOnHevy   Boolean       @default(false)
+}
