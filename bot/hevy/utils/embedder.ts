@@ -42,7 +42,7 @@ export const embedWorkout = (workout: HevyWorkout) => {
 
   const volume = workout.exercises.reduce((acc, exercise) => acc + getExerciseVolume(exercise), 0)
 
-  const duration = dayjs.duration(workout.end_time - workout.start_time, 'seconds')
+  const workoutDuration = dayjs.duration(workout.end_time - workout.start_time, 'seconds')
 
   const embed = new EmbedBuilder()
     .setTitle(workout.name)
@@ -61,7 +61,7 @@ export const embedWorkout = (workout: HevyWorkout) => {
     )
     .addFields({
       name: 'Duration',
-      value: `${duration.format('H[h] mm[m]')}`,
+      value: `${workoutDuration.format('H[h] mm[m]')}`,
       inline: true,
     })
 
