@@ -5,11 +5,11 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 
-import { getUserLatestWorkout } from "../../hevy/api";
-import { embedWorkout } from "../../hevy/utils/embedder";
-import { CommandOptions, SlashCommandProps } from "commandkit";
+import { getUserLatestWorkout } from "../../../hevy/api";
+import { embedWorkout } from "../../../hevy/utils/embedder";
+import { ChatInputCommandContext, CommandMetadata } from "commandkit";
 
-export const data = new SlashCommandBuilder()
+export const command = new SlashCommandBuilder()
   .setName("share")
   .setDescription("Share one of your workouts on this channel now")
   .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
@@ -27,7 +27,10 @@ export const data = new SlashCommandBuilder()
       .setDescription("Select one from a list of recent workouts.")
   );
 
-export async function run({ interaction, client, handler }: SlashCommandProps) {
+export async function chatInput({
+  interaction,
+  client,
+}: ChatInputCommandContext) {
   const workout = await getUserLatestWorkout("mohndoe");
 
   if (workout) {
@@ -45,7 +48,4 @@ export async function run({ interaction, client, handler }: SlashCommandProps) {
   }
 }
 
-export const options: CommandOptions = {
-  devOnly: true,
-  requiresHevyLinking: true,
-};
+export const metadata: CommandMetadata = {};

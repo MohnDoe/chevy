@@ -2,17 +2,18 @@
   "name": "chevy-discord-bot",
   "version": "1.0.0",
   "description": "Hevy companion Discord bot.",
-  "main": "dist/index.js",
+  "main": "dist/index.ts",
+  "type": "module",
   "scripts": {
-    "dev": "npx tsx src/index.ts",
-    "build": "npx prisma migrate deploy; npx prisma generate;tsc;",
-    "start": "node dist/index.js"
+    "dev": "npx commandkit dev",
+    "build": "npx prisma migrate deploy; npx prisma generate;npx commandkit build;",
+    "start": "npx commandkit start"
   },
   "author": "MohnDoe",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.15.0",
-    "commandkit": "^0.1.10",
+    "commandkit": "^1.2.0-rc.6",
     "dayjs": "^1.11.18",
     "discord.js": "^14.0.0",
     "dotenv": "^16.6.1"

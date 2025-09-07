@@ -9,7 +9,6 @@ const FETCH_HEADERS = {
   "auth-token": process.env.CHEVY_ON_HEVY_AUTH_TOKEN!,
 };
 
-
 export const getUserLatestWorkout = async (username: string) => {
   const workouts = await getUserWorkouts(username, 1, 1);
   if (workouts!.length === 0) {

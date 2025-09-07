@@ -1,4 +1,4 @@
-import { CommandData, CommandOptions, SlashCommandProps } from "commandkit";
+import { ChatInputCommandContext, CommandMetadata } from "commandkit";
 import {
   ActionRowBuilder,
   ApplicationIntegrationType,
@@ -20,7 +20,7 @@ const CONFIRMATION_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents(
     .setStyle(ButtonStyle.Primary)
 );
 
-export const data = new SlashCommandBuilder()
+export const command = new SlashCommandBuilder()
   .setName("account")
   .setDescription("Set-up your Hevy account.")
   .setContexts([
@@ -43,7 +43,10 @@ export const data = new SlashCommandBuilder()
     sc.setName("unlink").setDescription("Unlink your Hevy account.")
   );
 
-export async function run({ interaction, client, handler }: SlashCommandProps) {
+export async function chatInput({
+  interaction,
+  client,
+}: ChatInputCommandContext) {
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
     withResponse: true,
@@ -68,6 +71,4 @@ export async function run({ interaction, client, handler }: SlashCommandProps) {
     i.user.id === interaction.user.id;
 }
 
-export const options: CommandOptions = {
-  devOnly: true,
-};
+export const metadata: CommandMetadata = {};
