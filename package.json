@@ -12,6 +12,7 @@
   "author": "MohnDoe",
   "license": "MIT",
   "dependencies": {
+    "@commandkit/devtools": "^1.2.0-rc.6",
     "@prisma/client": "^6.15.0",
     "commandkit": "^1.2.0-rc.6",
     "dayjs": "^1.11.18",

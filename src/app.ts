@@ -5,11 +5,7 @@ dotenv.config();
 
 // Create a new client instance
 const client = new Client({
-  intents: [
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.Guilds,
-  ],
+  intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.Guilds],
 });
 
 client.token = process.env.DISCORD_TOKEN!;
