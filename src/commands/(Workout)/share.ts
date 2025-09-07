@@ -1,6 +1,4 @@
 import {
-  BaseInteraction,
-  ChatInputCommandInteraction,
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
@@ -9,8 +7,9 @@ import {
 
 import { getUserLatestWorkout } from "../../hevy/api";
 import { embedWorkout } from "../../hevy/utils/embedder";
+import { CommandOptions, SlashCommandProps } from "commandkit";
 
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
   .setName("share")
   .setDescription("Share one of your workouts on this channel now")
   .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
@@ -28,26 +27,25 @@ const data = new SlashCommandBuilder()
       .setDescription("Select one from a list of recent workouts.")
   );
 
-module.exports = {
-  wip: true,
-  data,
-  async execute(interaction: ChatInputCommandInteraction) {
-    console.log(interaction);
+export async function run({ interaction, client, handler }: SlashCommandProps) {
+  const workout = await getUserLatestWorkout("mohndoe");
 
-    const workout = await getUserLatestWorkout("mohndoe");
+  if (workout) {
+    const embeds = [embedWorkout(workout)];
 
-    if (workout) {
-      const embeds = [embedWorkout(workout)];
+    await interaction.reply({
+      content: `<@${interaction.user.id}> latest workout.`,
+      embeds,
+    });
+  } else {
+    await interaction.reply({
+      content: "No latest workout found.",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+}
 
-      await interaction.reply({
-        content: `<@${interaction.user.id}> latest workout.`,
-        embeds,
-      });
-    } else {
-      await interaction.reply({
-        content: "No latest workout found.",
-        ephemeral: true,
-      });
-    }
-  },
+export const options: CommandOptions = {
+  devOnly: true,
+  requiresHevyLinking: true,
 };
