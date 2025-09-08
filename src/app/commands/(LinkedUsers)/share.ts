@@ -5,9 +5,10 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 
-import { getUserLatestWorkout } from "../../../hevy/api";
+import { getUserLatestWorkout } from "../../../hevy/botApi";
 import { embedWorkout } from "../../../hevy/utils/embedder";
 import { ChatInputCommandContext, CommandMetadata } from "commandkit";
+import { getUserByDiscordId } from "../../../controllers/user";
 
 export const command = new SlashCommandBuilder()
   .setName("share")
@@ -18,20 +19,29 @@ export const command = new SlashCommandBuilder()
     InteractionContextType.Guild,
     InteractionContextType.PrivateChannel,
   ])
-  .addSubcommand((sc) =>
-    sc.setName("latest").setDescription("Share your last finished workout.")
-  )
-  .addSubcommand((sc) =>
-    sc
-      .setName("list")
-      .setDescription("Select one from a list of recent workouts.")
+  .addSubcommandGroup((scg) =>
+    scg
+      .setName("workout")
+      .setDescription(
+        "Share your most recent workout or select one in particular."
+      )
+      .addSubcommand((sc) =>
+        sc.setName("latest").setDescription("Share your last finished workout.")
+      )
+      .addSubcommand((sc) =>
+        sc
+          .setName("list")
+          .setDescription("Select one from a list of recent workouts.")
+      )
   );
 
 export async function chatInput({
   interaction,
   client,
 }: ChatInputCommandContext) {
-  const workout = await getUserLatestWorkout("mohndoe");
+  const user = await getUserByDiscordId(interaction.user.id);
+
+  const workout = await getUserLatestWorkout(user!.hevyUsername!);
 
   if (workout) {
     const embeds = [embedWorkout(workout)];

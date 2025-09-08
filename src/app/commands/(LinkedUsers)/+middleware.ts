@@ -1,11 +1,16 @@
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import { checkIfUserIsVerifiedOnHevy } from "../../../controllers/user";
 
-export function beforeExecute(ctx: MiddlewareContext) {
-  console.log("Command requires linking to Hevy");
-  (ctx.interaction as ChatInputCommandInteraction).reply({
-    content: "You are not linked to Hevy yet",
-    flags: MessageFlags.Ephemeral,
-  });
-  stopMiddlewares();
+export async function beforeExecute(ctx: MiddlewareContext) {
+  const userDiscordId = ctx.interaction.user.id;
+  const verified = await checkIfUserIsVerifiedOnHevy(userDiscordId);
+
+  if (!verified) {
+    (ctx.interaction as ChatInputCommandInteraction).reply({
+      content: "You are not linked to Hevy yet.",
+      flags: MessageFlags.Ephemeral,
+    });
+    stopMiddlewares();
+  }
 }
