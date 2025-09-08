@@ -30,7 +30,7 @@ import {
   followUserOnHevy,
 } from "../../../hevy/botApi";
 
-const CONFIRM_FOLLOW_BOT_ON_HEVY_ID = "confirmFollowBotButton";
+const CHECK_LINKING_STATUS_BUTTON_ID = "checkLinkingStatusButton";
 
 const followHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
@@ -43,8 +43,8 @@ const verifyHevyBotFollowButtonComponent = (disabled: boolean) => (
     style={ButtonStyle.Secondary}
     onClick={checkIfUserFollowedOnHevyButtonClick}
     disabled={disabled}
-    emoji={disabled ? "✔" : "🔄"}
-    customId={CONFIRM_FOLLOW_BOT_ON_HEVY_ID}
+    emoji={disabled ? "✅" : "🔄"}
+    customId={CHECK_LINKING_STATUS_BUTTON_ID}
   >
     {disabled ? "Successfuly linked" : "Check"}
   </Button>
@@ -93,12 +93,15 @@ const checkIfUserFollowedOnHevyButtonClick: OnButtonKitClick = async (
   interaction,
   context
 ) => {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
   userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
     targetHevyUsername!
   );
 
-  await interaction.editReply({
+  if (!userIsFollowedByHevyBot) await followUserOnHevy(targetHevyUsername!);
+
+  await interaction.followUp({
     flags: MessageFlags.IsComponentsV2,
     components: [generateHevyLinkingValidationComponent()],
   });
@@ -152,7 +155,7 @@ export const chatInput: ChatInputCommand = async ({
         targetHevyUsername!
       );
 
-      await interaction.editReply({
+      await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
         components: [generateHevyLinkingValidationComponent()],
       });
