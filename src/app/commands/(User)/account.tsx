@@ -17,11 +17,14 @@ import {
   SlashCommandBuilder,
 } from "discord.js";
 import { upsertUser } from "../../../controllers/user";
-import { checkIfUserFollowingBot, followUser } from "../../../hevy/botApi";
+import {
+  checkIfUserFollowingBot,
+  followUserOnHevy,
+} from "../../../hevy/botApi";
 
 const CONFIRM_FOLLOW_BOT_ON_HEVY_ID = "confirmFollowBotButton";
 
-let targetHevyUsername = "";
+let targetHevyUsername: string | null = null;
 
 export const command = new SlashCommandBuilder()
   .setName("account")
@@ -59,10 +62,10 @@ const checkIfUserFollowedOnHevy: OnButtonKitClick = async (
     withResponse: true,
   });
 
-  const didFollow = await checkIfUserFollowingBot(targetHevyUsername);
+  const didFollow = await checkIfUserFollowingBot(targetHevyUsername!);
 
   if (didFollow) {
-    await followUser(targetHevyUsername);
+    await followUserOnHevy(targetHevyUsername!);
 
     await interaction.followUp({
       content: `You are following @${process.env.BOT_ON_HEVY_USERNAME} on Hevy.
