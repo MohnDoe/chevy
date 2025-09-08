@@ -8,23 +8,59 @@ import {
   Container,
   TextDisplay,
 } from "commandkit";
+
 import {
-  ButtonInteraction,
+  ActionRowBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  ContainerBuilder,
   InteractionContextType,
   MessageFlags,
+  SectionBuilder,
+  SeparatorBuilder,
   SlashCommandBuilder,
+  TextDisplayBuilder,
 } from "discord.js";
+
 import { upsertUser } from "../../../controllers/user";
+
 import {
   checkIfUserFollowingBot,
+  checkIfUserUserIsFollowedByBot,
   followUserOnHevy,
 } from "../../../hevy/botApi";
 
 const CONFIRM_FOLLOW_BOT_ON_HEVY_ID = "confirmFollowBotButton";
 
+const followHevyBotTextComponent = (done: boolean) =>
+  new TextDisplayBuilder().setContent(
+    `${done ? "✅" : "❌"} Follow [**@${process.env
+      .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()!})`
+  );
+
+const verifyHevyBotFollowButtonComponent = (disabled: boolean) => (
+  <Button
+    style={ButtonStyle.Secondary}
+    onClick={checkIfUserFollowedOnHevyButtonClick}
+    disabled={disabled}
+    emoji={disabled ? "✔" : "🔄"}
+    customId={CONFIRM_FOLLOW_BOT_ON_HEVY_ID}
+  >
+    {disabled ? "Successfuly linked" : "Check"}
+  </Button>
+);
+
+const getFollowedByHevyBotTextComponent = (done: boolean) =>
+  new TextDisplayBuilder().setContent(
+    `${done ? "✅" : "❌"} Get followed by @${
+      process.env.BOT_ON_HEVY_USERNAME
+    } on Hevy.
+    **If your account is set to private, you'll have to accept the follow request.**`
+  );
+
 let targetHevyUsername: string | null = null;
+let userFollowsHevyBot = false;
+let userIsFollowedByHevyBot = false;
 
 export const command = new SlashCommandBuilder()
   .setName("account")
@@ -53,47 +89,50 @@ const getHevyUsernameOption = (interaction: ChatInputCommandInteraction) => {
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
 };
 
-const checkIfUserFollowedOnHevy: OnButtonKitClick = async (
+const checkIfUserFollowedOnHevyButtonClick: OnButtonKitClick = async (
   interaction,
   context
 ) => {
-  await interaction.deferReply({
-    flags: MessageFlags.Ephemeral,
-    withResponse: true,
+  userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
+  userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+    targetHevyUsername!
+  );
+
+  await interaction.editReply({
+    flags: MessageFlags.IsComponentsV2,
+    components: [generateHevyLinkingValidationComponent()],
   });
-
-  const didFollow = await checkIfUserFollowingBot(targetHevyUsername!);
-
-  if (didFollow) {
-    await followUserOnHevy(targetHevyUsername!);
-
-    await interaction.followUp({
-      content: `You are following @${process.env.BOT_ON_HEVY_USERNAME} on Hevy.
-            The bot will now follow you on Hevy, if your account is set to private you need to accept its follow requests.`,
-    });
-  } else {
-    await interaction.followUp({
-      content: `You are not following <[**@${process.env
-        .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()!})>, in order to link your account your need to.`,
-      components: [confirmFollowingTheBotActionRow],
-    });
-  }
 
   // Clean up the button context
   context.dispose();
 };
 
-const confirmFollowingTheBotActionRow = (
-  <ActionRow>
-    <Button
-      style={ButtonStyle.Primary}
-      onClick={checkIfUserFollowedOnHevy}
-      customId={CONFIRM_FOLLOW_BOT_ON_HEVY_ID}
-    >
-      I have followed {process.env.BOT_ON_HEVY_USERNAME!} on Hevy
-    </Button>
-  </ActionRow>
-);
+const generateHevyLinkingValidationComponent = () => {
+  const introText = new TextDisplayBuilder().setContent(
+    `**In order to verify that you are the owner of the Hevy account @${targetHevyUsername} you need to follow the following steps :**`
+  );
+
+  const isAlreadyLinked = userFollowsHevyBot && userIsFollowedByHevyBot;
+
+  return new ContainerBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        "# Welcome to your Hevy companion bot !"
+      )
+    )
+    .addTextDisplayComponents(introText)
+    .addSeparatorComponents((s) => s)
+    .addTextDisplayComponents(followHevyBotTextComponent(userFollowsHevyBot))
+    .addTextDisplayComponents(
+      getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
+    )
+    .addSeparatorComponents((s) => s)
+    .addActionRowComponents((actionRow) =>
+      actionRow.setComponents([
+        verifyHevyBotFollowButtonComponent(isAlreadyLinked),
+      ])
+    );
+};
 
 export const chatInput: ChatInputCommand = async ({
   interaction,
@@ -108,12 +147,14 @@ export const chatInput: ChatInputCommand = async ({
     case "link":
       await upsertUser(discordUserId);
       targetHevyUsername = getHevyUsernameOption(interaction);
+      userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
+      userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+        targetHevyUsername!
+      );
 
-      const sentMessage = await interaction.editReply({
-        content: `To verify that you are in fact __@${targetHevyUsername}__ on Hevy, please first follow <[**@${process
-          .env
-          .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()!})> !`,
-        components: [confirmFollowingTheBotActionRow],
+      await interaction.editReply({
+        flags: MessageFlags.IsComponentsV2,
+        components: [generateHevyLinkingValidationComponent()],
       });
 
       break;
@@ -122,6 +163,7 @@ export const chatInput: ChatInputCommand = async ({
       throw new Error("Not yet implemented!");
 
     default:
+      await interaction.followUp("This action does not exist.");
       break;
   }
 };
