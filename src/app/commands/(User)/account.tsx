@@ -41,7 +41,6 @@ let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
 let userIsFollowedByHevyBot = false;
 let hevyUserProfile: any | null = null;
-let followRequestSent = false;
 
 const getHevyUsernameOption = (interaction: ChatInputCommandInteraction) => {
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
@@ -68,8 +67,8 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
     .setCustomId("followsHevyBotCheckButton")
     .setDisabled(isFollowing)
     .onClick(async (interaction, context) => {
-      await context.setDisabled(true);
-      await context.dispose();
+      context.setDisabled(true);
+      context.dispose();
       if (!interaction.deferred) {
         await interaction.deferUpdate({ withResponse: true });
       }
@@ -83,18 +82,20 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
       await checkAndSendPrivateFollowInstruction(interaction);
     });
 
-const refreshButtonComponent = (isFollowed: boolean) =>
+const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
   new ButtonKit()
     .setStyle(ButtonStyle.Secondary)
     .setLabel(isFollowed ? "Followed" : "Check")
     .setEmoji(isFollowed ? "✅" : "🔄")
-    .setCustomId("refreshFollowedStatus")
+    .setCustomId("refreshFollowedStatusButton")
     .setDisabled(isFollowed)
     .onClick(async (interaction, context) => {
-      await context.setDisabled(true);
-      await context.dispose();
+      context.setDisabled(true);
+      context.dispose();
+
+      console.log("refreshFollowedStatusButtonComponent.onClick");
       if (!interaction.deferred) {
-        await interaction.deferUpdate();
+        await interaction.deferUpdate({ withResponse: true });
       }
 
       userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
@@ -102,11 +103,10 @@ const refreshButtonComponent = (isFollowed: boolean) =>
       );
 
       await interaction.editReply({
-        components: privateFollowInstructionsComponents(
-          "refreshButtonComponent"
+        components: generatePrivateFollowInstructionsComponents(
+          "refreshFollowedStatusButtonComponent"
         ),
       });
-      return;
     });
 
 const checkAndSendPrivateFollowInstruction = async (
@@ -117,28 +117,37 @@ const checkAndSendPrivateFollowInstruction = async (
     hevyUserProfile &&
     hevyUserProfile.private_profile
   ) {
+    if (!interaction.deferred) {
+      await interaction.deferReply({ withResponse: true });
+    }
     await followUserOnHevy(targetHevyUsername!);
     await interaction.followUp({
-      flags: MessageFlags.IsComponentsV2,
-      components: privateFollowInstructionsComponents(
+      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+      components: generatePrivateFollowInstructionsComponents(
         "checkAndSendPrivateFollowInstruction"
       ),
     });
   }
 };
 
-const privateFollowInstructionsComponents = (source: string) => {
-  console.log("privateFollowInstructionsComponents", source);
+const generatePrivateFollowInstructionsComponents = (source: string) => {
+  console.log("generatePrivateFollowInstructionsComponents", source);
+
   let components = [
     new TextDisplayBuilder().setContent(
-      `Your account is set to private you need to do one more thing :`
+      `Your account is set to private, @${process.env
+        .BOT_ON_HEVY_USERNAME!} won't have access to your workouts, routines, etc. if you are not mutual followers.
+        
+A follow request was sent out to your account, you need to accept it to proceed.`
     ),
     new ContainerBuilder().addSectionComponents((section) =>
       section
         .addTextDisplayComponents(
           getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
         )
-        .setButtonAccessory(refreshButtonComponent(userIsFollowedByHevyBot))
+        .setButtonAccessory(
+          refreshFollowedStatusButtonComponent(userIsFollowedByHevyBot)
+        )
     ),
   ];
 
