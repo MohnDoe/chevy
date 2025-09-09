@@ -13,9 +13,11 @@ import { getUserByDiscordId } from "../../../controllers/user";
 export const command = new SlashCommandBuilder()
   .setName("workout")
   .setDescription("Share one of your workouts on this channel now")
-  .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
+  .setDefaultMemberPermissions(
+    PermissionFlagsBits.SendMessages |
+      PermissionFlagsBits.UseApplicationCommands
+  )
   .setContexts([
-    InteractionContextType.BotDM,
     InteractionContextType.Guild,
     InteractionContextType.PrivateChannel,
   ])

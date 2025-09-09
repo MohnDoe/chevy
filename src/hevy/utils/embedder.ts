@@ -3,8 +3,9 @@ import { HevyExercise } from "../../types/hevy/exercise.type";
 import { HevyWorkout } from "../../types/hevy/workout.type";
 import { HevySet } from "../../types/hevy/set.type";
 
-import * as dayjs from "dayjs";
-import * as duration from "dayjs/plugin/duration";
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration.js";
+dayjs.extend(duration);
 
 const SUPERSETS_PREFIXES = [
   "🟪",
