@@ -60,33 +60,6 @@ const getFollowedByHevyBotTextComponent = (done: boolean) =>
     }`
   );
 
-const sendFollowRequestButton = (disabled: boolean) => (
-  <Button
-    style={disabled ? ButtonStyle.Secondary : ButtonStyle.Primary}
-    onClick={async (interaction, context) => {
-      if (!interaction.deferred) {
-        await interaction.deferUpdate({ withResponse: true });
-      }
-      await context.setDisabled(true);
-      await context.dispose();
-      // TODO: uncomment
-      // if (userFollowsHevyBot && !userIsFollowedByHevyBot)
-      //   await followUserOnHevy(targetHevyUsername!);
-      followRequestSent = true;
-
-      await interaction.editReply({
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-        components: privateFollowInstructionsComponents(),
-      });
-    }}
-    emoji={"✉"}
-    disabled={disabled}
-    customId={"sendFollowRequestToUserButton"}
-  >
-    Get follow request
-  </Button>
-);
-
 const followHevyBotLinkButton = (isFollowing: boolean) =>
   new ButtonKit()
     .setLabel(isFollowing ? "Following" : "Check")
@@ -110,61 +83,62 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
       await checkAndSendPrivateFollowInstruction(interaction);
     });
 
-const refreshButtonComponent = (disabled: boolean) =>
+const refreshButtonComponent = (isFollowed: boolean) =>
   new ButtonKit()
     .setStyle(ButtonStyle.Secondary)
-    .setLabel("I have accepted")
-    .setDisabled(disabled)
+    .setLabel(isFollowed ? "Followed" : "Check")
+    .setEmoji(isFollowed ? "✅" : "🔄")
     .setCustomId("refreshFollowedStatus")
-    .onClick((i, c) => {
-      followRequestSent = false;
+    .setDisabled(isFollowed)
+    .onClick(async (interaction, context) => {
+      await context.setDisabled(true);
+      await context.dispose();
+      if (!interaction.deferred) {
+        await interaction.deferUpdate();
+      }
+
+      userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+        targetHevyUsername!
+      );
+
+      await interaction.editReply({
+        components: privateFollowInstructionsComponents(
+          "refreshButtonComponent"
+        ),
+      });
+      return;
     });
 
 const checkAndSendPrivateFollowInstruction = async (
   interaction: ButtonInteraction | ChatInputCommandInteraction
 ) => {
-  if (!userIsFollowedByHevyBot) {
-    if (
-      userFollowsHevyBot &&
-      hevyUserProfile &&
-      hevyUserProfile.private_profile
-    ) {
-      await interaction.followUp({
-        flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-        components: privateFollowInstructionsComponents(),
-      });
-    }
+  if (
+    userFollowsHevyBot &&
+    hevyUserProfile &&
+    hevyUserProfile.private_profile
+  ) {
+    await followUserOnHevy(targetHevyUsername!);
+    await interaction.followUp({
+      flags: MessageFlags.IsComponentsV2,
+      components: privateFollowInstructionsComponents(
+        "checkAndSendPrivateFollowInstruction"
+      ),
+    });
   }
 };
 
-const privateFollowInstructionsComponents = () => {
+const privateFollowInstructionsComponents = (source: string) => {
+  console.log("privateFollowInstructionsComponents", source);
   let components = [
     new TextDisplayBuilder().setContent(
-      `Since your account is set to private you need to do one more thing :`
+      `Your account is set to private you need to do one more thing :`
     ),
-    new ContainerBuilder()
-      .setAccentColor(0x0099ff)
-      .addSectionComponents((section) =>
-        section
-          .addTextDisplayComponents((td) =>
-            td.setContent(
-              followRequestSent
-                ? "A follow request has been sent to you on Hevy. Open Hevy and accept it in order to continue."
-                : "Click this button to get a friend request"
-            )
-          )
-          .setButtonAccessory(
-            sendFollowRequestButton(
-              userIsFollowedByHevyBot || followRequestSent
-            )
-          )
-      ),
     new ContainerBuilder().addSectionComponents((section) =>
       section
         .addTextDisplayComponents(
           getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
         )
-        .setButtonAccessory(refreshButtonComponent(!followRequestSent))
+        .setButtonAccessory(refreshButtonComponent(userIsFollowedByHevyBot))
     ),
   ];
 

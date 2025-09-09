@@ -1,6 +1,8 @@
 import { HevyWorkout } from "../types/hevy/workout.type";
 import axios from "axios";
 import dotenv from "dotenv";
+
+const wait = require("node:timers/promises").setTimeout;
 dotenv.config();
 
 const HEVY_API_URL = "https://api.hevyapp.com";
@@ -45,9 +47,11 @@ export const checkIfUserUserIsFollowedByBot = async (
 
 export const followUserOnHevy = async (userHevyUsername: string) => {
   console.log("following user ", userHevyUsername);
-  await HevyBotAPIClient.post(`/follow`, {
-    username: userHevyUsername,
-  });
+  // await HevyBotAPIClient.post(`/follow`, {
+  //   username: userHevyUsername,
+  // });
+
+  await wait(1_000);
 
   return;
 };
