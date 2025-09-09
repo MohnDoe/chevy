@@ -34,6 +34,7 @@ let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
 let userIsFollowedByHevyBot = false;
 let hevyUserProfile: any | null = null;
+let hevyBotFollowRequestSent = false;
 
 const getHevyUsernameOption = (interaction: ChatInputCommandInteraction) => {
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
@@ -41,13 +42,13 @@ const getHevyUsernameOption = (interaction: ChatInputCommandInteraction) => {
 
 const followHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
-    `${done ? "✅" : "⏳"} Follow [**@${process.env
+    `${done ? "✅" : "⏳"}  Follow [**@${process.env
       .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()})`
   );
 
 const getFollowedByHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
-    `${done ? "✅" : "⏳"} Accept follow request from @${
+    `${done ? "✅" : "⏳"}  Accept follow request from @${
       process.env.BOT_ON_HEVY_USERNAME
     }`
   );
@@ -66,11 +67,11 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
 
       userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
 
+      context.dispose();
+
       await interaction.editReply({
         components: await generateLinkingInstructions(),
       });
-
-      context.dispose();
     });
 
 const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
@@ -81,7 +82,6 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
     .setCustomId("refreshFollowedStatusButton")
     .setDisabled(isFollowed)
     .onClick(async (interaction, context) => {
-      console.log("refreshFollowedStatusButtonComponent.onClick");
       if (!interaction.deferred) {
         await interaction.deferUpdate({ withResponse: true });
       }
@@ -90,16 +90,13 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
         targetHevyUsername!
       );
 
+      context.dispose();
       await interaction.editReply({
         components: await generateLinkingInstructions(),
       });
-
-      context.dispose();
     });
 
-const generatePrivateFollowInstructionsComponents = (source: string) => {
-  console.log("generatePrivateFollowInstructionsComponents", source);
-
+const generatePrivateFollowInstructionsComponents = () => {
   let components = [
     new TextDisplayBuilder().setContent(
       `Your account is set to private, @${process.env
@@ -107,23 +104,25 @@ const generatePrivateFollowInstructionsComponents = (source: string) => {
         
 A follow request was sent out to your account, you need to accept it to proceed.`
     ),
-    new ContainerBuilder().addSectionComponents((section) =>
-      section
-        .addTextDisplayComponents(
+    userIsFollowedByHevyBot
+      ? new ContainerBuilder().addTextDisplayComponents(
           getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
         )
-        .setButtonAccessory(
-          refreshFollowedStatusButtonComponent(userIsFollowedByHevyBot)
-        )
-    ),
+      : new ContainerBuilder().addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents(
+              getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
+            )
+            .setButtonAccessory(
+              refreshFollowedStatusButtonComponent(userIsFollowedByHevyBot)
+            )
+        ),
   ];
 
   return components;
 };
 
 const generateLinkingInstructions = async () => {
-  console.log("generateLinkingInstructions");
-
   let components = [
     new TextDisplayBuilder().setContent(
       "# Welcome to your Hevy companion bot !"
@@ -131,13 +130,17 @@ const generateLinkingInstructions = async () => {
     new TextDisplayBuilder().setContent(
       `In order to verify that you are the owner of the Hevy account **@${targetHevyUsername}** you need to follow the following steps :`
     ),
-    new ContainerBuilder().addSectionComponents((section) =>
-      section
-        .addTextDisplayComponents(
+    userFollowsHevyBot
+      ? new ContainerBuilder().addTextDisplayComponents(
           followHevyBotTextComponent(userFollowsHevyBot)
         )
-        .setButtonAccessory(followHevyBotLinkButton(userFollowsHevyBot))
-    ),
+      : new ContainerBuilder().addSectionComponents((section) =>
+          section
+            .addTextDisplayComponents(
+              followHevyBotTextComponent(userFollowsHevyBot)
+            )
+            .setButtonAccessory(followHevyBotLinkButton(userFollowsHevyBot))
+        ),
   ];
 
   if (
@@ -145,12 +148,13 @@ const generateLinkingInstructions = async () => {
     hevyUserProfile &&
     hevyUserProfile.private_profile
   ) {
-    await followUserOnHevy(targetHevyUsername!);
+    if (!hevyBotFollowRequestSent && !userIsFollowedByHevyBot) {
+      await followUserOnHevy(targetHevyUsername!);
+      hevyBotFollowRequestSent = true;
+    }
     components = [
       ...components,
-      ...generatePrivateFollowInstructionsComponents(
-        "generateLinkingInstructions"
-      ),
+      ...generatePrivateFollowInstructionsComponents(),
     ];
   }
 
