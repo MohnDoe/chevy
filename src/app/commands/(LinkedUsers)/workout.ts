@@ -19,20 +19,13 @@ export const command = new SlashCommandBuilder()
     InteractionContextType.Guild,
     InteractionContextType.PrivateChannel,
   ])
-  .addSubcommandGroup((scg) =>
-    scg
-      .setName("workout")
-      .setDescription(
-        "Share your most recent workout or select one in particular."
-      )
-      .addSubcommand((sc) =>
-        sc.setName("latest").setDescription("Share your last finished workout.")
-      )
-      .addSubcommand((sc) =>
-        sc
-          .setName("list")
-          .setDescription("Select one from a list of recent workouts.")
-      )
+  .addSubcommand((sc) =>
+    sc.setName("latest").setDescription("Share your last finished workout.")
+  )
+  .addSubcommand((sc) =>
+    sc
+      .setName("list")
+      .setDescription("Select one from a list of recent workouts.")
   );
 
 export async function chatInput({
