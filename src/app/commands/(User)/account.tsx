@@ -2,26 +2,19 @@ import {
   type ChatInputCommand,
   ChatInputCommandContext,
   CommandMetadata,
-  OnButtonKitClick,
-  ActionRow,
-  Button,
-  Container,
-  TextDisplay,
   ButtonKit,
+  ActionRow,
 } from "commandkit";
 
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
   ContainerBuilder,
   InteractionContextType,
-  MessageComponent,
   MessageFlags,
-  SectionBuilder,
   SeparatorBuilder,
+  SeparatorSpacingSize,
   SlashCommandBuilder,
   TextDisplayBuilder,
 } from "discord.js";
@@ -67,8 +60,6 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
     .setCustomId("followsHevyBotCheckButton")
     .setDisabled(isFollowing)
     .onClick(async (interaction, context) => {
-      context.setDisabled(true);
-      context.dispose();
       if (!interaction.deferred) {
         await interaction.deferUpdate({ withResponse: true });
       }
@@ -76,23 +67,20 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
       userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
 
       await interaction.editReply({
-        components: generateFirstStepHevyLinkingComponents(),
+        components: await generateLinkingInstructions(),
       });
 
-      await checkAndSendPrivateFollowInstruction(interaction);
+      context.dispose();
     });
 
 const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
   new ButtonKit()
-    .setStyle(ButtonStyle.Secondary)
     .setLabel(isFollowed ? "Followed" : "Check")
+    .setStyle(ButtonStyle.Secondary)
     .setEmoji(isFollowed ? "✅" : "🔄")
     .setCustomId("refreshFollowedStatusButton")
     .setDisabled(isFollowed)
     .onClick(async (interaction, context) => {
-      context.setDisabled(true);
-      context.dispose();
-
       console.log("refreshFollowedStatusButtonComponent.onClick");
       if (!interaction.deferred) {
         await interaction.deferUpdate({ withResponse: true });
@@ -103,32 +91,11 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
       );
 
       await interaction.editReply({
-        components: generatePrivateFollowInstructionsComponents(
-          "refreshFollowedStatusButtonComponent"
-        ),
+        components: await generateLinkingInstructions(),
       });
-    });
 
-const checkAndSendPrivateFollowInstruction = async (
-  interaction: ButtonInteraction | ChatInputCommandInteraction
-) => {
-  if (
-    userFollowsHevyBot &&
-    hevyUserProfile &&
-    hevyUserProfile.private_profile
-  ) {
-    if (!interaction.deferred) {
-      await interaction.deferReply({ withResponse: true });
-    }
-    await followUserOnHevy(targetHevyUsername!);
-    await interaction.followUp({
-      flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-      components: generatePrivateFollowInstructionsComponents(
-        "checkAndSendPrivateFollowInstruction"
-      ),
+      context.dispose();
     });
-  }
-};
 
 const generatePrivateFollowInstructionsComponents = (source: string) => {
   console.log("generatePrivateFollowInstructionsComponents", source);
@@ -154,8 +121,8 @@ A follow request was sent out to your account, you need to accept it to proceed.
   return components;
 };
 
-const generateFirstStepHevyLinkingComponents = () => {
-  console.log("generate");
+const generateLinkingInstructions = async () => {
+  console.log("generateLinkingInstructions");
 
   let components = [
     new TextDisplayBuilder().setContent(
@@ -172,6 +139,20 @@ const generateFirstStepHevyLinkingComponents = () => {
         .setButtonAccessory(followHevyBotLinkButton(userFollowsHevyBot))
     ),
   ];
+
+  if (
+    userFollowsHevyBot &&
+    hevyUserProfile &&
+    hevyUserProfile.private_profile
+  ) {
+    await followUserOnHevy(targetHevyUsername!);
+    components = [
+      ...components,
+      ...generatePrivateFollowInstructionsComponents(
+        "generateLinkingInstructions"
+      ),
+    ];
+  }
 
   return components;
 };
@@ -205,10 +186,10 @@ export const chatInput: ChatInputCommand = async ({
 
       await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
-        components: generateFirstStepHevyLinkingComponents(),
+        components: await generateLinkingInstructions(),
       });
 
-      await checkAndSendPrivateFollowInstruction(interaction);
+      // await checkAndSendPrivateFollowInstruction(interaction);
 
       break;
 
