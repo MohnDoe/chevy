@@ -19,7 +19,11 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 
-import { upsertUser } from "../../../controllers/user";
+import {
+  setUserHevyUsername,
+  setUserVerified,
+  upsertUser,
+} from "../../../controllers/user";
 
 import {
   checkIfUserFollowingBot,
@@ -36,7 +40,9 @@ let userIsFollowedByHevyBot = false;
 let hevyUserProfile: any | null = null;
 let hevyBotFollowRequestSent = false;
 
-const getHevyUsernameOption = (interaction: ChatInputCommandInteraction) => {
+export const getHevyUsernameOption = (
+  interaction: ChatInputCommandInteraction
+) => {
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
 };
 
@@ -67,6 +73,14 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
 
       userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
 
+      if (userFollowsHevyBot) {
+        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
+        await setUserVerified(
+          interaction.user.id,
+          hevyUserProfile && !hevyUserProfile.private_profile
+        );
+      }
+
       context.dispose();
 
       await interaction.editReply({
@@ -89,6 +103,11 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
       userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
         targetHevyUsername!
       );
+
+      if (userIsFollowedByHevyBot) {
+        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
+        await setUserVerified(interaction.user.id, true);
+      }
 
       context.dispose();
       await interaction.editReply({
@@ -143,19 +162,17 @@ const generateLinkingInstructions = async () => {
         ),
   ];
 
-  if (
-    userFollowsHevyBot &&
-    hevyUserProfile &&
-    hevyUserProfile.private_profile
-  ) {
-    if (!hevyBotFollowRequestSent && !userIsFollowedByHevyBot) {
-      await followUserOnHevy(targetHevyUsername!);
-      hevyBotFollowRequestSent = true;
+  if (userFollowsHevyBot) {
+    if (hevyUserProfile && hevyUserProfile.private_profile) {
+      if (!hevyBotFollowRequestSent && !userIsFollowedByHevyBot) {
+        await followUserOnHevy(targetHevyUsername!);
+        hevyBotFollowRequestSent = true;
+      }
+      components = [
+        ...components,
+        ...generatePrivateFollowInstructionsComponents(),
+      ];
     }
-    components = [
-      ...components,
-      ...generatePrivateFollowInstructionsComponents(),
-    ];
   }
 
   return components;
@@ -192,8 +209,6 @@ export const chatInput: ChatInputCommand = async ({
         flags: MessageFlags.IsComponentsV2,
         components: await generateLinkingInstructions(),
       });
-
-      // await checkAndSendPrivateFollowInstruction(interaction);
 
       break;
 

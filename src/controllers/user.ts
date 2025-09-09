@@ -24,6 +24,28 @@ export async function checkIfUserIsVerifiedOnHevy(discordId: string) {
   return !!user && user.isVerifiedOnHevy;
 }
 
+export async function setUserHevyUsername(discordId: string, username: string) {
+  return await prisma.user.update({
+    where: {
+      discordId,
+    },
+    data: {
+      hevyUsername: username,
+    },
+  });
+}
+
+export async function setUserVerified(discordId: string, verified: boolean) {
+  return await prisma.user.update({
+    where: {
+      discordId,
+    },
+    data: {
+      isVerifiedOnHevy: verified,
+    },
+  });
+}
+
 export const upsertUser = async (discordId: string) => {
   return await prisma.user.upsert({
     where: {

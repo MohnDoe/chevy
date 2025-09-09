@@ -4,6 +4,7 @@ import {
   checkIfUserIsVerifiedOnHevy,
   getUserByDiscordId,
 } from "../../../controllers/user";
+import { getHevyUsernameOption } from "./account";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
@@ -12,8 +13,15 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     (ctx.interaction as ChatInputCommandInteraction).options.getSubcommand()
   ) {
     case "link":
-      if (verified) {
-        const user = await getUserByDiscordId(userDiscordId);
+      const user = await getUserByDiscordId(userDiscordId);
+      if (
+        user &&
+        user.hevyUsername ==
+          getHevyUsernameOption(
+            ctx.interaction as ChatInputCommandInteraction
+          ) &&
+        user.isVerifiedOnHevy
+      ) {
         (ctx.interaction as ChatInputCommandInteraction).reply({
           content: `You are already linked to Hevy with the username @${
             user!.hevyUsername
