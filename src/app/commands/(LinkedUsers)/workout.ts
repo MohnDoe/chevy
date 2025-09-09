@@ -11,7 +11,7 @@ import { ChatInputCommandContext, CommandMetadata } from "commandkit";
 import { getUserByDiscordId } from "../../../controllers/user";
 
 export const command = new SlashCommandBuilder()
-  .setName("share")
+  .setName("workout")
   .setDescription("Share one of your workouts on this channel now")
   .setDefaultMemberPermissions(PermissionFlagsBits.SendMessages)
   .setContexts([
