@@ -3,25 +3,23 @@ import {
   ChatInputCommandContext,
   CommandMetadata,
   ButtonKit,
-  ActionRow,
 } from "commandkit";
 
 import {
-  ActionRowBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
   ContainerBuilder,
   InteractionContextType,
   MessageFlags,
-  SeparatorBuilder,
-  SeparatorSpacingSize,
   SlashCommandBuilder,
   TextDisplayBuilder,
 } from "discord.js";
 
 import {
+  setIsFollowedByHevyBot,
+  setIsFollowingHevyBot,
+  setIsHevyProfilePrivate,
   setUserHevyUsername,
-  setUserVerified,
   upsertUser,
 } from "../../../controllers/user";
 
@@ -31,8 +29,6 @@ import {
   followUserOnHevy,
   getUserProfile,
 } from "../../../hevy/botApi";
-
-const CHECK_LINKING_STATUS_BUTTON_ID = "checkLinkingStatusButton";
 
 let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
@@ -75,9 +71,10 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
 
       if (userFollowsHevyBot) {
         await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
-        await setUserVerified(
+        await setIsFollowingHevyBot(interaction.user.id, true);
+        await setIsHevyProfilePrivate(
           interaction.user.id,
-          hevyUserProfile && !hevyUserProfile.private_profile
+          hevyUserProfile.private_profile
         );
       }
 
@@ -106,7 +103,7 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
 
       if (userIsFollowedByHevyBot) {
         await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
-        await setUserVerified(interaction.user.id, true);
+        await setIsFollowedByHevyBot(interaction.user.id, true);
       }
 
       context.dispose();
@@ -117,12 +114,6 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
 
 const generatePrivateFollowInstructionsComponents = () => {
   let components = [
-    new TextDisplayBuilder().setContent(
-      `Your account is set to private, @${process.env
-        .BOT_ON_HEVY_USERNAME!} won't have access to your workouts, routines, etc. if you are not mutual followers.
-        
-A follow request was sent out to your account, you need to accept it to proceed.`
-    ),
     userIsFollowedByHevyBot
       ? new ContainerBuilder().addTextDisplayComponents(
           getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
@@ -136,6 +127,12 @@ A follow request was sent out to your account, you need to accept it to proceed.
               refreshFollowedStatusButtonComponent(userIsFollowedByHevyBot)
             )
         ),
+    new TextDisplayBuilder().setContent(
+      `Your account is set to private, @${process.env
+        .BOT_ON_HEVY_USERNAME!} won't have access to your workouts, routines, etc. if you are not mutual followers.
+        
+A follow request was sent out to your account, you need to accept it to proceed.`
+    ),
   ];
 
   return components;
@@ -200,6 +197,7 @@ export const chatInput: ChatInputCommand = async ({
 
         return;
       }
+
       userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
       userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
         targetHevyUsername!
