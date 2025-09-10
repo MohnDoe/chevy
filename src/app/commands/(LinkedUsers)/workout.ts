@@ -1,14 +1,26 @@
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonInteraction,
+  ButtonStyle,
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } from "discord.js";
 
 import { getUserLatestWorkout } from "../../../hevy/botApi";
 import { embedWorkout } from "../../../hevy/utils/embedder";
-import { ChatInputCommandContext, CommandMetadata } from "commandkit";
+import {
+  ButtonKit,
+  ChatInputCommandContext,
+  CommandMetadata,
+  OnButtonKitClick,
+} from "commandkit";
 import { getUserByDiscordId } from "../../../controllers/user";
+import { HevyWorkout } from "../../../types/hevy/workout.type";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -18,6 +30,7 @@ export const command = new SlashCommandBuilder()
       PermissionFlagsBits.UseApplicationCommands
   )
   .setContexts([
+    InteractionContextType.BotDM,
     InteractionContextType.Guild,
     InteractionContextType.PrivateChannel,
   ])
@@ -30,20 +43,35 @@ export const command = new SlashCommandBuilder()
       .setDescription("Select one from a list of recent workouts.")
   );
 
+let workout: HevyWorkout | null;
+
 export async function chatInput({
   interaction,
   client,
 }: ChatInputCommandContext) {
+  await interaction.deferReply({
+    withResponse: true,
+    flags: MessageFlags.Ephemeral,
+  });
   const user = await getUserByDiscordId(interaction.user.id);
 
-  const workout = await getUserLatestWorkout(user!.hevyUsername!);
+  workout = await getUserLatestWorkout(user!.hevyUsername!);
 
   if (workout) {
-    const embeds = [embedWorkout(workout)];
+    const embed = embedWorkout(workout);
 
-    await interaction.reply({
-      content: `<@${interaction.user.id}> latest workout.`,
-      embeds,
+    await interaction.followUp({
+      flags: MessageFlags.Ephemeral,
+      embeds: [embed],
+      components: [
+        new ActionRowBuilder<ButtonBuilder>().setComponents([
+          new ButtonKit()
+            .setLabel("Send in chat")
+            .setCustomId("sendInChat")
+            .setStyle(ButtonStyle.Primary)
+            .onClick(handleMessageClick),
+        ]),
+      ],
     });
   } else {
     await interaction.reply({
@@ -52,5 +80,26 @@ export async function chatInput({
     });
   }
 }
+
+const handleMessageClick: OnButtonKitClick = async (
+  interaction: ButtonInteraction,
+  context: ButtonKit
+) => {
+  switch (interaction.customId) {
+    case "sendInChat":
+      await interaction.deferReply({ withResponse: true });
+      await interaction.followUp({
+        embeds: [embedWorkout(workout!)],
+      });
+      break;
+
+    default:
+      await interaction.followUp({
+        flags: MessageFlags.Ephemeral,
+        content: `Unhandle interaction  ${interaction.customId}`,
+      });
+      break;
+  }
+};
 
 export const metadata: CommandMetadata = {};
