@@ -1,6 +1,7 @@
 import {
   bold,
   ButtonStyle,
+  ComponentBuilder,
   ContainerBuilder,
   ContainerComponent,
   EmbedBuilder,
@@ -48,7 +49,7 @@ const getExerciseVolume = (ex: HevyExercise) => {
   );
 };
 
-export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
+export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
     0
@@ -69,21 +70,13 @@ export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
     "seconds"
   );
 
-  let informationsSectionTextDisplays = [
-    new TextDisplayBuilder().setContent(
-      "**Duration**: " + workoutDuration.format("H[h] mm[m]")
-    ),
-    new TextDisplayBuilder().setContent(
-      `**Volume**: ${new Intl.NumberFormat("en-US").format(volume)} Kg`
-    ),
-    new TextDisplayBuilder().setContent(`**Sets**: ${setCount}`),
-  ];
+  let informationsText = `
+**Duration**: ${workoutDuration.format("H[h] mm[m]")}
+**Volume**: ${new Intl.NumberFormat("en-US").format(volume)} Kg
+**Sets**: ${setCount}`;
 
   if (prCount > 0) {
-    informationsSectionTextDisplays = [
-      ...informationsSectionTextDisplays,
-      new TextDisplayBuilder().setContent(`**PRs**: ${prCount}`),
-    ];
+    informationsText += `**PRs**: ${prCount}`;
   }
 
   let container = new ContainerBuilder()
@@ -92,21 +85,23 @@ export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
         `### [${workout.name}](https://hevy.com/workout/${workout.short_id})`
       )
     )
-    .addSectionComponents((section) =>
-      section
-        .addTextDisplayComponents(informationsSectionTextDisplays)
+    .addSectionComponents(
+      new SectionBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(informationsText)
+        )
         .setThumbnailAccessory(
           new ThumbnailBuilder().setURL(workout.profile_image)
         )
     )
-    .addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
-    );
+    .addSeparatorComponents(new SeparatorBuilder());
 
   for (const exercise of workout.exercises) {
     const exerciseVolume = getExerciseVolume(exercise);
     const showSetNumber = exercise.sets.length > 1;
     let exerciseTitle = "";
+
+    let exerciseSection = new SectionBuilder();
 
     if (exercise.superset_id) {
       exerciseTitle += SUPERSETS_PREFIXES[exercise.superset_id]
@@ -118,15 +113,29 @@ export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
       exerciseTitle += ` [${new Intl.NumberFormat("en-US").format(volume)} kg]`;
     }
 
-    container = container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(bold(exerciseTitle))
-    );
+    exerciseTitle = `### ${bold(exerciseTitle)}`;
 
     if (exercise.notes) {
-      container = container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(subtext(exercise.notes))
-      );
+      exerciseTitle += `\n${subtext(exercise.notes)}`;
     }
+
+    // if (volume > 0) {
+    //   exerciseSection = exerciseSection
+    //     .addTextDisplayComponents(
+    //       new TextDisplayBuilder().setContent(exerciseTitle)
+    //     )
+    //     .setButtonAccessory(
+    //       new ButtonKit()
+    //         .setDisabled(true)
+    //         .setLabel(`${new Intl.NumberFormat("en-US").format(volume)} kg`)
+    //         .setStyle(ButtonStyle.Secondary)
+    //         .setCustomId(`${exercise.id}-${exercise.index}`)
+    //     );
+    // } else {
+    exerciseSection = exerciseSection.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(exerciseTitle)
+    );
+    // }
 
     let i = 1;
     let setsText = "";
@@ -136,13 +145,11 @@ export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
 
       i++;
     }
-    container = container.addTextDisplayComponents(
+    exerciseSection = exerciseSection.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(setsText)
     );
 
-    container = container.addSeparatorComponents(
-      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-    );
+    container = container.addSectionComponents(exerciseSection);
   }
 
   return container;
