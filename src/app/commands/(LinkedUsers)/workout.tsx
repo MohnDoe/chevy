@@ -17,7 +17,6 @@ import {
 } from "discord.js";
 
 import { getUserLatestWorkout, getUserWorkouts } from "../../../hevy/botApi";
-import { embedWorkout } from "../../../hevy/utils/embedder";
 import {
   ActionRow,
   AutocompleteCommand,
@@ -35,6 +34,7 @@ import { HevyWorkout } from "../../../types/hevy/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import { toContainer } from "../../../hevy/utils/embedder";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -64,18 +64,18 @@ let workoutToShare: HevyWorkout | null;
 function workoutEphemeralOptions(
   workout: HevyWorkout
 ): InteractionReplyOptions | InteractionEditReplyOptions {
-  const embed = embedWorkout(workout); // TODO don't use embeds
+  const workoutContainer = toContainer(workout);
   return {
-    flags: MessageFlags.Ephemeral,
-    embeds: [embed],
+    flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
-      new ActionRowBuilder<ButtonBuilder>().setComponents([
-        new ButtonKit()
-          .setLabel("Send in chat")
-          .setCustomId("sendInChat")
-          .setStyle(ButtonStyle.Primary)
-          .onClick(handleMessageClick),
-      ]),
+      workoutContainer,
+      // new ActionRowBuilder<ButtonBuilder>().setComponents([
+      //   new ButtonKit()
+      //     .setLabel("Send in chat")
+      //     .setCustomId("sendInChat")
+      //     .setStyle(ButtonStyle.Primary)
+      //     .onClick(handleMessageClick),
+      // ]),
     ],
   };
 }
@@ -183,7 +183,8 @@ const handleMessageClick: OnButtonKitClick = async (
     case "sendInChat":
       await interaction.deferReply();
       await interaction.followUp({
-        embeds: [embedWorkout(workoutToShare!)],
+        flags: MessageFlags.IsComponentsV2,
+        components: [toContainer(workoutToShare!)],
       });
       break;
 

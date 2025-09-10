@@ -1,10 +1,23 @@
-import { EmbedBuilder } from "discord.js";
+import {
+  bold,
+  ButtonStyle,
+  ContainerBuilder,
+  ContainerComponent,
+  EmbedBuilder,
+  SectionBuilder,
+  SeparatorBuilder,
+  SeparatorSpacingSize,
+  subtext,
+  TextDisplayBuilder,
+  ThumbnailBuilder,
+} from "discord.js";
 import { HevyExercise } from "../../types/hevy/exercise.type";
 import { HevyWorkout } from "../../types/hevy/workout.type";
 import { HevySet } from "../../types/hevy/set.type";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration.js";
+import { ButtonKit, Container, TextDisplay } from "commandkit";
 dayjs.extend(duration);
 
 const SUPERSETS_PREFIXES = [
@@ -33,6 +46,106 @@ const getExerciseVolume = (ex: HevyExercise) => {
     (a, set) => a + (set.weight_kg || 0) * (set.reps || 1),
     0
   );
+};
+
+export const toContainer = (workout: HevyWorkout): ContainerBuilder => {
+  const setCount = workout.exercises.reduce(
+    (acc, exercise) => acc + exercise.sets.length,
+    0
+  );
+
+  const prCount = workout.exercises.reduce(
+    (acc, ex) => acc + ex.sets.reduce((a, s) => a + s.prs.length, 0),
+    0
+  );
+
+  const volume = workout.exercises.reduce(
+    (acc, exercise) => acc + getExerciseVolume(exercise),
+    0
+  );
+
+  const workoutDuration = dayjs.duration(
+    workout.end_time - workout.start_time,
+    "seconds"
+  );
+
+  let informationsSectionTextDisplays = [
+    new TextDisplayBuilder().setContent(
+      "**Duration**: " + workoutDuration.format("H[h] mm[m]")
+    ),
+    new TextDisplayBuilder().setContent(
+      `**Volume**: ${new Intl.NumberFormat("en-US").format(volume)} Kg`
+    ),
+    new TextDisplayBuilder().setContent(`**Sets**: ${setCount}`),
+  ];
+
+  if (prCount > 0) {
+    informationsSectionTextDisplays = [
+      ...informationsSectionTextDisplays,
+      new TextDisplayBuilder().setContent(`**PRs**: ${prCount}`),
+    ];
+  }
+
+  let container = new ContainerBuilder()
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `### [${workout.name}](https://hevy.com/workout/${workout.short_id})`
+      )
+    )
+    .addSectionComponents((section) =>
+      section
+        .addTextDisplayComponents(informationsSectionTextDisplays)
+        .setThumbnailAccessory(
+          new ThumbnailBuilder().setURL(workout.profile_image)
+        )
+    )
+    .addSeparatorComponents(
+      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
+    );
+
+  for (const exercise of workout.exercises) {
+    const exerciseVolume = getExerciseVolume(exercise);
+    const showSetNumber = exercise.sets.length > 1;
+    let exerciseTitle = "";
+
+    if (exercise.superset_id) {
+      exerciseTitle += SUPERSETS_PREFIXES[exercise.superset_id]
+        ? `${SUPERSETS_PREFIXES[exercise.superset_id]} `
+        : "";
+    }
+    exerciseTitle += exercise.title;
+    if (volume > 0) {
+      exerciseTitle += ` [${new Intl.NumberFormat("en-US").format(volume)} kg]`;
+    }
+
+    container = container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(bold(exerciseTitle))
+    );
+
+    if (exercise.notes) {
+      container = container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(subtext(exercise.notes))
+      );
+    }
+
+    let i = 1;
+    let setsText = "";
+    for (const set of exercise.sets) {
+      setsText += setToTextDisplay(set, i);
+      setsText += `\n`;
+
+      i++;
+    }
+    container = container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(setsText)
+    );
+
+    container = container.addSeparatorComponents(
+      new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
+    );
+  }
+
+  return container;
 };
 
 export const embedWorkout = (workout: HevyWorkout) => {
@@ -142,6 +255,67 @@ const exerciseToEmbedField = (exercise: HevyExercise) => {
         .map((s, i) => setToString(s, i + 1, showSetNumber))
         .join("\n"),
   };
+};
+
+const setToTextDisplay = (
+  set: HevySet,
+  setNumber: number,
+  showSetNumber = true
+) => {
+  const indicator = {
+    normal: null,
+    warmup: "[Warm-up]",
+    dropset: "[Dropset]",
+    failure: "[Failure]",
+  };
+
+  let string = "";
+  if (showSetNumber) {
+    string += `Set ${setNumber}: `;
+  }
+
+  if (set.reps) {
+    if (set.weight_kg) {
+      string += `${set.weight_kg} kg x ${set.reps}`;
+    } else {
+      string += `${set.reps} reps`;
+    }
+  } else if (set.duration_seconds) {
+    if (set.distance_meters) {
+      string += `${set.distance_meters / 1000} km`;
+    }
+    const setDuration = dayjs.duration(set.duration_seconds, "seconds");
+    string += ` - ${setDuration.format(
+      `m${setDuration.get("seconds") > 0 ? "[:]ss" : ""}[min]`
+    )}`;
+  }
+
+  if (set.rpe) {
+    string += ` @ *${set.rpe} rpe*`;
+  }
+
+  if (set.indicator !== null && indicator[set.indicator]) {
+    string += ` **${indicator[set.indicator]}**`;
+  }
+
+  if (set.prs.length) {
+    string += ` - 🏆 `;
+    string += set.prs
+      .map((pr) => {
+        switch (pr.type) {
+          case "best_distance":
+            return `Best Distance (${pr.value / 1000} km)`;
+          case "best_weight":
+            return `Best Weight (${pr.value} kg)`;
+          default:
+            return "Personal Best";
+        }
+      })
+      .join(" | ");
+    string += ``;
+  }
+
+  return string;
 };
 
 const setToString = (set: HevySet, setNumber: number, showSetNumber = true) => {
