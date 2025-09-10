@@ -34,7 +34,7 @@ import { HevyWorkout } from "../../../types/hevy/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
-import { toComponents } from "../../../hevy/utils/embedder";
+import { embedWorkout, toComponents } from "../../../hevy/utils/embedder";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -65,20 +65,19 @@ function workoutEphemeralOptions(
   workout: HevyWorkout
 ): InteractionReplyOptions | InteractionEditReplyOptions {
   const workoutComponents = toComponents(workout);
+  const embed = embedWorkout(workout);
 
   return {
-    flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+    flags: MessageFlags.Ephemeral,
+    embeds: [embed],
     components: [
-      workoutComponents,
-      new ActionRowBuilder<ButtonBuilder>()
-        .setComponents([
-          new ButtonKit()
-            .setLabel("Send in chat")
-            .setCustomId("sendInChat")
-            .setStyle(ButtonStyle.Primary)
-            .onClick(handleMessageClick),
-        ])
-        .toJSON(),
+      new ActionRowBuilder<ButtonBuilder>().setComponents([
+        new ButtonKit()
+          .setLabel("Send in chat")
+          .setCustomId("sendInChat")
+          .setStyle(ButtonStyle.Primary)
+          .onClick(handleMessageClick),
+      ]),
     ],
   };
 }
@@ -141,14 +140,9 @@ export async function chatInput({
       );
 
       await interaction.followUp({
-        flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-        components: [
-          new ContainerBuilder()
-            .addTextDisplayComponents((td) =>
-              td.setContent("Select a workout.")
-            )
-            .addActionRowComponents(selectRow),
-        ],
+        flags: MessageFlags.Ephemeral,
+        content: "Select a workout",
+        components: [selectRow],
       });
 
       break;
@@ -184,10 +178,9 @@ const handleMessageClick: OnButtonKitClick = async (
 ) => {
   switch (interaction.customId) {
     case "sendInChat":
-      await interaction.deferReply();
+      if (!interaction.deferred) await interaction.deferReply();
       await interaction.followUp({
-        flags: MessageFlags.IsComponentsV2,
-        components: [toComponents(workoutToShare!)],
+        embeds: [embedWorkout(workoutToShare!)],
       });
       break;
 
