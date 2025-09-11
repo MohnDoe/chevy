@@ -199,9 +199,24 @@ export const chatInput: ChatInputCommand = async ({
       }
 
       userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
+
+      if (userFollowsHevyBot) {
+        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
+        await setIsFollowingHevyBot(interaction.user.id, true);
+        await setIsHevyProfilePrivate(
+          interaction.user.id,
+          hevyUserProfile.private_profile
+        );
+      }
+
       userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
         targetHevyUsername!
       );
+
+      if (userIsFollowedByHevyBot) {
+        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
+        await setIsFollowedByHevyBot(interaction.user.id, true);
+      }
 
       await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
