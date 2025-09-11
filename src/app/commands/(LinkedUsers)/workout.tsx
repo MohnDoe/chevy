@@ -177,7 +177,10 @@ export async function chatInput({
 
       await interaction.editReply({
         flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-        components: [paginatedWorkoutsContainer, paginationActionRow.toJSON()],
+        components: [
+          paginatedWorkoutsContainer,
+          // paginationActionRow.toJSON()
+        ],
       });
 
       break;
