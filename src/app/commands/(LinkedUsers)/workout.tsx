@@ -65,40 +65,52 @@ export const command = new SlashCommandBuilder()
 
 let _workoutToShare: HevyWorkout | null;
 
-function workoutEphemeralOptions(
+function sharabledWorkoutEphemeralOptions(
   workout: HevyWorkout,
   format: WorkoutComponentFormat
 ): InteractionReplyOptions | InteractionEditReplyOptions {
   const workoutComponent = toComponent(workout, format);
+  //makes it so the onClick event is not fired 10000 times
+  const customIdSuffix = `${
+    workout.short_id
+  }-${format}-${new Date().toISOString()}`;
 
   return {
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
       workoutComponent,
+      new ContainerBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent("Select workout format")
+        )
+        .addActionRowComponents(
+          new ActionRowBuilder<ButtonBuilder>().setComponents([
+            new ButtonKit()
+              .setLabel("Simple")
+              .setDisabled(format == "simple")
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId(`changeWorkoutFormat--simple--${customIdSuffix}`)
+              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
+            new ButtonKit()
+              .setLabel(`Standard`)
+              .setCustomId(`changeWorkoutFormat--standard--${customIdSuffix}`)
+              .setDisabled(format == "standard")
+              .setStyle(ButtonStyle.Secondary)
+              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
+            new ButtonKit()
+              .setLabel("Detailed")
+              .setDisabled(format == "detailed")
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
+              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
+          ])
+        ),
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
-          .setLabel("Simple")
-          .setDisabled(format == "simple")
-          .setStyle(ButtonStyle.Secondary)
-          .setCustomId("changeWorkoutFormat--simple")
-          .onClick((i, c) => changeWorkoutFormat(i, workout, "simple")),
-        new ButtonKit()
-          .setLabel(`Standard`)
-          .setCustomId("changeWorkoutFormat--standard")
-          .onClick((i, c) => changeWorkoutFormat(i, workout, "standard"))
-          .setDisabled(format == "standard")
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonKit()
-          .setLabel("Detailed")
-          .setDisabled(format == "detailed")
-          .setStyle(ButtonStyle.Secondary)
-          .setCustomId("changeWorkoutFormat--detailed")
-          .onClick((i, c) => changeWorkoutFormat(i, workout, "detailed")),
-        new ButtonKit()
           .setLabel("Send in chat 💬")
-          .setCustomId("sendInChat")
+          .setCustomId(`sendInChat--${customIdSuffix}`)
           .setStyle(ButtonStyle.Primary)
-          .onClick(handleMessageClick),
+          .onClick(handleMessageClick, { once: true }),
       ]),
     ],
   };
@@ -109,9 +121,15 @@ async function changeWorkoutFormat(
   workout: HevyWorkout,
   format: WorkoutComponentFormat
 ) {
+  console.log(
+    `Changing workout#${workout.short_id} format to ${format} | ${interaction.id}`
+  );
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
-    workoutEphemeralOptions(workout, format) as InteractionEditReplyOptions
+    sharabledWorkoutEphemeralOptions(
+      workout,
+      format
+    ) as InteractionEditReplyOptions
   );
 }
 
@@ -121,7 +139,10 @@ async function followUpWithWorkoutEphemeral(
 ) {
   if (workout) {
     await interaction.followUp(
-      workoutEphemeralOptions(workout, "standard") as InteractionReplyOptions
+      sharabledWorkoutEphemeralOptions(
+        workout,
+        "standard"
+      ) as InteractionReplyOptions
     );
   } else {
     await interaction.reply({
@@ -229,7 +250,7 @@ const handleSelectWorkout = async (
   if (!interaction.deferred) await interaction.deferUpdate();
   _workoutToShare = await getWorkout(workoutShortId);
   await interaction.editReply(
-    workoutEphemeralOptions(
+    sharabledWorkoutEphemeralOptions(
       _workoutToShare,
       "standard"
     ) as InteractionEditReplyOptions
@@ -243,21 +264,34 @@ const handleMessageClick: OnButtonKitClick = async (
   interaction: ButtonInteraction,
   context: ButtonKit
 ) => {
-  switch (interaction.customId) {
-    case "sendInChat":
-      if (!interaction.deferred) await interaction.deferReply();
-      await interaction.followUp({
-        flags: MessageFlags.IsComponentsV2,
-        components: [toComponent(_workoutToShare!, "simple")],
-      });
-      break;
+  console.log("handleMessageClick", interaction.customId);
+  context.dispose();
 
-    default:
+  if (interaction.customId.startsWith("sendInChat")) {
+    if (!interaction.deferred) await interaction.deferReply();
+    await interaction.followUp({
+      flags: MessageFlags.IsComponentsV2,
+      components: [toComponent(_workoutToShare!, "simple")],
+    });
+  } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
+    const desiredFormat = interaction.customId.split("--")[1];
+    if (["simple", "standard", "detailed"].includes(desiredFormat)) {
+      await changeWorkoutFormat(
+        interaction,
+        _workoutToShare!,
+        desiredFormat as WorkoutComponentFormat
+      );
+    } else {
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
-        content: `Unhandle interaction  ${interaction.customId}`,
+        content: `The format "${desiredFormat}" does not exists.`,
       });
-      break;
+    }
+  } else {
+    await interaction.followUp({
+      flags: MessageFlags.Ephemeral,
+      content: `Unhandle interaction  ${interaction.customId}`,
+    });
   }
 };
 
