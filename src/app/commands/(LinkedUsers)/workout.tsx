@@ -41,7 +41,7 @@ import { HevyWorkout } from "../../../types/hevy/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
-import { embedWorkout, toComponent } from "../../../hevy/utils/embedder";
+import { toComponent } from "../../../hevy/utils/embedder";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 

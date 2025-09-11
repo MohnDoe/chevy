@@ -57,9 +57,11 @@ const getExerciseVolume = (ex: HevyExercise) => {
   );
 };
 
+type WorkoutComponentFormat = "small" | "medium" | "full";
+
 export const toComponent = (
   workout: HevyWorkout,
-  size: "small"
+  format: WorkoutComponentFormat
 ): ContainerBuilder => {
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
@@ -80,96 +82,66 @@ export const toComponent = (
     workout.end_time - workout.start_time,
     "seconds"
   );
-
-  let informationsText = `
+  let informationsText;
+  switch (format) {
+    case "full":
+    default:
+      informationsText = `
 **Duration**: ${workoutDuration.format("H[h] mm[m]")}
 **Volume**: ${new Intl.NumberFormat("en-US").format(volume)} Kg
 **Sets**: ${setCount}
 `;
+      if (prCount > 0) {
+        informationsText += `**PRs**: ${prCount}`;
+      }
+      break;
+    case "small":
+      informationsText = `${workoutDuration.format(
+        "H[h] mm[m]"
+      )} • ${new Intl.NumberFormat("en-US").format(
+        volume
+      )} Kg • ${setCount} sets`;
+      if (prCount > 0) {
+        informationsText += `• ${prCount} PRs`;
+      }
 
-  if (prCount > 0) {
-    informationsText += `**PRs**: ${prCount}`;
+      informationsText = `${bold(informationsText)}`;
+      break;
   }
 
-  let container = new ContainerBuilder()
-    .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(
-        `### [${workout.name}](https://hevy.com/workout/${workout.short_id})`
-      )
+  let container = new ContainerBuilder().addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      `## [${workout.name}](https://hevy.com/workout/${workout.short_id})`
     )
-    .addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(informationsText)
-        )
-        .setThumbnailAccessory(
-          new ThumbnailBuilder().setURL(workout.profile_image)
-        )
-    )
-    .addSeparatorComponents(
-      new SeparatorBuilder()
-        .setSpacing(SeparatorSpacingSize.Small)
-        .setDivider(false)
-    );
+  );
 
-  for (const [i, exercise] of workout.exercises.entries()) {
-    const exerciseVolume = getExerciseVolume(exercise);
-    let exerciseTitle = "";
-
-    if (exercise.superset_id) {
-      exerciseTitle += SUPERSETS_PREFIXES[exercise.superset_id]
-        ? `${SUPERSETS_PREFIXES[exercise.superset_id]} `
-        : "";
-    }
-    exerciseTitle += exercise.title;
-    if (exerciseVolume > 0) {
-      exerciseTitle += ` ${inlineCode(
-        `${new Intl.NumberFormat("en-US").format(exerciseVolume)} kg`
-      )}`;
-    }
-
-    exerciseTitle = `${bold(exerciseTitle)}`;
-
-    if (exercise.notes) {
-      exerciseTitle += `\n${quote(subtext(exercise.notes))}`;
-    }
-
-    // if (volume > 0) {
-    //   exerciseSection = exerciseSection
-    //     .addTextDisplayComponents(
-    //       new TextDisplayBuilder().setContent(exerciseTitle)
-    //     )
-    //     .setButtonAccessory(
-    //       new ButtonKit()
-    //         .setDisabled(true)
-    //         .setLabel(`${new Intl.NumberFormat("en-US").format(volume)} kg`)
-    //         .setStyle(ButtonStyle.Secondary)
-    //         .setCustomId(`${exercise.id}-${exercise.index}`)
-    //     );
-    // } else {
-    container = container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(exerciseTitle)
-    );
-    // }
-
-    const showSetNumber = exercise.sets.length > 1;
-    let setsText = "";
-    for (const [j, set] of exercise.sets.entries()) {
-      setsText += subtext(setToTextDisplay(set, j + 1, showSetNumber));
-      setsText += `\n`;
-    }
-    container = container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(setsText)
-    );
-
-    if (i < workout.exercises.length - 1) {
-      container = container.addSeparatorComponents(
-        new SeparatorBuilder()
-          .setSpacing(SeparatorSpacingSize.Small)
-          .setDivider(false)
+  switch (format) {
+    case "full":
+    default:
+      container = container.addSectionComponents(
+        new SectionBuilder()
+          .addTextDisplayComponents(
+            new TextDisplayBuilder().setContent(informationsText)
+          )
+          .setThumbnailAccessory(
+            new ThumbnailBuilder().setURL(workout.profile_image)
+          )
       );
-    }
+      break;
+    case "small":
+      container = container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(informationsText)
+      );
+      break;
   }
+
+  container = container.addSeparatorComponents(
+    new SeparatorBuilder()
+      .setSpacing(SeparatorSpacingSize.Small)
+      .setDivider(format == "small")
+  );
+
+  container = addExercises(container, workout.exercises, format);
 
   container = container.addSeparatorComponents(
     new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
@@ -194,81 +166,86 @@ export const toComponent = (
   return container;
 };
 
-export const embedWorkout = (workout: HevyWorkout) => {
-  const setCount = workout.exercises.reduce(
-    (acc, exercise) => acc + exercise.sets.length,
-    0
-  );
+const addExercises = (
+  container: ContainerBuilder,
+  exercises: HevyExercise[],
+  format: WorkoutComponentFormat
+) => {
+  for (const [i, exercise] of exercises.entries()) {
+    const exerciseVolume = getExerciseVolume(exercise);
+    let exerciseTitle = "";
 
-  const prCount = workout.exercises.reduce(
-    (acc, ex) =>
-      acc + ex.sets.reduce((a, s) => a + s.personalRecords.length, 0),
-    0
-  );
+    const supersetIndicator = exercise.superset_id
+      ? SUPERSETS_PREFIXES[exercise.superset_id]
+      : "";
 
-  const volume = workout.exercises.reduce(
-    (acc, exercise) => acc + getExerciseVolume(exercise),
-    0
-  );
+    exerciseTitle += exercise.title;
+    if (exerciseVolume > 0 && format == "full") {
+      exerciseTitle += ` ${inlineCode(
+        `${new Intl.NumberFormat("en-US").format(exerciseVolume)} kg`
+      )}`;
+    }
 
-  const workoutDuration = dayjs.duration(
-    workout.end_time - workout.start_time,
-    "seconds"
-  );
+    switch (format) {
+      case "full":
+      default:
+        exerciseTitle = `${bold(exerciseTitle)}`;
 
-  const embed = new EmbedBuilder()
-    .setTitle(workout.name)
-    .setURL(`https://hevy.com/workout/${workout.short_id}`)
-    .setAuthor({
-      name: workout.username,
-      iconURL: workout.profile_image,
-      url: `https://hevy.com/user/${workout.username}`,
-    })
-    .setDescription(
-      workout.description
-        ? workout.description.trim().length != 0
-          ? workout.description
-          : null
-        : null
-    )
-    .addFields({
-      name: "Duration",
-      value: `${workoutDuration.format("H[h] mm[m]")}`,
-      inline: true,
-    });
+        if (exercise.notes) {
+          exerciseTitle += `\n${quote(subtext(exercise.notes))}`;
+        }
 
-  if (volume > 0) {
-    embed.addFields({
-      name: "Volume",
-      value: `${new Intl.NumberFormat("en-US").format(volume)} Kg`,
-      inline: true,
-    });
+        break;
+      case "small":
+        exerciseTitle = `${bold(`${exercise.sets.length}x`)} ${exerciseTitle}`;
+
+        break;
+    }
+
+    if (supersetIndicator) {
+      exerciseTitle = supersetIndicator + " " + exerciseTitle;
+    }
+
+    // if (volume > 0) {
+    //   exerciseSection = exerciseSection
+    //     .addTextDisplayComponents(
+    //       new TextDisplayBuilder().setContent(exerciseTitle)
+    //     )
+    //     .setButtonAccessory(
+    //       new ButtonKit()
+    //         .setDisabled(true)
+    //         .setLabel(`${new Intl.NumberFormat("en-US").format(volume)} kg`)
+    //         .setStyle(ButtonStyle.Secondary)
+    //         .setCustomId(`${exercise.id}-${exercise.index}`)
+    //     );
+    // } else {
+    container = container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(exerciseTitle)
+    );
+    // }
+
+    if (format == "full") {
+      const showSetNumber = exercise.sets.length > 1;
+      let setsText = "";
+      for (const [j, set] of exercise.sets.entries()) {
+        setsText += subtext(setToTextDisplay(set, j + 1, showSetNumber));
+        setsText += `\n`;
+      }
+      container = container.addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(setsText)
+      );
+    }
+
+    if (i < exercises.length - 1 && format == "full") {
+      container = container.addSeparatorComponents(
+        new SeparatorBuilder()
+          .setSpacing(SeparatorSpacingSize.Small)
+          .setDivider(false)
+      );
+    }
   }
-  if (setCount > 0) {
-    embed.addFields({
-      name: "Sets",
-      value: setCount + "",
-      inline: true,
-    });
-  }
 
-  if (prCount > 0) {
-    embed.addFields({
-      name: "Records",
-      value: prCount + " 🏆",
-      inline: true,
-    });
-  }
-
-  embed
-    .setThumbnail(workout.image_urls.length ? workout.image_urls[0] : null)
-    .addFields(workout.exercises.map((e) => exerciseToEmbedField(e)))
-    .setTimestamp(workout.start_time * 1000)
-    .setFooter({
-      text: `${integerToPositionString(workout.nth_workout)} workout`,
-    });
-
-  return embed;
+  return container;
 };
 
 const exerciseToEmbedField = (exercise: HevyExercise) => {
@@ -430,4 +407,81 @@ const integerToPositionString = (number: number) => {
   return (
     number + (suffixes[(value - 20) % 10] || suffixes[value] || suffixes[0])
   );
+};
+
+export const embedWorkout = (workout: HevyWorkout) => {
+  const setCount = workout.exercises.reduce(
+    (acc, exercise) => acc + exercise.sets.length,
+    0
+  );
+
+  const prCount = workout.exercises.reduce(
+    (acc, ex) =>
+      acc + ex.sets.reduce((a, s) => a + s.personalRecords.length, 0),
+    0
+  );
+
+  const volume = workout.exercises.reduce(
+    (acc, exercise) => acc + getExerciseVolume(exercise),
+    0
+  );
+
+  const workoutDuration = dayjs.duration(
+    workout.end_time - workout.start_time,
+    "seconds"
+  );
+
+  const embed = new EmbedBuilder()
+    .setTitle(workout.name)
+    .setURL(`https://hevy.com/workout/${workout.short_id}`)
+    .setAuthor({
+      name: workout.username,
+      iconURL: workout.profile_image,
+      url: `https://hevy.com/user/${workout.username}`,
+    })
+    .setDescription(
+      workout.description
+        ? workout.description.trim().length != 0
+          ? workout.description
+          : null
+        : null
+    )
+    .addFields({
+      name: "Duration",
+      value: `${workoutDuration.format("H[h] mm[m]")}`,
+      inline: true,
+    });
+
+  if (volume > 0) {
+    embed.addFields({
+      name: "Volume",
+      value: `${new Intl.NumberFormat("en-US").format(volume)} Kg`,
+      inline: true,
+    });
+  }
+  if (setCount > 0) {
+    embed.addFields({
+      name: "Sets",
+      value: setCount + "",
+      inline: true,
+    });
+  }
+
+  if (prCount > 0) {
+    embed.addFields({
+      name: "Records",
+      value: prCount + " 🏆",
+      inline: true,
+    });
+  }
+
+  embed
+    .setThumbnail(workout.image_urls.length ? workout.image_urls[0] : null)
+    .addFields(workout.exercises.map((e) => exerciseToEmbedField(e)))
+    .setTimestamp(workout.start_time * 1000)
+    .setFooter({
+      text: `${integerToPositionString(workout.nth_workout)} workout`,
+    });
+
+  return embed;
 };
