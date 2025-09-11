@@ -237,7 +237,7 @@ export const chatInput: ChatInputCommand = async ({
 export const metadata: CommandMetadata = {};
 
 export const command = new SlashCommandBuilder()
-  .setName("account")
+  .setName("hevy")
   .setDescription("Set-up your Hevy account.")
   .setContexts([
     InteractionContextType.Guild,
