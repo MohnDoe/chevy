@@ -10,13 +10,20 @@ import {
   InteractionReplyOptions,
   MessageFlags,
   PermissionFlagsBits,
+  SectionBuilder,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuInteraction,
   StringSelectMenuOptionBuilder,
+  subtext,
+  TextDisplayBuilder,
 } from "discord.js";
 
-import { getUserLatestWorkout, getUserWorkouts } from "../../../hevy/botApi";
+import {
+  getUserLatestWorkout,
+  getUserWorkouts,
+  getWorkout,
+} from "../../../hevy/botApi";
 import {
   ActionRow,
   AutocompleteCommand,
@@ -55,11 +62,11 @@ export const command = new SlashCommandBuilder()
   )
   .addSubcommand((sc) =>
     sc
-      .setName("list")
+      .setName("recent")
       .setDescription("Select one from a list of recent workouts.")
   );
 
-let workoutToShare: HevyWorkout | null;
+let _workoutToShare: HevyWorkout | null;
 
 function workoutEphemeralOptions(
   workout: HevyWorkout
@@ -108,39 +115,69 @@ export async function chatInput({
 
   switch (interaction.options.getSubcommand()) {
     case "latest":
-      workoutToShare = await getUserLatestWorkout(user!.hevyUsername!);
+      _workoutToShare = await getUserLatestWorkout(user!.hevyUsername!);
 
-      await followUpWithWorkoutEphemeral(interaction, workoutToShare);
+      await followUpWithWorkoutEphemeral(interaction, _workoutToShare);
       break;
 
-    case "list":
-      const workouts = await getUserWorkouts(user!.hevyUsername!, 1, 5);
+    case "recent":
+      const currentPage = 1;
 
-      const selectRow = (
-        <ActionRow>
-          <StringSelectMenu
-            placeholder="Select a workout"
-            onSelect={(i, c) => handleSelectWorkout(i, c, workouts)}
-            minValues={1}
-            maxValues={1}
-            customId="workoutSelect"
-          >
-            {workouts.map((w) => (
-              <StringSelectMenuOption
-                label={w.name}
-                value={w.short_id}
-                description={`${dayjs().to(w.created_at)} - ${dayjs(
-                  w.created_at
-                ).format("llll")}`}
-              />
-            ))}
-          </StringSelectMenu>
-        </ActionRow>
+      const paginationActionRow = new ActionRowBuilder().addComponents(
+        new ButtonKit()
+          .setLabel("<")
+          .setStyle(ButtonStyle.Primary)
+          .setCustomId("recent-workouts--previous")
+          .onClick(() => {}),
+        new ButtonBuilder()
+          .setLabel(`Page ${currentPage}/30`)
+          .setDisabled(true)
+          .setCustomId("pagination-label-recent-workouts")
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonKit()
+          .setLabel(">")
+          .setStyle(ButtonStyle.Primary)
+          .setCustomId("recent-workouts--next")
+          .onClick(() => {})
       );
 
-      await interaction.followUp({
+      const workouts = await getUserWorkouts(
+        user!.hevyUsername!,
+        currentPage,
+        5
+      );
+      const paginatedWorkoutsContainer = new ContainerBuilder()
+        .addTextDisplayComponents(
+          new TextDisplayBuilder().setContent("### Your recent workouts")
+        )
+        .addSectionComponents(
+          workouts.map((workout) =>
+            new SectionBuilder()
+              .addTextDisplayComponents(
+                new TextDisplayBuilder().setContent(workout.name),
+                new TextDisplayBuilder().setContent(
+                  subtext(
+                    `${dayjs().to(workout.created_at)} - ${dayjs(
+                      workout.created_at
+                    ).format("llll")}`
+                  )
+                )
+              )
+              .setButtonAccessory(
+                new ButtonKit()
+                  .setStyle(ButtonStyle.Secondary)
+                  .setLabel("View")
+                  .setCustomId(`preview-workout--${workout.short_id}`)
+                  .onClick((i, c) =>
+                    handleSelectWorkout(i, c, workout.short_id)
+                  )
+              )
+          )
+        );
+
+      await interaction.editReply({
         flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-        components: [selectRow],
+        components: [paginatedWorkoutsContainer, paginationActionRow.toJSON()],
       });
 
       break;
@@ -155,15 +192,14 @@ export async function chatInput({
 }
 
 const handleSelectWorkout = async (
-  interaction: StringSelectMenuInteraction,
-  context: StringSelectMenuKit,
-  workouts: HevyWorkout[]
+  interaction: ButtonInteraction,
+  context: ButtonKit,
+  workoutShortId: string
 ) => {
-  const selection = interaction.values[0];
-  workoutToShare = workouts.find((w) => w.short_id === selection)!;
-
-  await interaction.update(
-    workoutEphemeralOptions(workoutToShare) as InteractionEditReplyOptions
+  if (!interaction.deferred) await interaction.deferUpdate();
+  _workoutToShare = await getWorkout(workoutShortId);
+  await interaction.editReply(
+    workoutEphemeralOptions(_workoutToShare) as InteractionEditReplyOptions
   );
 
   // Clean up the select menu context
@@ -179,7 +215,7 @@ const handleMessageClick: OnButtonKitClick = async (
       if (!interaction.deferred) await interaction.deferReply();
       await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
-        components: [toComponent(workoutToShare!, "small")],
+        components: [toComponent(_workoutToShare!, "small")],
       });
       break;
 

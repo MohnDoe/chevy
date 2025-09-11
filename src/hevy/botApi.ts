@@ -66,6 +66,20 @@ export const getUserProfile = async (username: string) => {
   }
 };
 
+export const getWorkout = async (
+  workoutShortId: string
+): Promise<HevyWorkout> => {
+  try {
+    const hevyResponse = await HevyBotAPIClient.get(
+      `/workout/${workoutShortId}`
+    );
+    return hevyResponse.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 export const getUserWorkouts = async (
   username: string,
   page = 1,
