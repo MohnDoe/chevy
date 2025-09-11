@@ -79,38 +79,35 @@ function sharabledWorkoutEphemeralOptions(
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
       workoutComponent,
-      new ContainerBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent("Select workout format")
-        )
-        .addActionRowComponents(
-          new ActionRowBuilder<ButtonBuilder>().setComponents([
-            new ButtonKit()
-              .setLabel("Simple")
-              .setDisabled(format == "simple")
-              .setStyle(ButtonStyle.Secondary)
-              .setCustomId(`changeWorkoutFormat--simple--${customIdSuffix}`)
-              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
-            new ButtonKit()
-              .setLabel(`Standard`)
-              .setCustomId(`changeWorkoutFormat--standard--${customIdSuffix}`)
-              .setDisabled(format == "standard")
-              .setStyle(ButtonStyle.Secondary)
-              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
-            new ButtonKit()
-              .setLabel("Detailed")
-              .setDisabled(format == "detailed")
-              .setStyle(ButtonStyle.Secondary)
-              .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
-              .onClick(handleMessageClick, { once: true, onEnd: console.log }),
-          ])
-        ),
+      new ContainerBuilder().addActionRowComponents(
+        new ActionRowBuilder<ButtonBuilder>().setComponents([
+          new ButtonKit()
+            .setLabel("Simple")
+            .setDisabled(format == "simple")
+            .setStyle(ButtonStyle.Secondary)
+            .setCustomId(`changeWorkoutFormat--simple--${customIdSuffix}`)
+            .onClick(handleMessageClick, { once: true, time: 60_000 }),
+          new ButtonKit()
+            .setLabel(`Standard`)
+            .setCustomId(`changeWorkoutFormat--standard--${customIdSuffix}`)
+            .setDisabled(format == "standard")
+            .setStyle(ButtonStyle.Secondary)
+            .onClick(handleMessageClick, { once: true, time: 60_000 }),
+          new ButtonKit()
+            .setLabel("Detailed")
+            .setDisabled(format == "detailed")
+            .setStyle(ButtonStyle.Secondary)
+            .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
+            .onClick(handleMessageClick, { once: true, time: 60_000 }),
+        ])
+      ),
+
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
           .setLabel("Send in chat 💬")
-          .setCustomId(`sendInChat--${customIdSuffix}`)
+          .setCustomId(`sendInChat--${format}--${customIdSuffix}`)
           .setStyle(ButtonStyle.Primary)
-          .onClick(handleMessageClick, { once: true }),
+          .onClick(handleMessageClick, { once: true, time: 60_000 }),
       ]),
     ],
   };
@@ -266,15 +263,22 @@ const handleMessageClick: OnButtonKitClick = async (
 ) => {
   console.log("handleMessageClick", interaction.customId);
   context.dispose();
+  const desiredFormat = interaction.customId.split("--")[1];
 
   if (interaction.customId.startsWith("sendInChat")) {
     if (!interaction.deferred) await interaction.deferReply();
     await interaction.followUp({
       flags: MessageFlags.IsComponentsV2,
-      components: [toComponent(_workoutToShare!, "simple")],
+      components: [
+        toComponent(
+          _workoutToShare!,
+          (["simple", "standard", "detailed"].includes(desiredFormat)
+            ? desiredFormat
+            : "simple") as WorkoutComponentFormat
+        ),
+      ],
     });
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
-    const desiredFormat = interaction.customId.split("--")[1];
     if (["simple", "standard", "detailed"].includes(desiredFormat)) {
       await changeWorkoutFormat(
         interaction,
