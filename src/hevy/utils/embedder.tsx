@@ -1,16 +1,22 @@
 import {
+  blockQuote,
   bold,
   ButtonStyle,
   ComponentBuilder,
   ContainerBuilder,
   ContainerComponent,
   EmbedBuilder,
+  hyperlink,
+  inlineCode,
+  quote,
   SectionBuilder,
   SeparatorBuilder,
   SeparatorSpacingSize,
   subtext,
   TextDisplayBuilder,
   ThumbnailBuilder,
+  time,
+  TimestampStyles,
 } from "discord.js";
 import { HevyExercise } from "../../types/hevy/exercise.type";
 import { HevyWorkout } from "../../types/hevy/workout.type";
@@ -18,8 +24,10 @@ import { HevySet } from "../../types/hevy/set.type";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration.js";
-import { ButtonKit, Container, TextDisplay } from "commandkit";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
+
 dayjs.extend(duration);
+dayjs.extend(localizedFormat);
 
 const SUPERSETS_PREFIXES = [
   "🟪",
@@ -49,7 +57,10 @@ const getExerciseVolume = (ex: HevyExercise) => {
   );
 };
 
-export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
+export const toComponent = (
+  workout: HevyWorkout,
+  size: "small"
+): ContainerBuilder => {
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
     0
@@ -73,7 +84,8 @@ export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
   let informationsText = `
 **Duration**: ${workoutDuration.format("H[h] mm[m]")}
 **Volume**: ${new Intl.NumberFormat("en-US").format(volume)} Kg
-**Sets**: ${setCount}`;
+**Sets**: ${setCount}
+`;
 
   if (prCount > 0) {
     informationsText += `**PRs**: ${prCount}`;
@@ -94,14 +106,15 @@ export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
           new ThumbnailBuilder().setURL(workout.profile_image)
         )
     )
-    .addSeparatorComponents(new SeparatorBuilder());
+    .addSeparatorComponents(
+      new SeparatorBuilder()
+        .setSpacing(SeparatorSpacingSize.Small)
+        .setDivider(false)
+    );
 
-  for (const exercise of workout.exercises) {
+  for (const [i, exercise] of workout.exercises.entries()) {
     const exerciseVolume = getExerciseVolume(exercise);
-    const showSetNumber = exercise.sets.length > 1;
     let exerciseTitle = "";
-
-    let exerciseSection = new SectionBuilder();
 
     if (exercise.superset_id) {
       exerciseTitle += SUPERSETS_PREFIXES[exercise.superset_id]
@@ -109,14 +122,16 @@ export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
         : "";
     }
     exerciseTitle += exercise.title;
-    if (volume > 0) {
-      exerciseTitle += ` [${new Intl.NumberFormat("en-US").format(volume)} kg]`;
+    if (exerciseVolume > 0) {
+      exerciseTitle += ` ${inlineCode(
+        `${new Intl.NumberFormat("en-US").format(exerciseVolume)} kg`
+      )}`;
     }
 
-    exerciseTitle = `### ${bold(exerciseTitle)}`;
+    exerciseTitle = `${bold(exerciseTitle)}`;
 
     if (exercise.notes) {
-      exerciseTitle += `\n${subtext(exercise.notes)}`;
+      exerciseTitle += `\n${quote(subtext(exercise.notes))}`;
     }
 
     // if (volume > 0) {
@@ -132,25 +147,49 @@ export const toComponents = (workout: HevyWorkout): ContainerBuilder => {
     //         .setCustomId(`${exercise.id}-${exercise.index}`)
     //     );
     // } else {
-    exerciseSection = exerciseSection.addTextDisplayComponents(
+    container = container.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(exerciseTitle)
     );
     // }
 
-    let i = 1;
+    const showSetNumber = exercise.sets.length > 1;
     let setsText = "";
-    for (const set of exercise.sets) {
-      setsText += setToTextDisplay(set, i);
+    for (const [j, set] of exercise.sets.entries()) {
+      setsText += subtext(setToTextDisplay(set, j + 1, showSetNumber));
       setsText += `\n`;
-
-      i++;
     }
-    exerciseSection = exerciseSection.addTextDisplayComponents(
+    container = container.addTextDisplayComponents(
       new TextDisplayBuilder().setContent(setsText)
     );
 
-    container = container.addSectionComponents(exerciseSection);
+    if (i < workout.exercises.length - 1) {
+      container = container.addSeparatorComponents(
+        new SeparatorBuilder()
+          .setSpacing(SeparatorSpacingSize.Small)
+          .setDivider(false)
+      );
+    }
   }
+
+  container = container.addSeparatorComponents(
+    new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
+  );
+  container = container.addTextDisplayComponents(
+    new TextDisplayBuilder().setContent(
+      subtext(
+        `${hyperlink(
+          `**@${workout.username}**`,
+          `https://hevy.com/user/${workout.username}`
+        )} • ${bold(
+          integerToPositionString(workout.nth_workout)
+        )} workout | ${time(
+          workout.start_time,
+          TimestampStyles.ShortDateTime
+        )} • ${time(workout.start_time, TimestampStyles.RelativeTime)}
+        `
+      )
+    )
+  );
 
   return container;
 };

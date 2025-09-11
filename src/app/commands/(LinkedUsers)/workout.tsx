@@ -34,7 +34,7 @@ import { HevyWorkout } from "../../../types/hevy/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
-import { embedWorkout, toComponents } from "../../../hevy/utils/embedder";
+import { embedWorkout, toComponent } from "../../../hevy/utils/embedder";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -64,13 +64,12 @@ let workoutToShare: HevyWorkout | null;
 function workoutEphemeralOptions(
   workout: HevyWorkout
 ): InteractionReplyOptions | InteractionEditReplyOptions {
-  const workoutComponents = toComponents(workout);
-  const embed = embedWorkout(workout);
+  const workoutComponent = toComponent(workout, "small");
 
   return {
-    flags: MessageFlags.Ephemeral,
-    embeds: [embed],
+    flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
     components: [
+      workoutComponent,
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
           .setLabel("Send in chat")
@@ -140,8 +139,7 @@ export async function chatInput({
       );
 
       await interaction.followUp({
-        flags: MessageFlags.Ephemeral,
-        content: "Select a workout",
+        flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
         components: [selectRow],
       });
 
@@ -180,7 +178,8 @@ const handleMessageClick: OnButtonKitClick = async (
     case "sendInChat":
       if (!interaction.deferred) await interaction.deferReply();
       await interaction.followUp({
-        embeds: [embedWorkout(workoutToShare!)],
+        flags: MessageFlags.IsComponentsV2,
+        components: [toComponent(workoutToShare!, "small")],
       });
       break;
 
