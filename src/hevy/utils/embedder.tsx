@@ -322,7 +322,7 @@ const setToTextDisplay = (
 
   if (set.reps) {
     if (set.weight_kg) {
-      string += `${set.weight_kg} kg x ${set.reps}`;
+      string += `${set.weight_kg.toFixed(0)} kg x ${set.reps}`; //TODO
     } else {
       string += `${set.reps} reps`;
     }
@@ -352,7 +352,7 @@ const setToTextDisplay = (
           case "best_distance":
             return `Best Distance (${pr.value / 1000} km)`;
           case "best_weight":
-            return `Best Weight (${pr.value} kg)`;
+            return `Best Weight (${pr.value.toFixed(0)} kg)`; //TODO
           default:
             return "Personal Best";
         }
