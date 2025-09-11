@@ -57,7 +57,7 @@ const getExerciseVolume = (ex: HevyExercise) => {
   );
 };
 
-type WorkoutComponentFormat = "small" | "medium" | "full";
+export type WorkoutComponentFormat = "simple" | "standard" | "detailed";
 
 export const toComponent = (
   workout: HevyWorkout,
@@ -84,7 +84,7 @@ export const toComponent = (
   );
   let informationsText;
   switch (format) {
-    case "full":
+    case "detailed":
     default:
       informationsText = `
 **Duration**: ${workoutDuration.format("H[h] mm[m]")}
@@ -92,32 +92,53 @@ export const toComponent = (
 **Sets**: ${setCount}
 `;
       if (prCount > 0) {
-        informationsText += `**PRs**: ${prCount}`;
+        informationsText += `**Records**: ${prCount}`;
       }
       break;
-    case "small":
-      informationsText = `${workoutDuration.format(
+    case "standard":
+      informationsText = `### ${workoutDuration.format(
         "H[h] mm[m]"
       )} • ${new Intl.NumberFormat("en-US").format(
         volume
       )} Kg • ${setCount} sets`;
       if (prCount > 0) {
-        informationsText += `• ${prCount} PRs`;
+        informationsText += ` • ${prCount} PRs 🥇`;
       }
 
-      informationsText = `${bold(informationsText)}`;
+      informationsText = `${informationsText}`;
+      break;
+
+    case "simple":
+      informationsText = `${bold(workoutDuration.format("H[h] mm[m]"))}
+${subtext("Duration")}\n
+${bold(`${new Intl.NumberFormat("en-US").format(volume)} Kg`)}
+${subtext("Volume")}\n
+${bold(workout.exercises.length.toString())}
+${subtext("Exercises")}`;
+      if (prCount > 0) {
+        informationsText += `\n
+${bold(`${prCount} 🥇`)}
+${subtext("Records")}`;
+      }
       break;
   }
 
+  // WORKOUT TITLE
   let container = new ContainerBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       `## [${workout.name}](https://hevy.com/workout/${workout.short_id})`
     )
   );
 
+  if (format == "simple") {
+    container = container.addSeparatorComponents(
+      new SeparatorBuilder().setDivider(false)
+    );
+  }
+
   switch (format) {
-    case "full":
-    default:
+    case "detailed":
+    case "simple":
       container = container.addSectionComponents(
         new SectionBuilder()
           .addTextDisplayComponents(
@@ -128,7 +149,8 @@ export const toComponent = (
           )
       );
       break;
-    case "small":
+    case "standard":
+    default:
       container = container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(informationsText)
       );
@@ -138,10 +160,12 @@ export const toComponent = (
   container = container.addSeparatorComponents(
     new SeparatorBuilder()
       .setSpacing(SeparatorSpacingSize.Small)
-      .setDivider(format == "small")
+      .setDivider(format == "standard")
   );
 
-  container = addExercises(container, workout.exercises, format);
+  if (format != "simple") {
+    container = addExercises(container, workout.exercises, format);
+  }
 
   container = container.addSeparatorComponents(
     new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
@@ -180,14 +204,15 @@ const addExercises = (
       : "";
 
     exerciseTitle += exercise.title;
-    if (exerciseVolume > 0 && format == "full") {
+    if (exerciseVolume > 0 && format == "detailed") {
       exerciseTitle += ` ${inlineCode(
         `${new Intl.NumberFormat("en-US").format(exerciseVolume)} kg`
       )}`;
     }
 
     switch (format) {
-      case "full":
+      case "detailed":
+      case "simple":
       default:
         exerciseTitle = `${bold(exerciseTitle)}`;
 
@@ -196,7 +221,7 @@ const addExercises = (
         }
 
         break;
-      case "small":
+      case "standard":
         exerciseTitle = `${bold(`${exercise.sets.length}x`)} ${exerciseTitle}`;
 
         break;
@@ -224,7 +249,7 @@ const addExercises = (
     );
     // }
 
-    if (format == "full") {
+    if (format == "detailed") {
       const showSetNumber = exercise.sets.length > 1;
       let setsText = "";
       for (const [j, set] of exercise.sets.entries()) {
@@ -236,7 +261,7 @@ const addExercises = (
       );
     }
 
-    if (i < exercises.length - 1 && format == "full") {
+    if (i < exercises.length - 1 && format == "detailed") {
       container = container.addSeparatorComponents(
         new SeparatorBuilder()
           .setSpacing(SeparatorSpacingSize.Small)

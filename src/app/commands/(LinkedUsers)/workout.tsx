@@ -25,23 +25,20 @@ import {
   getWorkout,
 } from "../../../hevy/botApi";
 import {
-  ActionRow,
-  AutocompleteCommand,
   ButtonKit,
   ChatInputCommandContext,
   CommandMetadata,
   OnButtonKitClick,
-  OnStringSelectMenuKitSubmit,
-  StringSelectMenu,
-  StringSelectMenuKit,
-  StringSelectMenuOption,
 } from "commandkit";
 import { getUserByDiscordId } from "../../../controllers/user";
 import { HevyWorkout } from "../../../types/hevy/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
-import { toComponent } from "../../../hevy/utils/embedder";
+import {
+  toComponent,
+  WorkoutComponentFormat,
+} from "../../../hevy/utils/embedder";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -69,9 +66,10 @@ export const command = new SlashCommandBuilder()
 let _workoutToShare: HevyWorkout | null;
 
 function workoutEphemeralOptions(
-  workout: HevyWorkout
+  workout: HevyWorkout,
+  format: WorkoutComponentFormat
 ): InteractionReplyOptions | InteractionEditReplyOptions {
-  const workoutComponent = toComponent(workout, "small");
+  const workoutComponent = toComponent(workout, format);
 
   return {
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
@@ -79,7 +77,25 @@ function workoutEphemeralOptions(
       workoutComponent,
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
-          .setLabel("Send in chat")
+          .setLabel("Simple")
+          .setDisabled(format == "simple")
+          .setStyle(ButtonStyle.Secondary)
+          .setCustomId("changeWorkoutFormat--simple")
+          .onClick((i, c) => changeWorkoutFormat(i, workout, "simple")),
+        new ButtonKit()
+          .setLabel(`Standard`)
+          .setCustomId("changeWorkoutFormat--standard")
+          .onClick((i, c) => changeWorkoutFormat(i, workout, "standard"))
+          .setDisabled(format == "standard")
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonKit()
+          .setLabel("Detailed")
+          .setDisabled(format == "detailed")
+          .setStyle(ButtonStyle.Secondary)
+          .setCustomId("changeWorkoutFormat--detailed")
+          .onClick((i, c) => changeWorkoutFormat(i, workout, "detailed")),
+        new ButtonKit()
+          .setLabel("Send in chat 💬")
           .setCustomId("sendInChat")
           .setStyle(ButtonStyle.Primary)
           .onClick(handleMessageClick),
@@ -88,13 +104,24 @@ function workoutEphemeralOptions(
   };
 }
 
+async function changeWorkoutFormat(
+  interaction: ButtonInteraction,
+  workout: HevyWorkout,
+  format: WorkoutComponentFormat
+) {
+  if (!interaction.deferred) await interaction.deferUpdate();
+  await interaction.editReply(
+    workoutEphemeralOptions(workout, format) as InteractionEditReplyOptions
+  );
+}
+
 async function followUpWithWorkoutEphemeral(
   interaction: ChatInputCommandInteraction | StringSelectMenuInteraction,
   workout: HevyWorkout | null
 ) {
   if (workout) {
     await interaction.followUp(
-      workoutEphemeralOptions(workout) as InteractionReplyOptions
+      workoutEphemeralOptions(workout, "simple") as InteractionReplyOptions
     );
   } else {
     await interaction.reply({
@@ -202,7 +229,10 @@ const handleSelectWorkout = async (
   if (!interaction.deferred) await interaction.deferUpdate();
   _workoutToShare = await getWorkout(workoutShortId);
   await interaction.editReply(
-    workoutEphemeralOptions(_workoutToShare) as InteractionEditReplyOptions
+    workoutEphemeralOptions(
+      _workoutToShare,
+      "simple"
+    ) as InteractionEditReplyOptions
   );
 
   // Clean up the select menu context
@@ -218,7 +248,7 @@ const handleMessageClick: OnButtonKitClick = async (
       if (!interaction.deferred) await interaction.deferReply();
       await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
-        components: [toComponent(_workoutToShare!, "small")],
+        components: [toComponent(_workoutToShare!, "simple")],
       });
       break;
 
