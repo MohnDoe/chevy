@@ -121,7 +121,7 @@ async function followUpWithWorkoutEphemeral(
 ) {
   if (workout) {
     await interaction.followUp(
-      workoutEphemeralOptions(workout, "simple") as InteractionReplyOptions
+      workoutEphemeralOptions(workout, "standard") as InteractionReplyOptions
     );
   } else {
     await interaction.reply({
@@ -231,7 +231,7 @@ const handleSelectWorkout = async (
   await interaction.editReply(
     workoutEphemeralOptions(
       _workoutToShare,
-      "simple"
+      "standard"
     ) as InteractionEditReplyOptions
   );
 
