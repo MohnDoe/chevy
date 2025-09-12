@@ -18,9 +18,9 @@ import {
   time,
   TimestampStyles,
 } from "discord.js";
-import { HevyExercise } from "../../types/hevy/exercise.type";
-import { HevyWorkout } from "../../types/hevy/workout.type";
-import { HevySet } from "../../types/hevy/set.type";
+import { HevyExercise } from "../../../types/hevy/botApi/exercise.type";
+import { HevyWorkout } from "../../../types/hevy/botApi/workout.type";
+import { HevySet } from "../../../types/hevy/botApi/set.type";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration.js";

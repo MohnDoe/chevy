@@ -23,7 +23,7 @@ import {
   getUserLatestWorkout,
   getUserWorkouts,
   getWorkout,
-} from "../../../hevy/botApi";
+} from "../../../controllers/hevy/botApi";
 import {
   ButtonKit,
   ChatInputCommandContext,
@@ -32,14 +32,14 @@ import {
   useEnvironment,
 } from "commandkit";
 import { getUserByDiscordId } from "../../../controllers/user";
-import { HevyWorkout } from "../../../types/hevy/workout.type";
+import { HevyWorkout } from "../../../types/hevy/botApi/workout.type";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
 import {
   toComponent,
   WorkoutComponentFormat,
-} from "../../../hevy/utils/embedder";
+} from "../../../controllers/hevy/utils/embedder";
 import { User } from "@prisma/client";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);

@@ -1,4 +1,4 @@
-import { HevySet } from "./set.type";
+import { HevySet } from "../set.type";
 
 // Updated HevyExercise interface to match the provided workout exercise structure
 export interface HevyExercise {

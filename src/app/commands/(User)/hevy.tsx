@@ -28,7 +28,7 @@ import {
   checkIfUserUserIsFollowedByBot,
   followUserOnHevy,
   getUserProfile,
-} from "../../../hevy/botApi";
+} from "../../../controllers/hevy/botApi";
 
 let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
