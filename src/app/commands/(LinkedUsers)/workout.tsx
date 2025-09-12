@@ -40,6 +40,7 @@ import {
   toComponent,
   WorkoutComponentFormat,
 } from "../../../controllers/hevy/utils/workoutParser";
+import { User } from "@prisma/client";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -152,14 +153,13 @@ async function followUpWithWorkoutEphemeral(
 
 export async function chatInput({
   interaction,
-  client,
+  store,
 }: ChatInputCommandContext) {
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
-  // const env = useEnvironment();
-  // const user = env.context?.store.get("user") as User;
-  const user = await getUserByDiscordId(interaction.user.id);
+  const user = store.get("user") as User;
+  // const user = await getUserByDiscordId(interaction.user.id);
 
   switch (interaction.options.getSubcommand()) {
     case "latest":
