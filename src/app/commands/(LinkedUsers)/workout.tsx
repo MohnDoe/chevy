@@ -29,6 +29,7 @@ import {
   ChatInputCommandContext,
   CommandMetadata,
   OnButtonKitClick,
+  useEnvironment,
 } from "commandkit";
 import { getUserByDiscordId } from "../../../controllers/user";
 import { HevyWorkout } from "../../../types/hevy/workout.type";
@@ -39,6 +40,7 @@ import {
   toComponent,
   WorkoutComponentFormat,
 } from "../../../hevy/utils/embedder";
+import { User } from "@prisma/client";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -156,6 +158,8 @@ export async function chatInput({
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
+  // const env = useEnvironment();
+  // const user = env.context?.store.get("user") as User;
   const user = await getUserByDiscordId(interaction.user.id);
 
   switch (interaction.options.getSubcommand()) {

@@ -4,13 +4,15 @@ import { isDiscordUserAlreadyLinked } from "../../../controllers/user";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const linked = await isDiscordUserAlreadyLinked(userDiscordId);
+  const user = await isDiscordUserAlreadyLinked(userDiscordId);
 
-  if (!linked) {
+  if (!user) {
     (ctx.interaction as ChatInputCommandInteraction).reply({
       content: "You are not linked to Hevy yet.",
       flags: MessageFlags.Ephemeral,
     });
     stopMiddlewares();
+  } else {
+    ctx.store.set("user", user);
   }
 }
