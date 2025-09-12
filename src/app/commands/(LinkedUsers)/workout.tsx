@@ -39,8 +39,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat.js";
 import {
   toComponent,
   WorkoutComponentFormat,
-} from "../../../controllers/hevy/utils/embedder";
-import { User } from "@prisma/client";
+} from "../../../controllers/hevy/utils/workoutParser";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 

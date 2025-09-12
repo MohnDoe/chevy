@@ -16,6 +16,7 @@ import {
 } from "discord.js";
 
 import {
+  getUserByDiscordId,
   setIsFollowedByHevyBot,
   setIsFollowingHevyBot,
   setIsHevyProfilePrivate,
@@ -29,6 +30,7 @@ import {
   followUserOnHevy,
   getUserProfile,
 } from "../../../controllers/hevy/botApi";
+import successfulyLinkedToHevy from "../../components/successfulyLinkedToHevy";
 
 let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
@@ -172,6 +174,10 @@ const generateLinkingInstructions = async () => {
     }
   }
 
+  if (userFollowsHevyBot && userIsFollowedByHevyBot) {
+    components = [...components, successfulyLinkedToHevy(targetHevyUsername!)];
+  }
+
   return components;
 };
 
@@ -226,7 +232,18 @@ export const chatInput: ChatInputCommand = async ({
       break;
 
     case "unlink":
-      throw new Error("Not yet implemented!");
+      const user = await getUserByDiscordId(discordUserId);
+
+      if (user) {
+        await setUserHevyUsername(user.discordId, "");
+        await setIsFollowedByHevyBot(user.discordId, false);
+        await setIsFollowingHevyBot(user.discordId, false);
+      }
+      await interaction.followUp({
+        flags: MessageFlags.Ephemeral,
+        content: "Successfuly unlinked.",
+      });
+      break;
 
     default:
       await interaction.followUp("This action does not exist.");
