@@ -351,13 +351,13 @@ const setToTextDisplay = (
       .map((pr) => {
         switch (pr.type) {
           case "best_distance":
-            return `Distance (${pr.value / 1000} km)`;
+            return `Best Distance (${pr.value / 1000} km)`;
           case "best_weight":
-            return `Weight (${pr.value.toFixed(0)} kg)`; //TODO
+            return `Best Weight (${pr.value.toFixed(0)} kg)`; //TODO
           case "best_1rm":
-            return `1RM (${pr.value.toFixed(0)} kg)`; //TODO
+            return `Best 1RM (${pr.value.toFixed(0)} kg)`; //TODO
           case "best_volume":
-            return `Volume (${pr.value.toFixed(0)} kg)`; //TODO
+            return `Best Volume (${pr.value.toFixed(0)} kg)`; //TODO
           default:
             return "Unknown PR";
         }
