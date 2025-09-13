@@ -9,7 +9,6 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
 
-import { User } from "@repo/db";
 import { HevyWorkout } from "@/types/hevy/botApi/workout.type.ts";
 import {
   toComponent,
@@ -158,7 +157,7 @@ export async function chatInput({
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
-  const user = store.get("user") as User;
+  const user = store.get("user");
   // const user = await getUserByDiscordId(interaction.user.id);
 
   switch (interaction.options.getSubcommand()) {
