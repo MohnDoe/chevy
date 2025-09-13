@@ -1,0 +1,26 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "description": "Discord bot.",
+  "type": "module",
+  "author": "MohnDoe",
+  "license": "MIT",
+  "scripts": {
+    "commandkit": "npx commandkit",
+    "dev": "npx commandkit dev",
+    "build": "npx commandkit build",
+    "start": "npx commandkit start",
+    "node": "node"
+  },
+  "dependencies": {
+    "@commandkit/devtools": "^1.2.0-rc.6",
+    "axios": "^1.11.0",
+    "commandkit": "^1.2.0-rc.6",
+    "dayjs": "^1.11.18",
+    "dotenv": "^16.6.1",
+    "discord.js": "^14.22.1"
+  },
+  "devDependencies": {
+    "@repo/db": "*"
+  }
+}

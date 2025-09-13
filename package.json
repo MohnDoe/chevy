@@ -1,28 +1,38 @@
 {
-  "name": "chevy-discord-bot",
+  "name": "chevy",
   "version": "1.0.0",
-  "description": "Hevy companion Discord bot.",
-  "main": "dist/index.ts",
-  "type": "module",
-  "scripts": {
-    "dev": "npx commandkit dev",
-    "build": "npx prisma migrate deploy; npx prisma generate;npx commandkit build;",
-    "start": "npx commandkit start"
-  },
+  "description": "Hevy companion",
   "author": "MohnDoe",
   "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "prisma": {
+    "schema": "packages/db/prisma/schema.prisma",
+    "seed": "tsx packages/db/src/seed.ts"
+  },
+  "packageManager": "npm@8.5.0",
+  "scripts": {
+    "build": "turbo run build",
+    "db:migrate:deploy": "turbo run db:migrate:deploy",
+    "db:migrate:dev": "turbo run db:migrate:dev",
+    "db:push": "turbo run db:push",
+    "db:seed": "turbo run db:seed",
+    "dev": "turbo run dev",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "generate": "turbo run generate",
+    "lint": "turbo run lint"
+  },
   "dependencies": {
-    "@commandkit/devtools": "^1.2.0-rc.6",
-    "@prisma/client": "^6.15.0",
-    "axios": "^1.11.0",
-    "commandkit": "^1.2.0-rc.6",
-    "dayjs": "^1.11.18",
-    "discord.js": "^14.0.0",
-    "dotenv": "^16.6.1"
+    "@prisma/client": "latest"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "prisma": "^6.16.1",
     "ts-node": "^10.0.0",
+    "turbo": "^2.5.6",
     "typescript": "^5.0.0"
   }
 }
