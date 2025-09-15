@@ -1,5 +1,9 @@
 import { isDiscordUserAlreadyLinked } from "@/controllers/user";
-import { CommandData, UserContextMenuCommand } from "commandkit";
+import {
+  CommandData,
+  CommandMetadata,
+  UserContextMenuCommand,
+} from "commandkit";
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
@@ -11,15 +15,14 @@ import {
 } from "discord.js";
 
 export const command: CommandData = {
-  name: "show card",
-  description: "This is an avatar command.",
-  options: [
-    {
-      name: "user",
-      description: "The user to get the avatar for.",
-      type: ApplicationCommandOptionType.User,
-    },
-  ],
+  name: "show-user-hevy-profile",
+};
+
+export const metadata: CommandMetadata = {
+  nameAliases: {
+    user: "Show Hevy card",
+    message: "View user's Hevy card",
+  },
 };
 
 export const userContextMenu: UserContextMenuCommand = async ({
