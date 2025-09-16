@@ -3,3 +3,4 @@ node_modules
 .commandkit
 .turbo
 dist
+generated
