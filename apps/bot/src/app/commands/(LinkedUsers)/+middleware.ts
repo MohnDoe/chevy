@@ -1,5 +1,6 @@
 import { isDiscordUserAlreadyLinked } from "@/controllers/user.ts";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
+import { useAnalytics } from "commandkit/analytics";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
@@ -14,5 +15,15 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     stopMiddlewares();
   } else {
     ctx.store.set("user", user);
+    const analytics = useAnalytics();
+    analytics.identify({
+      distinctId: "discord_user_" + userDiscordId,
+      properties: {
+        hevyUsername: user.hevyUsername,
+        hevyProfilePrivate: user.hevyProfilePrivate,
+        isFollowingHevyBot: user.isFollowingHevyBot,
+        isFollowedByHevyBot: user.isFollowedByHevyBot,
+      },
+    });
   }
 }

@@ -13,12 +13,14 @@
     "node": "node"
   },
   "dependencies": {
+    "@commandkit/analytics": "^1.2.0-rc.9",
     "@commandkit/devtools": "^1.2.0-rc.6",
+    "@umami/node": "^0.4.0",
     "axios": "^1.11.0",
     "commandkit": "^1.2.0-rc.6",
     "dayjs": "^1.11.18",
-    "dotenv": "^16.6.1",
-    "discord.js": "^14.22.1"
+    "discord.js": "^14.22.1",
+    "dotenv": "^16.6.1"
   },
   "devDependencies": {
     "@repo/db": "*"

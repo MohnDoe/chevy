@@ -1,8 +1,6 @@
 import {
   ActionRow,
-  ButtonKit,
   ChatInputCommandContext,
-  Container,
   StringSelectMenu,
   StringSelectMenuOption,
   TextDisplay,
@@ -14,36 +12,22 @@ import localizedFormat from "dayjs/plugin/localizedFormat.js";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
+import { track } from "commandkit/analytics";
+
 import {
-  ButtonInteraction,
-  ButtonStyle,
   ChatInputCommandInteraction,
-  Colors,
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
-  StringSelectMenuInteraction,
 } from "discord.js";
-import {
-  ContainerBuilder,
-  SectionBuilder,
-  SelectMenuBuilder,
-  SelectMenuOptionBuilder,
-  subtext,
-  TextDisplayBuilder,
-} from "@discordjs/builders";
 
 import {
   getUserLatestWorkout,
   getUserWorkouts,
 } from "@/controllers/hevy/botApi.ts";
-import {
-  handleSelectWorkout,
-  handleWorkoutSelectMenuSelection,
-} from "@/controllers/discord/workout/handlers";
+import { handleWorkoutSelectMenuSelection } from "@/controllers/discord/workout/handlers";
 import { followUpWithWorkoutEphemeral } from "@/controllers/discord/workout/interactions";
-import { generateButtonCustomIdSuffix } from "@/controllers/discord/workout/parsers";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -74,7 +58,6 @@ export async function chatInput({
     flags: MessageFlags.Ephemeral,
   });
   const user = store.get("user");
-  // const user = await getUserByDiscordId(interaction.user.id);
 
   switch (interaction.options.getSubcommand()) {
     case "latest":
