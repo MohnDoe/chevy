@@ -58,17 +58,6 @@ export async function chatInput({
     flags: MessageFlags.Ephemeral,
   });
   const user = store.get("user");
-  // const user = await getUserByDiscordId(interaction.user.id);
-
-  track({
-    name: "workout",
-    data: {
-      subcommand: interaction.options.getSubcommand(),
-      responseTime: Date.now() - interaction.createdTimestamp,
-      timeOfDay: new Date().getHours(),
-      dayOfWeek: new Date().getDay(),
-    },
-  });
 
   switch (interaction.options.getSubcommand()) {
     case "latest":
