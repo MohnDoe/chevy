@@ -18,15 +18,18 @@ import {
 import { HevyWorkout } from "@/types/hevy/botApi/workout.type";
 import { handleMessageClick } from "./handlers";
 
+export const generateButtonCustomIdSuffix = (
+  workout: HevyWorkout,
+  extra: string
+) => `${workout.short_id}-${new Date().toISOString()}-${extra}`;
+
 export const sharabledWorkoutEphemeralOptions = (
   workout: HevyWorkout,
   format: WorkoutComponentFormat
 ): InteractionReplyOptions | InteractionEditReplyOptions => {
   const workoutComponent = toComponent(workout, format);
   //makes it so the onClick event is not fired 10000 times
-  const customIdSuffix = `${
-    workout.short_id
-  }-${format}-${new Date().toISOString()}`;
+  const customIdSuffix = generateButtonCustomIdSuffix(workout, format);
 
   return {
     flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,

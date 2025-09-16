@@ -1,9 +1,14 @@
-import { ButtonKit } from "commandkit";
+import {
+  ButtonKit,
+  OnStringSelectMenuKitSubmit,
+  StringSelectMenuKit,
+} from "commandkit";
 
 import {
   ButtonInteraction,
   InteractionEditReplyOptions,
   MessageFlags,
+  StringSelectMenuInteraction,
 } from "discord.js";
 
 import { sharabledWorkoutEphemeralOptions } from "./parsers";
@@ -13,10 +18,11 @@ import {
 } from "@/controllers/hevy/utils/workoutParser";
 import { HevyWorkout } from "@/types/hevy/botApi/workout.type";
 import { changeWorkoutFormat } from "./interactions";
+import { getWorkout } from "@/controllers/hevy/botApi";
 
 export const handleSelectWorkout = async (
-  interaction: ButtonInteraction,
-  context: ButtonKit,
+  interaction: ButtonInteraction | StringSelectMenuInteraction,
+  context: ButtonKit | StringSelectMenuKit,
   workout: HevyWorkout
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
@@ -30,6 +36,19 @@ export const handleSelectWorkout = async (
   // Clean up the select menu context
   context.dispose();
 };
+
+export const handleWorkoutSelectMenuSelection: OnStringSelectMenuKitSubmit =
+  async (interaction, context) => {
+    const selection = interaction.values[0];
+
+    const workout = await getWorkout(selection);
+
+    await handleSelectWorkout(
+      interaction as unknown as StringSelectMenuInteraction,
+      context,
+      workout
+    );
+  };
 
 export const handleMessageClick = async (
   interaction: ButtonInteraction,

@@ -1,4 +1,12 @@
-import { ButtonKit, ChatInputCommandContext } from "commandkit";
+import {
+  ActionRow,
+  ButtonKit,
+  ChatInputCommandContext,
+  Container,
+  StringSelectMenu,
+  StringSelectMenuOption,
+  TextDisplay,
+} from "commandkit";
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime.js";
@@ -10,13 +18,18 @@ import {
   ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
+  Colors,
   InteractionContextType,
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  StringSelectMenuInteraction,
 } from "discord.js";
 import {
+  ContainerBuilder,
   SectionBuilder,
+  SelectMenuBuilder,
+  SelectMenuOptionBuilder,
   subtext,
   TextDisplayBuilder,
 } from "@discordjs/builders";
@@ -25,8 +38,12 @@ import {
   getUserLatestWorkout,
   getUserWorkouts,
 } from "@/controllers/hevy/botApi.ts";
-import { handleSelectWorkout } from "@/controllers/discord/workout/handlers";
+import {
+  handleSelectWorkout,
+  handleWorkoutSelectMenuSelection,
+} from "@/controllers/discord/workout/handlers";
 import { followUpWithWorkoutEphemeral } from "@/controllers/discord/workout/interactions";
+import { generateButtonCustomIdSuffix } from "@/controllers/discord/workout/parsers";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -95,36 +112,65 @@ export async function chatInput({
         currentPage,
         5
       );
-      const workoutsSections = workouts.map((workout) =>
-        new SectionBuilder()
-          .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(workout.name),
-            new TextDisplayBuilder().setContent(
-              subtext(
-                `${dayjs().to(workout.created_at)} - ${dayjs(
-                  workout.created_at
-                ).format("llll")}`
-              )
-            )
-          )
-          .setButtonAccessory(
-            new ButtonKit()
-              .setStyle(ButtonStyle.Secondary)
-              .setLabel("View")
-              .setCustomId(`preview-workout--${workout.short_id}`)
-              .onClick((i, c) =>
-                handleSelectWorkout(
-                  i as unknown as ButtonInteraction,
-                  c,
-                  workout
-                )
-              )
-          )
-      );
+
+      console.log(workouts.length);
+
+      // const workoutsSections = workouts.map((workout) => {
+      //   const customIdSuffix = generateButtonCustomIdSuffix(workout, "");
+      //   const section = new SectionBuilder()
+      //     .addTextDisplayComponents(
+      //       new TextDisplayBuilder().setContent(workout.name),
+      //       new TextDisplayBuilder().setContent(
+      //         subtext(
+      //           `${dayjs().to(workout.created_at)} - ${dayjs(
+      //             workout.created_at
+      //           ).format("llll")}`
+      //         )
+      //       )
+      //     )
+      //     .setButtonAccessory(
+      //       new ButtonKit()
+      //         .setStyle(ButtonStyle.Primary)
+      //         .setLabel("View")
+      //         .setCustomId(
+      //           `preview-workout--${workout.short_id}--${customIdSuffix}`
+      //         )
+      //         .onClick(
+      //           (i, c) =>
+      //             handleSelectWorkout(
+      //               i as unknown as ButtonInteraction,
+      //               c,
+      //               workout
+      //             ),
+      //           { once: true }
+      //         )
+      //     );
+
+      //   console.log(section.accessory);
+      //   return section;
+      // });
 
       await interaction.editReply({
+        components: [
+          <TextDisplay content="Which workout would you look to look at?" />,
+          <ActionRow>
+            <StringSelectMenu
+              placeholder="Select a workout to preview and share."
+              onSelect={handleWorkoutSelectMenuSelection}
+            >
+              {workouts.map((workout) => (
+                <StringSelectMenuOption
+                  label={workout.name}
+                  value={workout.short_id}
+                  description={`${dayjs().to(workout.created_at)} - ${dayjs(
+                    workout.created_at
+                  ).format("llll")}`}
+                />
+              ))}
+            </StringSelectMenu>
+          </ActionRow>,
+        ],
         flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-        components: workoutsSections,
         // paginationActionRow.toJSON()
       });
 
