@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "globalDependencies": [
+    ".env"
+  ],
+  "globalEnv": [
+    "DATABASE_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [
@@ -37,6 +43,13 @@
       "cache": false
     },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": [
+        "^generate"
+      ],
       "cache": false,
       "persistent": true
     },
