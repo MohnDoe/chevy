@@ -27,6 +27,7 @@
     "lint": "turbo run lint"
   },
   "dependencies": {
+    "@commandkit/analytics": "^1.2.0-rc.9",
     "@prisma/client": "latest"
   },
   "devDependencies": {
