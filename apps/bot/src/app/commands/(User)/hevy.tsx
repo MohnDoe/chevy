@@ -33,6 +33,7 @@ import {
   upsertUser,
 } from "@/controllers/user.ts";
 import successfulyLinkedToHevy from "@/app/components/successfulyLinkedToHevy.ts";
+import { track } from "commandkit/analytics";
 
 let targetHevyUsername: string | null = null;
 let userFollowsHevyBot = false;
@@ -189,6 +190,9 @@ const generateLinkingInstructions = async () => {
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large),
       successfulyLinkedToHevy(targetHevyUsername!),
     ];
+    track({
+      name: "Successfuly linked Hevy",
+    });
   }
 
   return components;
@@ -254,6 +258,10 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
         content: "Successfuly unlinked.",
+      });
+
+      track({
+        name: "Successfuly unlinked Hevy",
       });
       break;
 
