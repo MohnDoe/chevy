@@ -93,7 +93,7 @@ export const sharabledWorkoutEphemeralOptions = (
 
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
-          .setLabel("Send in chat 💬")
+          .setLabel("Send in chat")
           .setCustomId(`sendInChat--${format}--${customIdSuffix}`)
           .setStyle(ButtonStyle.Primary)
           .onClick(
