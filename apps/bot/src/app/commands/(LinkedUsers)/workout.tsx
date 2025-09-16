@@ -60,7 +60,7 @@ export async function chatInput({
   const user = store.get("user");
   // const user = await getUserByDiscordId(interaction.user.id);
 
-  await track({
+  track({
     name: "workout",
     data: {
       subcommand: interaction.options.getSubcommand(),
