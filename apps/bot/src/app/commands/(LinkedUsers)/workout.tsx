@@ -20,14 +20,17 @@ import {
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  TextDisplayBuilder,
 } from "discord.js";
 
 import {
   getUserLatestWorkout,
   getUserWorkouts,
+  getWorkout,
 } from "@/controllers/hevy/botApi.ts";
 import { handleWorkoutSelectMenuSelection } from "@/controllers/discord/workout/handlers";
 import { followUpWithWorkoutEphemeral } from "@/controllers/discord/workout/interactions";
+import { getWorkoutShortIdFromUrl } from "@/controllers/hevy/utils/workoutParser";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -48,6 +51,19 @@ export const command = new SlashCommandBuilder()
     sc
       .setName("recent")
       .setDescription("Select one from a list of recent workouts.")
+  )
+  .addSubcommand((sc) =>
+    sc
+      .setName("url")
+      .setDescription("Share one of your workout using a URL.")
+      .addStringOption((so) =>
+        so
+          .setAutocomplete(false)
+          .setName("url")
+          .setDescription("URL to your workout.")
+          .setRequired(true)
+          .setMinLength(10)
+      )
   );
 
 export async function chatInput({
@@ -58,15 +74,40 @@ export async function chatInput({
     flags: MessageFlags.Ephemeral,
   });
   const user = store.get("user");
+  const subcommand = interaction.options.getSubcommand();
 
-  switch (interaction.options.getSubcommand()) {
+  switch (subcommand) {
     case "latest":
-      const workout = await getUserLatestWorkout(user!.hevyUsername!);
+    case "url":
+      let workout;
+      if (subcommand == "url") {
+        if (interaction.options.getString("url")) {
+          const workoutShortId = getWorkoutShortIdFromUrl(
+            interaction.options.getString("url")!
+          );
 
-      await followUpWithWorkoutEphemeral(
-        interaction as unknown as ChatInputCommandInteraction,
-        workout
-      );
+          if (workoutShortId) {
+            workout = await getWorkout(workoutShortId);
+          }
+        }
+      } else {
+        workout = await getUserLatestWorkout(user!.hevyUsername!);
+      }
+
+      if (workout) {
+        await followUpWithWorkoutEphemeral(
+          interaction as unknown as ChatInputCommandInteraction,
+          workout
+        );
+      } else {
+        interaction.followUp({
+          flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+          components: [
+            new TextDisplayBuilder().setContent("Workout not found."),
+          ],
+        });
+      }
+
       break;
 
     case "recent":

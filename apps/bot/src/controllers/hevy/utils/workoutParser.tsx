@@ -510,3 +510,10 @@ export const embedWorkout = (workout: HevyWorkout) => {
 
   return embed;
 };
+
+export const getWorkoutShortIdFromUrl = (url: string) => {
+  const match = url.match(
+    /^(?:https?:\/\/)?(?:www\.)?hevy\.com\/workout\/([A-Za-z0-9]+)\/?$/
+  );
+  return match ? match[1] : null;
+};
