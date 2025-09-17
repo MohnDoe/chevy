@@ -170,6 +170,8 @@ ${subtext("Records")}`;
   container = container.addSeparatorComponents(
     new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
   );
+
+  // signature
   container = container.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       subtext(
@@ -178,10 +180,7 @@ ${subtext("Records")}`;
           `https://hevy.com/user/${workout.username}`
         )} • ${bold(
           integerToPositionString(workout.nth_workout)
-        )} workout | ${time(
-          workout.start_time,
-          TimestampStyles.ShortDateTime
-        )} • ${time(workout.start_time, TimestampStyles.RelativeTime)}
+        )} workout | ${time(workout.start_time, TimestampStyles.RelativeTime)}
         `
       )
     )
