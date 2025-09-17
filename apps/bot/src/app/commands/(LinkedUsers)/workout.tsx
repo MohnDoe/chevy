@@ -95,6 +95,8 @@ export async function chatInput({
       }
 
       if (workout) {
+        console.debug(workout);
+
         await followUpWithWorkoutEphemeral(
           interaction as unknown as ChatInputCommandInteraction,
           workout

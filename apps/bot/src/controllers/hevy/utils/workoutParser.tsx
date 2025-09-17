@@ -145,7 +145,11 @@ ${subtext("Records")}`;
             new TextDisplayBuilder().setContent(informationsText)
           )
           .setThumbnailAccessory(
-            new ThumbnailBuilder().setURL(workout.profile_image)
+            new ThumbnailBuilder().setURL(
+              workout.image_urls.length
+                ? workout.image_urls[0]
+                : workout.profile_image
+            )
           )
       );
       break;
