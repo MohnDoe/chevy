@@ -17,10 +17,10 @@ export async function followUpWithWorkoutEphemeral(
 ) {
   if (workout) {
     await interaction.followUp(
-      sharabledWorkoutEphemeralOptions(
+      (await sharabledWorkoutEphemeralOptions(
         workout,
         "standard"
-      ) as InteractionReplyOptions
+      )) as InteractionReplyOptions
     );
   } else {
     await interaction.reply({
@@ -40,9 +40,9 @@ export async function changeWorkoutFormat(
   );
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
-    sharabledWorkoutEphemeralOptions(
+    (await sharabledWorkoutEphemeralOptions(
       workout,
       format
-    ) as InteractionEditReplyOptions
+    )) as InteractionEditReplyOptions
   );
 }

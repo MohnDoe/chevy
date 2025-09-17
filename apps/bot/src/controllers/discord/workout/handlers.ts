@@ -27,10 +27,10 @@ export const handleSelectWorkout = async (
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
-    sharabledWorkoutEphemeralOptions(
+    (await sharabledWorkoutEphemeralOptions(
       workout,
       "standard"
-    ) as InteractionEditReplyOptions
+    )) as InteractionEditReplyOptions
   );
 
   // Clean up the select menu context
@@ -64,7 +64,7 @@ export const handleMessageClick = async (
     await interaction.followUp({
       flags: MessageFlags.IsComponentsV2,
       components: [
-        toComponent(
+        await toComponent(
           workout,
           (["simple", "standard", "detailed"].includes(desiredFormat)
             ? desiredFormat

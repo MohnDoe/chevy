@@ -23,11 +23,11 @@ export const generateButtonCustomIdSuffix = (
   extra: string
 ) => `${workout.short_id}-${new Date().toISOString()}-${extra}`;
 
-export const sharabledWorkoutEphemeralOptions = (
+export const sharabledWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
   format: WorkoutComponentFormat
-): InteractionReplyOptions | InteractionEditReplyOptions => {
-  const workoutComponent = toComponent(workout, format);
+): Promise<InteractionReplyOptions | InteractionEditReplyOptions> => {
+  const workoutComponent = await toComponent(workout, format);
   //makes it so the onClick event is not fired 10000 times
   const customIdSuffix = generateButtonCustomIdSuffix(workout, format);
 

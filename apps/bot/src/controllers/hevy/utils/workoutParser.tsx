@@ -25,6 +25,11 @@ import { HevySet } from "../../../types/hevy/botApi/set.type";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import {
+  getUserByHevyUsername,
+  isDiscordUserAlreadyLinked,
+} from "@/controllers/user";
+import { Logger } from "commandkit";
 
 dayjs.extend(duration);
 dayjs.extend(localizedFormat);
@@ -59,10 +64,10 @@ const getExerciseVolume = (ex: HevyExercise) => {
 
 export type WorkoutComponentFormat = "simple" | "standard" | "detailed";
 
-export const toComponent = (
+export const toComponent = async (
   workout: HevyWorkout,
   format: WorkoutComponentFormat
-): ContainerBuilder => {
+): Promise<ContainerBuilder> => {
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
     0
@@ -174,18 +179,29 @@ ${subtext("Records")}`;
   container = container.addSeparatorComponents(
     new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large)
   );
+
+  let linkedUser;
+  try {
+    linkedUser = await getUserByHevyUsername(workout.username);
+  } catch (error) {
+    Logger.error("Error fetching user by Hevy username.");
+    Logger.error(error);
+  }
+
+  // signature
   container = container.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       subtext(
-        `${hyperlink(
-          `**@${workout.username}**`,
-          `https://hevy.com/user/${workout.username}`
-        )} • ${bold(
+        `${
+          linkedUser
+            ? `<@${linkedUser.discordId}>`
+            : hyperlink(
+                `**@${workout.username}**`,
+                `https://hevy.com/user/${workout.username}`
+              )
+        } • ${bold(
           integerToPositionString(workout.nth_workout)
-        )} workout | ${time(
-          workout.start_time,
-          TimestampStyles.ShortDateTime
-        )} • ${time(workout.start_time, TimestampStyles.RelativeTime)}
+        )} workout | ${time(workout.start_time, TimestampStyles.RelativeTime)}
         `
       )
     )

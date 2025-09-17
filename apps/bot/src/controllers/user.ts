@@ -12,6 +12,16 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   return await prisma.user.findUnique({
     where: {
       hevyUsername,
+      OR: [
+        {
+          hevyProfilePrivate: true,
+          isFollowedByHevyBot: true,
+        },
+        {
+          hevyProfilePrivate: false,
+          isFollowingHevyBot: true,
+        },
+      ],
     },
   });
 }
