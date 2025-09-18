@@ -7,7 +7,18 @@ import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
   const user = await isDiscordUserAlreadyLinked(userDiscordId);
-
+  track({
+    name: "hevy command used",
+    data: {
+      id: "discord_user_" + ctx.interaction.user.id,
+      subcommand: (
+        ctx.interaction as unknown as ChatInputCommandInteraction
+      ).options.getSubcommand(),
+      channelType: ctx.interaction.channel?.type,
+      contextType: ctx.interaction.context,
+      responseTime: Date.now() - ctx.interaction.createdTimestamp,
+    },
+  });
   switch (
     (
       ctx.interaction as unknown as ChatInputCommandInteraction
