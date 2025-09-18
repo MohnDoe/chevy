@@ -7,8 +7,8 @@ export async function beforeExecute(ctx: MiddlewareContext) {
 
   track({
     name: "workout command used",
+    id: "discord_user_" + ctx.interaction.user.id,
     data: {
-      id: "discord_user_" + ctx.interaction.user.id,
       subcommand: (
         ctx.interaction as unknown as ChatInputCommandInteraction
       ).options.getSubcommand(),

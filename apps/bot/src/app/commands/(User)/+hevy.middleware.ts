@@ -9,8 +9,8 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   const user = await isDiscordUserAlreadyLinked(userDiscordId);
   track({
     name: "hevy command used",
+    id: "discord_user_" + ctx.interaction.user.id,
     data: {
-      id: "discord_user_" + ctx.interaction.user.id,
       subcommand: (
         ctx.interaction as unknown as ChatInputCommandInteraction
       ).options.getSubcommand(),
