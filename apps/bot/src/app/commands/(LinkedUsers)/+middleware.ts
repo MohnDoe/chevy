@@ -16,8 +16,10 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   } else {
     ctx.store.set("user", user);
     const analytics = useAnalytics();
+
+    // @ts-expect-error
+    analytics.identify("discord_user_" + userDiscordId);
     analytics.identify({
-      unique_id: "discord_user_" + userDiscordId,
       hevyUsername: user.hevyUsername,
       hevyProfilePrivate: user.hevyProfilePrivate,
       isFollowingHevyBot: user.isFollowingHevyBot,

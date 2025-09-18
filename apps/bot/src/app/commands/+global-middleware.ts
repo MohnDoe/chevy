@@ -12,8 +12,9 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   );
   const userDiscordId = ctx.interaction.user.id;
 
+  // @ts-expect-error
+  analytics.identify("discord_user_" + userDiscordId);
   analytics.identify({
-    unique_id: "discord_user_" + userDiscordId,
     ...ctx.interaction.user,
   });
 }
