@@ -1,7 +1,6 @@
 import { defineConfig } from "commandkit";
 import { devtools } from "@commandkit/devtools";
 import { posthog } from "@commandkit/analytics/posthog";
-import { BeforeSendFn, EventMessage } from "posthog-node";
 
 export default defineConfig({
   plugins: [
