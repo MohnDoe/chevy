@@ -8,6 +8,9 @@ export default defineConfig({
     posthog({
       posthogOptions: {
         apiKey: process.env.POSTHOG_API_KEY!,
+        options: {
+          host: process.env.POSTHOG_HOST!,
+        },
       },
     }),
   ],
