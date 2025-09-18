@@ -19,6 +19,7 @@ import {
 import { HevyWorkout } from "@/types/hevy/botApi/workout.type";
 import { changeWorkoutFormat } from "./interactions";
 import { getWorkout } from "@/controllers/hevy/botApi";
+import { track } from "commandkit/analytics";
 
 export const handleSelectWorkout = async (
   interaction: ButtonInteraction | StringSelectMenuInteraction,
@@ -72,6 +73,18 @@ export const handleMessageClick = async (
         ),
       ],
     });
+
+    track({
+      id: "discord_user_" + interaction.user.id,
+      name: "Share workout",
+      data: {
+        contextType: interaction.context,
+        format: desiredFormat,
+        responseTime: Date.now() - interaction.createdTimestamp,
+        timeOfDay: new Date().getHours(),
+        dayOfWeek: new Date().getDay(),
+      },
+    });
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
     if (["simple", "standard", "detailed"].includes(desiredFormat)) {
       await changeWorkoutFormat(
@@ -79,6 +92,19 @@ export const handleMessageClick = async (
         workout,
         desiredFormat as WorkoutComponentFormat
       );
+
+      track({
+        id: "discord_user_" + interaction.user.id,
+        name: "Change workout format",
+        data: {
+          contextType: interaction.context,
+          format: desiredFormat,
+          workout: workout,
+          responseTime: Date.now() - interaction.createdTimestamp,
+          timeOfDay: new Date().getHours(),
+          dayOfWeek: new Date().getDay(),
+        },
+      });
     } else {
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
