@@ -7,7 +7,18 @@ import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
   const user = await isDiscordUserAlreadyLinked(userDiscordId);
-
+  track({
+    name: "hevy command used",
+    data: {
+      id: "discord_user_" + ctx.interaction.user.id,
+      subcommand: (
+        ctx.interaction as unknown as ChatInputCommandInteraction
+      ).options.getSubcommand(),
+      channelType: ctx.interaction.channel?.type,
+      contextType: ctx.interaction.context,
+      responseTime: Date.now() - ctx.interaction.createdTimestamp,
+    },
+  });
   switch (
     (
       ctx.interaction as unknown as ChatInputCommandInteraction
@@ -20,27 +31,15 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           components: [successfulyLinkedToHevy(user.hevyUsername!)],
         });
         track({
+          name: "hevy account was already linked",
           id: "discord_user_" + ctx.interaction.user.id,
-          name: "Already linked Hevy",
           data: {
             contextType: ctx.interaction.context,
+            channelType: ctx.interaction.channel?.type,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
           },
         });
         stopMiddlewares();
-      } else {
-        track({
-          id: "discord_user_" + ctx.interaction.user.id,
-          name: "Begin linking Hevy",
-          data: {
-            contextType: ctx.interaction.context,
-            responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
-          },
-        });
       }
       break;
     case "unlink":
@@ -49,18 +48,17 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           flags: MessageFlags.Ephemeral,
           content: `Successfuly unlinked!`,
         });
-        stopMiddlewares();
-      } else {
+
         track({
+          name: "hevy account was already unlinked",
           id: "discord_user_" + ctx.interaction.user.id,
-          name: "Begin unlinking Hevy",
           data: {
             contextType: ctx.interaction.context,
+            channelType: ctx.interaction.channel?.type,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
           },
         });
+        stopMiddlewares();
       }
       break;
     default:

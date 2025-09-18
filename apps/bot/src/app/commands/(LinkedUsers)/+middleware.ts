@@ -17,13 +17,12 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     ctx.store.set("user", user);
     const analytics = useAnalytics();
 
-    // // @ts-expect-error
-    // analytics.identify("discord_user_" + userDiscordId);
-    // analytics.identify({
-    //   hevyUsername: user.hevyUsername,
-    //   hevyProfilePrivate: user.hevyProfilePrivate,
-    //   isFollowingHevyBot: user.isFollowingHevyBot,
-    //   isFollowedByHevyBot: user.isFollowedByHevyBot,
-    // });
+    analytics.identify({
+      id: "discord_user_" + userDiscordId,
+      hevyUsername: user.hevyUsername,
+      hevyProfilePrivate: user.hevyProfilePrivate,
+      isFollowingHevyBot: user.isFollowingHevyBot,
+      isFollowedByHevyBot: user.isFollowedByHevyBot,
+    });
   }
 }

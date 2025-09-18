@@ -95,8 +95,6 @@ export async function chatInput({
       }
 
       if (workout) {
-        console.debug(workout);
-
         await followUpWithWorkoutEphemeral(
           interaction as unknown as ChatInputCommandInteraction,
           workout
@@ -138,8 +136,6 @@ export async function chatInput({
         currentPage,
         5
       );
-
-      console.log(workouts.length);
 
       // const workoutsSections = workouts.map((workout) => {
       //   const customIdSuffix = generateButtonCustomIdSuffix(workout, "");

@@ -192,8 +192,8 @@ const generateLinkingInstructions = async () => {
       successfulyLinkedToHevy(targetHevyUsername!),
     ];
     track({
+      name: "hevy linking success",
       id: "discord_user_" + discordUserId,
-      name: "Successfuly linked Hevy",
     });
   }
 
@@ -263,8 +263,8 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
       });
 
       track({
+        name: "hevy unlinking success",
         id: "discord_user_" + discordUserId,
-        name: "Successfuly unlinked Hevy",
       });
       break;
 

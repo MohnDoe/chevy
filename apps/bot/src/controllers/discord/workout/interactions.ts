@@ -35,9 +35,6 @@ export async function changeWorkoutFormat(
   workout: HevyWorkout,
   format: WorkoutComponentFormat
 ) {
-  console.log(
-    `Changing workout#${workout.short_id} format to ${format} | ${interaction.id}`
-  );
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharabledWorkoutEphemeralOptions(
