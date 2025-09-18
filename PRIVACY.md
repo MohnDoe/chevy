@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: 17/09/2025**
+**Last updated: 18/09/2025**
 
 Chevy (“the Bot”) respects your privacy. This Privacy Policy explains what information we collect, how we use it, and the choices you have.
 
@@ -33,6 +33,7 @@ Chevy communicates with:
 
 - **Discord** – to receive commands and send messages.
 - **Hevy API** – to fetch workout information.
+- **PostHog** – to collect events & errors, for analytics purposes.
 
 These services have their own privacy policies, which we encourage you to review.
 
