@@ -40,16 +40,6 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           },
         });
         stopMiddlewares();
-      } else {
-        track({
-          name: "hevy linking start",
-          id: "discord_user_" + ctx.interaction.user.id,
-          data: {
-            contextType: ctx.interaction.context,
-            channelType: ctx.interaction.channel?.type,
-            responseTime: Date.now() - ctx.interaction.createdTimestamp,
-          },
-        });
       }
       break;
     case "unlink":
@@ -58,10 +48,9 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           flags: MessageFlags.Ephemeral,
           content: `Successfuly unlinked!`,
         });
-        stopMiddlewares();
-      } else {
+
         track({
-          name: "hevy unlinking start",
+          name: "hevy account was already unlinked",
           id: "discord_user_" + ctx.interaction.user.id,
           data: {
             contextType: ctx.interaction.context,
@@ -69,6 +58,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
           },
         });
+        stopMiddlewares();
       }
       break;
     default:
