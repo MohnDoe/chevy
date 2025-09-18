@@ -75,10 +75,11 @@ export const handleMessageClick = async (
     });
 
     track({
+      name: "workout shared",
       id: "discord_user_" + interaction.user.id,
-      name: "Share workout",
       data: {
         contextType: interaction.context,
+        channelType: interaction.channel?.type,
         format: desiredFormat,
         responseTime: Date.now() - interaction.createdTimestamp,
       },
@@ -92,10 +93,11 @@ export const handleMessageClick = async (
       );
 
       track({
+        name: "workout format changed",
         id: "discord_user_" + interaction.user.id,
-        name: "Change workout format",
         data: {
           contextType: interaction.context,
+          channelType: interaction.channel?.type,
           format: desiredFormat,
           workout: workout,
           responseTime: Date.now() - interaction.createdTimestamp,

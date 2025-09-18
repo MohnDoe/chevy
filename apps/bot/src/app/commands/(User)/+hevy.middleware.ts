@@ -20,20 +20,22 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           components: [successfulyLinkedToHevy(user.hevyUsername!)],
         });
         track({
+          name: "hevy account was already linked",
           id: "discord_user_" + ctx.interaction.user.id,
-          name: "Already linked Hevy",
           data: {
             contextType: ctx.interaction.context,
+            channelType: ctx.interaction.channel?.type,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
           },
         });
         stopMiddlewares();
       } else {
         track({
+          name: "hevy linking start",
           id: "discord_user_" + ctx.interaction.user.id,
-          name: "Begin linking Hevy",
           data: {
             contextType: ctx.interaction.context,
+            channelType: ctx.interaction.channel?.type,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
           },
         });
@@ -48,10 +50,11 @@ export async function beforeExecute(ctx: MiddlewareContext) {
         stopMiddlewares();
       } else {
         track({
+          name: "hevy unlinking start",
           id: "discord_user_" + ctx.interaction.user.id,
-          name: "Begin unlinking Hevy",
           data: {
             contextType: ctx.interaction.context,
+            channelType: ctx.interaction.channel?.type,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
           },
         });

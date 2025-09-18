@@ -6,12 +6,13 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   Logger.info('Tracking "workout" event in middleware.');
 
   track({
-    name: "workout",
+    name: "/workout command used",
     data: {
       id: "discord_user_" + ctx.interaction.user.id,
       subcommand: (
         ctx.interaction as unknown as ChatInputCommandInteraction
       ).options.getSubcommand(),
+      channelType: ctx.interaction.channel?.type,
       contextType: ctx.interaction.context,
       responseTime: Date.now() - ctx.interaction.createdTimestamp,
     },

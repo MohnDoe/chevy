@@ -14,7 +14,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
 
   analytics.identify({
     id: "discord_user_" + userDiscordId,
-    discordUsername: ctx.interaction.user.username,
+    name: ctx.interaction.user.username,
     bot: ctx.interaction.user.bot,
   });
 }
