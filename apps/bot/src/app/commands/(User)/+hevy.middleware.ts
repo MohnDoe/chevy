@@ -20,6 +20,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           components: [successfulyLinkedToHevy(user.hevyUsername!)],
         });
         track({
+          id: "discord_user_" + ctx.interaction.user.id,
           name: "Already linked Hevy",
           data: {
             contextType: ctx.interaction.context,
@@ -31,6 +32,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
         stopMiddlewares();
       } else {
         track({
+          id: "discord_user_" + ctx.interaction.user.id,
           name: "Begin linking Hevy",
           data: {
             contextType: ctx.interaction.context,
@@ -50,6 +52,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
         stopMiddlewares();
       } else {
         track({
+          id: "discord_user_" + ctx.interaction.user.id,
           name: "Begin unlinking Hevy",
           data: {
             contextType: ctx.interaction.context,

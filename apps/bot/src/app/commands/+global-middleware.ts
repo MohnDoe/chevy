@@ -13,9 +13,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
 
   analytics.identify({
-    distinctId: "discord_user_" + userDiscordId,
-    properties: {
-      ...ctx.interaction.user,
-    },
+    unique_id: "discord_user_" + userDiscordId,
+    ...ctx.interaction.user,
   });
 }

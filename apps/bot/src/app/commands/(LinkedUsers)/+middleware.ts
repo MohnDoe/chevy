@@ -17,13 +17,11 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     ctx.store.set("user", user);
     const analytics = useAnalytics();
     analytics.identify({
-      distinctId: "discord_user_" + userDiscordId,
-      properties: {
-        hevyUsername: user.hevyUsername,
-        hevyProfilePrivate: user.hevyProfilePrivate,
-        isFollowingHevyBot: user.isFollowingHevyBot,
-        isFollowedByHevyBot: user.isFollowedByHevyBot,
-      },
+      unique_id: "discord_user_" + userDiscordId,
+      hevyUsername: user.hevyUsername,
+      hevyProfilePrivate: user.hevyProfilePrivate,
+      isFollowingHevyBot: user.isFollowingHevyBot,
+      isFollowedByHevyBot: user.isFollowedByHevyBot,
     });
   }
 }

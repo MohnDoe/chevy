@@ -36,6 +36,7 @@ import successfulyLinkedToHevy from "@/app/components/successfulyLinkedToHevy.ts
 import { track } from "commandkit/analytics";
 
 let targetHevyUsername: string | null = null;
+let discordUserId: string | null = null;
 let userFollowsHevyBot = false;
 let userIsFollowedByHevyBot = false;
 let hevyUserProfile: any | null = null;
@@ -191,6 +192,7 @@ const generateLinkingInstructions = async () => {
       successfulyLinkedToHevy(targetHevyUsername!),
     ];
     track({
+      id: "discord_user_" + discordUserId,
       name: "Successfuly linked Hevy",
     });
   }
@@ -203,7 +205,7 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
     flags: MessageFlags.Ephemeral,
     withResponse: true,
   });
-  const discordUserId = interaction.user.id;
+  discordUserId = interaction.user.id;
   switch (interaction.options.getSubcommand()) {
     case "link":
       await upsertUser(discordUserId);
@@ -261,6 +263,7 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
       });
 
       track({
+        id: "discord_user_" + discordUserId,
         name: "Successfuly unlinked Hevy",
       });
       break;
