@@ -7,6 +7,7 @@ import {
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
+  ApplicationIntegrationType,
   InteractionContextType,
   SlashCommandBuilder,
 } from "discord.js";
@@ -19,6 +20,7 @@ export const command: CommandData = {
   name: "server",
   description: "Set-up Chevy on this server.",
   contexts: [InteractionContextType.Guild],
+  integration_types: [ApplicationIntegrationType.GuildInstall],
   type: ApplicationCommandType.ChatInput,
   options: [
     {
