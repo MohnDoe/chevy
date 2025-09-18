@@ -14,8 +14,6 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       ).options.getSubcommand(),
       contextType: ctx.interaction.context,
       responseTime: Date.now() - ctx.interaction.createdTimestamp,
-      timeOfDay: new Date().getHours(),
-      dayOfWeek: new Date().getDay(),
     },
   });
 }

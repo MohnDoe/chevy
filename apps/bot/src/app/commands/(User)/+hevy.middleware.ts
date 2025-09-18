@@ -25,8 +25,6 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           data: {
             contextType: ctx.interaction.context,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
           },
         });
         stopMiddlewares();
@@ -37,8 +35,6 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           data: {
             contextType: ctx.interaction.context,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
           },
         });
       }
@@ -57,8 +53,6 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           data: {
             contextType: ctx.interaction.context,
             responseTime: Date.now() - ctx.interaction.createdTimestamp,
-            timeOfDay: new Date().getHours(),
-            dayOfWeek: new Date().getDay(),
           },
         });
       }

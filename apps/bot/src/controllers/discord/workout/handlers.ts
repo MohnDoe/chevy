@@ -81,8 +81,6 @@ export const handleMessageClick = async (
         contextType: interaction.context,
         format: desiredFormat,
         responseTime: Date.now() - interaction.createdTimestamp,
-        timeOfDay: new Date().getHours(),
-        dayOfWeek: new Date().getDay(),
       },
     });
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
@@ -101,8 +99,6 @@ export const handleMessageClick = async (
           format: desiredFormat,
           workout: workout,
           responseTime: Date.now() - interaction.createdTimestamp,
-          timeOfDay: new Date().getHours(),
-          dayOfWeek: new Date().getDay(),
         },
       });
     } else {
