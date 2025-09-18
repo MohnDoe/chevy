@@ -46,7 +46,6 @@ export const checkIfUserUserIsFollowedByBot = async (
 };
 
 export const followUserOnHevy = async (userHevyUsername: string) => {
-  console.log("following user ", userHevyUsername);
   await HevyBotAPIClient.post(`/follow`, {
     username: userHevyUsername,
   });

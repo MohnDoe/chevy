@@ -56,7 +56,6 @@ export const handleMessageClick = async (
   context: ButtonKit,
   workout: HevyWorkout
 ) => {
-  console.log("handleMessageClick", interaction.customId);
   context.dispose();
   const desiredFormat = interaction.customId.split("--")[1];
 
