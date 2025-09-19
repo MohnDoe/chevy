@@ -22,7 +22,7 @@ import {
   checkIfUserUserIsFollowedByBot,
   followUserOnHevy,
   getUserProfile,
-} from "@/controllers/hevy/botApi.ts";
+} from "@/features/hevy/hevy.api";
 
 import {
   getUserByDiscordId,
@@ -31,8 +31,8 @@ import {
   setIsHevyProfilePrivate,
   setUserHevyUsername,
   upsertUser,
-} from "@/controllers/user.ts";
-import successfulyLinkedToHevy from "@/app/components/successfulyLinkedToHevy.ts";
+} from "@/features/hevy/hevy.service";
+import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
 import { track } from "commandkit/analytics";
 
 let targetHevyUsername: string | null = null;

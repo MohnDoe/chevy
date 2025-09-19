@@ -1,3 +1,4 @@
+
 import { prisma } from "@repo/db";
 
 export async function getUserByDiscordId(discordId: string) {
