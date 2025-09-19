@@ -1,6 +1,6 @@
-import { HevyWorkout } from "@/features/hevy/workout.types";
 import axios from "axios";
 import dotenv from "dotenv";
+import { HevyWorkout } from "./hevy.types";
 
 const wait = require("node:timers/promises").setTimeout;
 dotenv.config();
