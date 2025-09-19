@@ -544,6 +544,6 @@ export const commandPrefix = (interaction: ChatInputCommandInteraction) =>
     subtext(
       `${userMention(interaction.user.id)} used </${
         interaction.commandName
-      } ${interaction.options.getSubcommand()}:${interaction.commandId}>.`
+      } ${interaction.options.getSubcommand()}:${interaction.commandId}>`
     )
   );
