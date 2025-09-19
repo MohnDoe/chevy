@@ -1,4 +1,4 @@
-import { isDiscordUserAlreadyLinked } from "@/controllers/user.ts";
+import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { useAnalytics } from "commandkit/analytics";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
