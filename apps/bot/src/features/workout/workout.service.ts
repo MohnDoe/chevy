@@ -9,6 +9,9 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
+  TextDisplayBuilder,
+  subtext,
+  userMention,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
@@ -17,7 +20,11 @@ import {
   OnStringSelectMenuKitSubmit,
   StringSelectMenuKit,
 } from "commandkit";
-import { toComponent, WorkoutComponentFormat } from "./workout.embeds";
+import {
+  commandPrefix,
+  toComponent,
+  WorkoutComponentFormat,
+} from "./workout.embeds";
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
@@ -28,7 +35,8 @@ const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
 
 const sharableWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
-  format: WorkoutComponentFormat
+  format: WorkoutComponentFormat,
+  originalInteraction?: ChatInputCommandInteraction
 ): Promise<InteractionReplyOptions | InteractionEditReplyOptions> => {
   const workoutComponent = await toComponent(workout, format);
   const customIdSuffix = generateButtonCustomIdSuffix(workout, format);
@@ -90,7 +98,12 @@ const sharableWorkoutEphemeralOptions = async (
           .setStyle(ButtonStyle.Primary)
           .onClick(
             (i, c) =>
-              handleMessageClick(i as unknown as ButtonInteraction, c, workout),
+              handleMessageClick(
+                i as unknown as ButtonInteraction,
+                c,
+                workout,
+                originalInteraction
+              ),
             { once: true, time: 60_000 }
           ),
       ]),
@@ -100,14 +113,15 @@ const sharableWorkoutEphemeralOptions = async (
 
 // From interactions.ts
 export async function followUpWithWorkoutEphemeral(
-  interaction: ChatInputCommandInteraction | StringSelectMenuInteraction,
+  interaction: ChatInputCommandInteraction,
   workout: HevyWorkout | null
 ) {
   if (workout) {
     await interaction.followUp(
       (await sharableWorkoutEphemeralOptions(
         workout,
-        "standard"
+        "standard",
+        interaction
       )) as InteractionReplyOptions
     );
   } else {
@@ -162,23 +176,28 @@ export const handleWorkoutSelectMenuSelection: OnStringSelectMenuKitSubmit =
 const handleMessageClick = async (
   interaction: ButtonInteraction,
   context: ButtonKit,
-  workout: HevyWorkout
+  workout: HevyWorkout,
+  originalInteraction?:
+    | ChatInputCommandInteraction
+    | StringSelectMenuInteraction
 ) => {
   context.dispose();
   const desiredFormat = interaction.customId.split("--")[1];
 
   if (interaction.customId.startsWith("sendInChat")) {
+    let components = [];
+
+    if (originalInteraction && originalInteraction.isChatInputCommand())
+      components.push(commandPrefix(originalInteraction));
+
+    components.push(
+      await toComponent(workout, desiredFormat as WorkoutComponentFormat)
+    );
+
     if (!interaction.deferred) await interaction.deferReply();
     await interaction.followUp({
       flags: MessageFlags.IsComponentsV2,
-      components: [
-        await toComponent(
-          workout,
-          (["simple", "standard", "detailed"].includes(desiredFormat)
-            ? desiredFormat
-            : "simple") as WorkoutComponentFormat
-        ),
-      ],
+      components,
     });
 
     sendActivity(`Someone **shared a workout**.`);

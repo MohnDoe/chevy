@@ -2,6 +2,7 @@ import {
   blockQuote,
   bold,
   ButtonStyle,
+  ChatInputCommandInteraction,
   ComponentBuilder,
   ContainerBuilder,
   ContainerComponent,
@@ -17,6 +18,7 @@ import {
   ThumbnailBuilder,
   time,
   TimestampStyles,
+  userMention,
 } from "discord.js";
 import { Logger } from "commandkit";
 
@@ -536,3 +538,12 @@ export const getWorkoutShortIdFromUrl = (url: string) => {
   );
   return match ? match[1] : null;
 };
+
+export const commandPrefix = (interaction: ChatInputCommandInteraction) =>
+  new TextDisplayBuilder().setContent(
+    subtext(
+      `${userMention(interaction.user.id)} used </${
+        interaction.commandName
+      } ${interaction.options.getSubcommand()}:${interaction.commandId}>.`
+    )
+  );
