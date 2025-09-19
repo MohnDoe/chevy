@@ -3,6 +3,8 @@ import {
   MessageFlags,
   TextChannel,
   TextDisplayBuilder,
+  time,
+  TimestampStyles,
   WebhookClient,
 } from "discord.js";
 import liveActivityConfig from "@/config/liveActivity.config";
@@ -17,7 +19,10 @@ export const sendActivity = async (content: string) => {
   Logger.log("Sending activity message");
 
   webhookClient.send({
-    content: content,
+    content: `-# ${time(
+      new Date(),
+      TimestampStyles.RelativeTime
+    )} - ${content}`,
     username: "Live Activity",
     avatarURL: client.user?.displayAvatarURL(),
   });
