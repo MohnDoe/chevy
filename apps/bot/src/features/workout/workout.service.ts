@@ -20,6 +20,7 @@ import {
 import { toComponent, WorkoutComponentFormat } from "./workout.embeds";
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
+import { sendActivity } from "../liveActivity/liveActivity.service";
 
 // From parsers.ts
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
@@ -179,6 +180,8 @@ const handleMessageClick = async (
         ),
       ],
     });
+
+    sendActivity(`Someone **shared a workout**.`);
 
     track({
       name: "workout shared",

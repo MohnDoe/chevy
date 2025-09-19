@@ -34,6 +34,7 @@ import {
 } from "@/features/hevy/hevy.service";
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
 import { track } from "commandkit/analytics";
+import { sendActivity } from "@/features/liveActivity/liveActivity.service";
 
 let targetHevyUsername: string | null = null;
 let discordUserId: string | null = null;
@@ -191,6 +192,8 @@ const generateLinkingInstructions = async () => {
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large),
       successfulyLinkedToHevy(targetHevyUsername!),
     ];
+
+    sendActivity(`Someone **linked their Hevy account**.`);
     track({
       name: "hevy linking success",
       id: "discord_user_" + discordUserId,
@@ -262,6 +265,7 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
         content: "Successfuly unlinked.",
       });
 
+      sendActivity(`Someone **unlinked their Hevy account**.`);
       track({
         name: "hevy unlinking success",
         id: "discord_user_" + discordUserId,
