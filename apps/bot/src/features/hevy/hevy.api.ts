@@ -1,4 +1,4 @@
-import { HevyWorkout } from "../../types/hevy/botApi/workout.type";
+import { HevyWorkout } from "@/features/hevy/workout.types";
 import axios from "axios";
 import dotenv from "dotenv";
 

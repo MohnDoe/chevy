@@ -12,8 +12,6 @@ import localizedFormat from "dayjs/plugin/localizedFormat.js";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
-import { track } from "commandkit/analytics";
-
 import {
   ChatInputCommandInteraction,
   InteractionContextType,
@@ -24,13 +22,15 @@ import {
 } from "discord.js";
 
 import {
+  followUpWithWorkoutEphemeral,
+  handleWorkoutSelectMenuSelection,
+} from "@/features/workout/workout.service";
+import {
   getUserLatestWorkout,
   getUserWorkouts,
   getWorkout,
-} from "@/controllers/hevy/botApi.ts";
-import { handleWorkoutSelectMenuSelection } from "@/controllers/discord/workout/handlers";
-import { followUpWithWorkoutEphemeral } from "@/controllers/discord/workout/interactions";
-import { getWorkoutShortIdFromUrl } from "@/controllers/hevy/utils/workoutParser";
+} from "@/features/hevy/hevy.api";
+import { getWorkoutShortIdFromUrl } from "@/features/workout/workout.embeds";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -81,11 +81,9 @@ export async function chatInput({
     case "url":
       let workout;
       if (subcommand == "url") {
-        if (interaction.options.getString("url")) {
-          const workoutShortId = getWorkoutShortIdFromUrl(
-            interaction.options.getString("url")!
-          );
-
+        const url = interaction.options.getString("url");
+        if (url) {
+          const workoutShortId = getWorkoutShortIdFromUrl(url);
           if (workoutShortId) {
             workout = await getWorkout(workoutShortId);
           }
@@ -112,65 +110,11 @@ export async function chatInput({
 
     case "recent":
       const currentPage = 1;
-
-      // const paginationActionRow = new ActionRowBuilder().addComponents(
-      //   new ButtonKit()
-      //     .setLabel("<")
-      //     .setStyle(ButtonStyle.Primary)
-      //     .setCustomId("recent-workouts--previous")
-      //     .onClick(() => {}),
-      //   new ButtonBuilder()
-      //     .setLabel(`Page ${currentPage}/30`)
-      //     .setDisabled(true)
-      //     .setCustomId("pagination-label-recent-workouts")
-      //     .setStyle(ButtonStyle.Secondary),
-      //   new ButtonKit()
-      //     .setLabel(">")
-      //     .setStyle(ButtonStyle.Primary)
-      //     .setCustomId("recent-workouts--next")
-      //     .onClick(() => {})
-      // );
-
       const workouts = await getUserWorkouts(
         user!.hevyUsername!,
         currentPage,
         5
       );
-
-      // const workoutsSections = workouts.map((workout) => {
-      //   const customIdSuffix = generateButtonCustomIdSuffix(workout, "");
-      //   const section = new SectionBuilder()
-      //     .addTextDisplayComponents(
-      //       new TextDisplayBuilder().setContent(workout.name),
-      //       new TextDisplayBuilder().setContent(
-      //         subtext(
-      //           `${dayjs().to(workout.created_at)} - ${dayjs(
-      //             workout.created_at
-      //           ).format("llll")}`
-      //         )
-      //       )
-      //     )
-      //     .setButtonAccessory(
-      //       new ButtonKit()
-      //         .setStyle(ButtonStyle.Primary)
-      //         .setLabel("View")
-      //         .setCustomId(
-      //           `preview-workout--${workout.short_id}--${customIdSuffix}`
-      //         )
-      //         .onClick(
-      //           (i, c) =>
-      //             handleSelectWorkout(
-      //               i as unknown as ButtonInteraction,
-      //               c,
-      //               workout
-      //             ),
-      //           { once: true }
-      //         )
-      //     );
-
-      //   console.log(section.accessory);
-      //   return section;
-      // });
 
       await interaction.editReply({
         components: [
@@ -193,7 +137,6 @@ export async function chatInput({
           </ActionRow>,
         ],
         flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-        // paginationActionRow.toJSON()
       });
 
       break;
