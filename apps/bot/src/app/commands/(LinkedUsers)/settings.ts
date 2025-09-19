@@ -1,6 +1,5 @@
 import {
   ChatInputCommandContext,
-  Command,
   CommandData,
   CommandMetadata,
 } from "commandkit";
@@ -8,8 +7,6 @@ import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ApplicationIntegrationType,
-  ChannelType,
-  InteractionContextType,
 } from "discord.js";
 
 export const metadata: CommandMetadata = {};

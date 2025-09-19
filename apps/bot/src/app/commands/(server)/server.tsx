@@ -4,7 +4,6 @@ import {
   ChannelSelectMenu,
   ChannelSelectMenuKit,
   ChatInputCommandContext,
-  Command,
   CommandData,
   CommandMetadata,
   Container,
@@ -15,7 +14,6 @@ import {
   TextDisplay,
 } from "commandkit";
 import {
-  AnySelectMenuInteraction,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ApplicationIntegrationType,

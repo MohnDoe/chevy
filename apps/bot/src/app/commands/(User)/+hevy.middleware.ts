@@ -1,8 +1,9 @@
-import successfulyLinkedToHevy from "@/app/components/successfulyLinkedToHevy.ts";
-import { isDiscordUserAlreadyLinked } from "@/controllers/user.ts";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { track } from "commandkit/analytics";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
+
+import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
+import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
