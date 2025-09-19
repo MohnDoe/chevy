@@ -12,6 +12,7 @@ import {
   TextDisplayBuilder,
   subtext,
   userMention,
+  TextChannel,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
@@ -193,18 +194,30 @@ const handleMessageClick = async (
   if (interaction.customId.startsWith("sendInChat")) {
     let components = [];
 
-    if (originalInteraction && originalInteraction.isChatInputCommand())
-      components.push(commandPrefix(originalInteraction));
+    if (originalInteraction) {
+      if (originalInteraction.isChatInputCommand())
+        components.push(commandPrefix(originalInteraction));
+      await originalInteraction.deleteReply();
+    }
 
     components.push(
       await toComponent(workout, desiredFormat as WorkoutComponentFormat)
     );
 
-    if (!interaction.deferred) await interaction.deferReply();
-    await interaction.followUp({
-      flags: MessageFlags.IsComponentsV2,
-      components,
-    });
+    if (interaction.channel && interaction.channel instanceof TextChannel) {
+      // send directly in channel
+      await interaction.channel.send({
+        flags: MessageFlags.IsComponentsV2,
+        components,
+      });
+    } else {
+      if (!interaction.deferred) await interaction.deferReply();
+      // to follow up as fallback
+      await interaction.followUp({
+        flags: MessageFlags.IsComponentsV2,
+        components,
+      });
+    }
 
     sendActivity(`Someone **shared a workout**.`);
 
