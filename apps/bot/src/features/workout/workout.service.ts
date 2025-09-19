@@ -150,28 +150,34 @@ async function changeWorkoutFormat(
 export const handleSelectWorkout = async (
   interaction: ButtonInteraction | StringSelectMenuInteraction,
   context: ButtonKit | StringSelectMenuKit,
-  workout: HevyWorkout
+  workout: HevyWorkout,
+  originalInteraction?: ChatInputCommandInteraction
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
-      "standard"
+      "standard",
+      originalInteraction
     )) as InteractionEditReplyOptions
   );
   context.dispose();
 };
 
-export const handleWorkoutSelectMenuSelection: OnStringSelectMenuKitSubmit =
-  async (interaction, context) => {
-    const selection = interaction.values[0];
-    const workout = await getWorkout(selection);
-    await handleSelectWorkout(
-      interaction as unknown as StringSelectMenuInteraction,
-      context,
-      workout
-    );
-  };
+export const handleWorkoutSelectMenuSelection = async (
+  interaction: StringSelectMenuInteraction,
+  context: StringSelectMenuKit,
+  originalInteraction?: ChatInputCommandInteraction
+) => {
+  const selection = interaction.values[0];
+  const workout = await getWorkout(selection);
+  await handleSelectWorkout(
+    interaction as unknown as StringSelectMenuInteraction,
+    context,
+    workout,
+    originalInteraction
+  );
+};
 
 const handleMessageClick = async (
   interaction: ButtonInteraction,
