@@ -18,6 +18,7 @@ import {
   MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  StringSelectMenuInteraction,
   TextDisplayBuilder,
 } from "discord.js";
 
@@ -122,7 +123,13 @@ export async function chatInput({
           <ActionRow>
             <StringSelectMenu
               placeholder="Select a workout to preview and share."
-              onSelect={handleWorkoutSelectMenuSelection}
+              onSelect={(i, c) =>
+                handleWorkoutSelectMenuSelection(
+                  i as unknown as StringSelectMenuInteraction,
+                  c,
+                  interaction as unknown as ChatInputCommandInteraction
+                )
+              }
             >
               {workouts.map((workout) => (
                 <StringSelectMenuOption

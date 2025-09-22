@@ -9,6 +9,10 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
+  TextDisplayBuilder,
+  subtext,
+  userMention,
+  TextChannel,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
@@ -17,9 +21,14 @@ import {
   OnStringSelectMenuKitSubmit,
   StringSelectMenuKit,
 } from "commandkit";
-import { toComponent, WorkoutComponentFormat } from "./workout.embeds";
+import {
+  commandPrefix,
+  toComponent,
+  WorkoutComponentFormat,
+} from "./workout.embeds";
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
+import { sendActivity } from "../liveActivity/liveActivity.service";
 
 // From parsers.ts
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
@@ -27,7 +36,8 @@ const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
 
 const sharableWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
-  format: WorkoutComponentFormat
+  format: WorkoutComponentFormat,
+  originalInteraction?: ChatInputCommandInteraction
 ): Promise<InteractionReplyOptions | InteractionEditReplyOptions> => {
   const workoutComponent = await toComponent(workout, format);
   const customIdSuffix = generateButtonCustomIdSuffix(workout, format);
@@ -89,7 +99,12 @@ const sharableWorkoutEphemeralOptions = async (
           .setStyle(ButtonStyle.Primary)
           .onClick(
             (i, c) =>
-              handleMessageClick(i as unknown as ButtonInteraction, c, workout),
+              handleMessageClick(
+                i as unknown as ButtonInteraction,
+                c,
+                workout,
+                originalInteraction
+              ),
             { once: true, time: 60_000 }
           ),
       ]),
@@ -99,14 +114,15 @@ const sharableWorkoutEphemeralOptions = async (
 
 // From interactions.ts
 export async function followUpWithWorkoutEphemeral(
-  interaction: ChatInputCommandInteraction | StringSelectMenuInteraction,
+  interaction: ChatInputCommandInteraction,
   workout: HevyWorkout | null
 ) {
   if (workout) {
     await interaction.followUp(
       (await sharableWorkoutEphemeralOptions(
         workout,
-        "standard"
+        "standard",
+        interaction
       )) as InteractionReplyOptions
     );
   } else {
@@ -135,50 +151,75 @@ async function changeWorkoutFormat(
 export const handleSelectWorkout = async (
   interaction: ButtonInteraction | StringSelectMenuInteraction,
   context: ButtonKit | StringSelectMenuKit,
-  workout: HevyWorkout
+  workout: HevyWorkout,
+  originalInteraction?: ChatInputCommandInteraction
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
-      "standard"
+      "standard",
+      originalInteraction
     )) as InteractionEditReplyOptions
   );
   context.dispose();
 };
 
-export const handleWorkoutSelectMenuSelection: OnStringSelectMenuKitSubmit =
-  async (interaction, context) => {
-    const selection = interaction.values[0];
-    const workout = await getWorkout(selection);
-    await handleSelectWorkout(
-      interaction as unknown as StringSelectMenuInteraction,
-      context,
-      workout
-    );
-  };
+export const handleWorkoutSelectMenuSelection = async (
+  interaction: StringSelectMenuInteraction,
+  context: StringSelectMenuKit,
+  originalInteraction?: ChatInputCommandInteraction
+) => {
+  const selection = interaction.values[0];
+  const workout = await getWorkout(selection);
+  await handleSelectWorkout(
+    interaction as unknown as StringSelectMenuInteraction,
+    context,
+    workout,
+    originalInteraction
+  );
+};
 
 const handleMessageClick = async (
   interaction: ButtonInteraction,
   context: ButtonKit,
-  workout: HevyWorkout
+  workout: HevyWorkout,
+  originalInteraction?:
+    | ChatInputCommandInteraction
+    | StringSelectMenuInteraction
 ) => {
   context.dispose();
   const desiredFormat = interaction.customId.split("--")[1];
 
   if (interaction.customId.startsWith("sendInChat")) {
-    if (!interaction.deferred) await interaction.deferReply();
-    await interaction.followUp({
-      flags: MessageFlags.IsComponentsV2,
-      components: [
-        await toComponent(
-          workout,
-          (["simple", "standard", "detailed"].includes(desiredFormat)
-            ? desiredFormat
-            : "simple") as WorkoutComponentFormat
-        ),
-      ],
-    });
+    let components = [];
+
+    if (originalInteraction) {
+      if (originalInteraction.isChatInputCommand())
+        components.push(commandPrefix(originalInteraction));
+      await originalInteraction.deleteReply();
+    }
+
+    components.push(
+      await toComponent(workout, desiredFormat as WorkoutComponentFormat)
+    );
+
+    if (interaction.channel && interaction.channel instanceof TextChannel) {
+      // send directly in channel
+      await interaction.channel.send({
+        flags: MessageFlags.IsComponentsV2,
+        components,
+      });
+    } else {
+      if (!interaction.deferred) await interaction.deferReply();
+      // to follow up as fallback
+      await interaction.followUp({
+        flags: MessageFlags.IsComponentsV2,
+        components,
+      });
+    }
+
+    sendActivity(`Someone **shared a workout**.`);
 
     track({
       name: "workout shared",

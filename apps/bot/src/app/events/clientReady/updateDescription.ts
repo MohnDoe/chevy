@@ -11,13 +11,13 @@ const handler: EventHandler<"clientReady"> = (client) => {
     });
   } else {
     client.application.edit({
-      description: `A Hevy companion app. Use </hevy link:1417150032951377961> to get started !
+      description: `A Hevy companion app. Share your workout now using </workout latest:1417150032951377960> or </workout recent:1417150032951377960>.
 
-Share your workout now using </workout latest:1417150032951377960> or </workout recent:1417150032951377960>.
+Use </hevy link:1417150032951377961> to get started !
 
-https://chevy.doe.cool/ - \`v${botVersion}\`
+https://chevy.fit/add-bot
 
-(Not affiliated with Hevy.)
+(Chevy is not affiliated with Hevy) - \`v${botVersion}\`
 `,
     });
   }
