@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "@commandkit/analytics": "^1.2.0-rc.9",
-    "@prisma/client": "latest"
+    "@commandkit/tasks": "^1.2.0-rc.11",
+    "@prisma/client": "latest",
+    "bullmq": "^5.58.7"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
