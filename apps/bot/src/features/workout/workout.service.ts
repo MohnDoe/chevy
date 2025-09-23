@@ -13,6 +13,7 @@ import {
   subtext,
   userMention,
   TextChannel,
+  BaseInteraction,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
@@ -29,6 +30,8 @@ import {
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
+import { prisma } from "@repo/db";
+import { ShareReason } from "../../../../../packages/database/generated/prisma";
 
 // From parsers.ts
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
@@ -189,7 +192,9 @@ const handleMessageClick = async (
     | StringSelectMenuInteraction
 ) => {
   context.dispose();
-  const desiredFormat = interaction.customId.split("--")[1];
+  const desiredFormat = interaction.customId.split(
+    "--"
+  )[1] as WorkoutComponentFormat;
 
   if (interaction.customId.startsWith("sendInChat")) {
     let components = [];
@@ -200,9 +205,7 @@ const handleMessageClick = async (
       await originalInteraction.deleteReply();
     }
 
-    components.push(
-      await toComponent(workout, desiredFormat as WorkoutComponentFormat)
-    );
+    components.push(await toComponent(workout, desiredFormat));
 
     if (interaction.channel && interaction.channel instanceof TextChannel) {
       // send directly in channel
@@ -218,6 +221,14 @@ const handleMessageClick = async (
         components,
       });
     }
+
+    saveWorkoutShare(
+      workout,
+      interaction.user,
+      interaction.channel,
+      "commandUsed",
+      desiredFormat
+    );
 
     sendActivity(`Someone **shared a workout**.`);
 
@@ -236,7 +247,7 @@ const handleMessageClick = async (
       await changeWorkoutFormat(
         interaction as unknown as ButtonInteraction,
         workout,
-        desiredFormat as WorkoutComponentFormat
+        desiredFormat
       );
 
       track({
@@ -262,4 +273,43 @@ const handleMessageClick = async (
       content: `Unhandle interaction  ${interaction.customId}`,
     });
   }
+};
+
+const saveWorkoutShare = async (
+  workout: HevyWorkout,
+  discordUser: BaseInteraction["user"],
+  channel: BaseInteraction["channel"],
+  reason: ShareReason,
+  format: WorkoutComponentFormat
+) => {
+  return prisma.share.create({
+    data: {
+      channelId: channel!.id,
+      channelType: channel!.type as number,
+      reason: reason,
+      format,
+      Workout: {
+        connectOrCreate: {
+          where: {
+            hevyWorkoutId: workout.id,
+          },
+          create: {
+            createdAt: workout.created_at,
+            hevyWorkoutId: workout.id,
+            hevyWorkoutShortId: workout.short_id,
+            User: {
+              connect: {
+                discordId: discordUser.id,
+              },
+            },
+          },
+        },
+      },
+      sharedBy: {
+        connect: {
+          discordId: discordUser.id,
+        },
+      },
+    },
+  });
 };
