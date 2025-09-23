@@ -61,7 +61,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -75,7 +76,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -89,7 +91,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -139,13 +142,15 @@ export async function followUpWithWorkoutEphemeral(
 async function changeWorkoutFormat(
   interaction: ButtonInteraction,
   workout: HevyWorkout,
-  format: WorkoutComponentFormat
+  format: WorkoutComponentFormat,
+  originalInteraction?: ChatInputCommandInteraction
 ) {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
-      format
+      format,
+      originalInteraction
     )) as InteractionEditReplyOptions
   );
 }
@@ -187,9 +192,7 @@ const handleMessageClick = async (
   interaction: ButtonInteraction,
   context: ButtonKit,
   workout: HevyWorkout,
-  originalInteraction?:
-    | ChatInputCommandInteraction
-    | StringSelectMenuInteraction
+  originalInteraction?: ChatInputCommandInteraction
 ) => {
   context.dispose();
   const desiredFormat = interaction.customId.split(
@@ -227,7 +230,12 @@ const handleMessageClick = async (
       interaction.user,
       interaction.channel,
       "commandUsed",
-      desiredFormat
+      desiredFormat,
+      originalInteraction?.isCommand()
+        ? originalInteraction.commandName +
+            " " +
+            originalInteraction.options.getSubcommand()
+        : undefined
     );
 
     sendActivity(`Someone **shared a workout**.`);
@@ -247,7 +255,8 @@ const handleMessageClick = async (
       await changeWorkoutFormat(
         interaction as unknown as ButtonInteraction,
         workout,
-        desiredFormat
+        desiredFormat,
+        originalInteraction
       );
 
       track({
@@ -280,7 +289,8 @@ const saveWorkoutShare = async (
   discordUser: BaseInteraction["user"],
   channel: BaseInteraction["channel"],
   reason: ShareReason,
-  format: WorkoutComponentFormat
+  format: WorkoutComponentFormat,
+  commandUsed?: string
 ) => {
   return prisma.share.create({
     data: {
@@ -288,6 +298,7 @@ const saveWorkoutShare = async (
       channelType: channel!.type as number,
       reason: reason,
       format,
+      commandUsed,
       Workout: {
         connectOrCreate: {
           where: {

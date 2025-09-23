@@ -63,6 +63,7 @@ model Share {
   channelId   String
   channelType Int
   format      String
+  commandUsed String?
   reason      ShareReason
 
   sharedBy    User?       @relation(fields: [sharerId], references: [id]) // null if bot
