@@ -31,6 +31,7 @@ import {
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
+import { handleDiscordAPIError } from "../discord/discord.service";
 
 // From parsers.ts
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
@@ -236,35 +237,7 @@ const handleMessageClick = async (
       });
     } catch (error) {
       if (error instanceof DiscordAPIError) {
-        if (!interaction.deferred) {
-          await interaction.deferReply({
-            flags: MessageFlags.Ephemeral,
-          });
-        }
-        if (error.code == 50001) {
-          await interaction.followUp({
-            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-            components: [
-              new ContainerBuilder()
-                .setAccentColor(Colors.Red)
-                .addTextDisplayComponents([
-                  new TextDisplayBuilder().setContent(
-                    "### ⚠ I do not have the permission to send messages here."
-                  ),
-                  new TextDisplayBuilder().setContent(
-                    subtext(
-                      "Ask the admin to either add Chevy in this channel or give Chevy the permission to send messages here."
-                    )
-                  ),
-                ]),
-            ],
-          });
-        } else {
-          await interaction.followUp({
-            flags: MessageFlags.Ephemeral,
-            content: "Something went wrong, please try again later.",
-          });
-        }
+        await handleDiscordAPIError(error, interaction);
       }
     }
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
