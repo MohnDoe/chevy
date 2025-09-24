@@ -9,18 +9,12 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
-  TextDisplayBuilder,
-  subtext,
-  userMention,
   TextChannel,
+  DiscordAPIError,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
-import {
-  ButtonKit,
-  OnStringSelectMenuKitSubmit,
-  StringSelectMenuKit,
-} from "commandkit";
+import { ButtonKit, StringSelectMenuKit } from "commandkit";
 import {
   commandPrefix,
   toComponent,
@@ -29,8 +23,8 @@ import {
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
+import { handleDiscordAPIError } from "../discord/error.service";
 
-// From parsers.ts
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
   `${workout.short_id}-${new Date().toISOString()}-${extra}`;
 
@@ -204,33 +198,39 @@ const handleMessageClick = async (
       await toComponent(workout, desiredFormat as WorkoutComponentFormat)
     );
 
-    if (interaction.channel && interaction.channel instanceof TextChannel) {
-      // send directly in channel
-      await interaction.channel.send({
-        flags: MessageFlags.IsComponentsV2,
-        components,
+    try {
+      if (interaction.channel && interaction.channel instanceof TextChannel) {
+        // send directly in channel
+        await interaction.channel.send({
+          flags: MessageFlags.IsComponentsV2,
+          components,
+        });
+      } else {
+        if (!interaction.deferred) await interaction.deferReply();
+        // to follow up as fallback
+        await interaction.followUp({
+          flags: MessageFlags.IsComponentsV2,
+          components,
+        });
+      }
+
+      sendActivity(`Someone **shared a workout**.`);
+
+      track({
+        name: "workout shared",
+        id: "discord_user_" + interaction.user.id,
+        data: {
+          contextType: interaction.context,
+          channelType: interaction.channel?.type,
+          format: desiredFormat,
+          responseTime: Date.now() - interaction.createdTimestamp,
+        },
       });
-    } else {
-      if (!interaction.deferred) await interaction.deferReply();
-      // to follow up as fallback
-      await interaction.followUp({
-        flags: MessageFlags.IsComponentsV2,
-        components,
-      });
+    } catch (error) {
+      if (error instanceof DiscordAPIError) {
+        await handleDiscordAPIError(error, interaction);
+      }
     }
-
-    sendActivity(`Someone **shared a workout**.`);
-
-    track({
-      name: "workout shared",
-      id: "discord_user_" + interaction.user.id,
-      data: {
-        contextType: interaction.context,
-        channelType: interaction.channel?.type,
-        format: desiredFormat,
-        responseTime: Date.now() - interaction.createdTimestamp,
-      },
-    });
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
     if (["simple", "standard", "detailed"].includes(desiredFormat)) {
       await changeWorkoutFormat(
