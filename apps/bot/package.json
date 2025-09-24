@@ -1,6 +1,6 @@
 {
   "name": "bot",
-  "version": "0.1.5b",
+  "version": "0.1.6",
   "description": "Discord bot.",
   "type": "module",
   "author": "MohnDoe",
