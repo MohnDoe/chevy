@@ -13,6 +13,8 @@ import {
   subtext,
   userMention,
   TextChannel,
+  DiscordAPIError,
+  Colors,
 } from "discord.js";
 import { track } from "commandkit/analytics";
 
@@ -204,33 +206,67 @@ const handleMessageClick = async (
       await toComponent(workout, desiredFormat as WorkoutComponentFormat)
     );
 
-    if (interaction.channel && interaction.channel instanceof TextChannel) {
-      // send directly in channel
-      await interaction.channel.send({
-        flags: MessageFlags.IsComponentsV2,
-        components,
+    try {
+      if (interaction.channel && interaction.channel instanceof TextChannel) {
+        // send directly in channel
+        await interaction.channel.send({
+          flags: MessageFlags.IsComponentsV2,
+          components,
+        });
+      } else {
+        if (!interaction.deferred) await interaction.deferReply();
+        // to follow up as fallback
+        await interaction.followUp({
+          flags: MessageFlags.IsComponentsV2,
+          components,
+        });
+      }
+
+      sendActivity(`Someone **shared a workout**.`);
+
+      track({
+        name: "workout shared",
+        id: "discord_user_" + interaction.user.id,
+        data: {
+          contextType: interaction.context,
+          channelType: interaction.channel?.type,
+          format: desiredFormat,
+          responseTime: Date.now() - interaction.createdTimestamp,
+        },
       });
-    } else {
-      if (!interaction.deferred) await interaction.deferReply();
-      // to follow up as fallback
-      await interaction.followUp({
-        flags: MessageFlags.IsComponentsV2,
-        components,
-      });
+    } catch (error) {
+      if (error instanceof DiscordAPIError) {
+        if (!interaction.deferred) {
+          await interaction.deferReply({
+            flags: MessageFlags.Ephemeral,
+          });
+        }
+        if (error.code == 50001) {
+          await interaction.followUp({
+            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+            components: [
+              new ContainerBuilder()
+                .setAccentColor(Colors.Red)
+                .addTextDisplayComponents([
+                  new TextDisplayBuilder().setContent(
+                    "### ⚠ I do not have the permission to send messages here."
+                  ),
+                  new TextDisplayBuilder().setContent(
+                    subtext(
+                      "Ask the admin to either add Chevy in this channel or give Chevy the permission to send messages here."
+                    )
+                  ),
+                ]),
+            ],
+          });
+        } else {
+          await interaction.followUp({
+            flags: MessageFlags.Ephemeral,
+            content: "Something went wrong, please try again later.",
+          });
+        }
+      }
     }
-
-    sendActivity(`Someone **shared a workout**.`);
-
-    track({
-      name: "workout shared",
-      id: "discord_user_" + interaction.user.id,
-      data: {
-        contextType: interaction.context,
-        channelType: interaction.channel?.type,
-        format: desiredFormat,
-        responseTime: Date.now() - interaction.createdTimestamp,
-      },
-    });
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
     if (["simple", "standard", "detailed"].includes(desiredFormat)) {
       await changeWorkoutFormat(
