@@ -7,8 +7,11 @@ import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ApplicationIntegrationType,
+  InteractionContextType,
   MessageFlags,
 } from "discord.js";
+
+import { setAutoShareEnabledStatus } from "@/features/core/user.service";
 
 export const metadata: CommandMetadata = {};
 
@@ -17,6 +20,7 @@ export const command: CommandData = {
   description: "Chevy's auto-share feature settings.",
   integration_types: [ApplicationIntegrationType.GuildInstall],
   type: ApplicationCommandType.ChatInput,
+  contexts: [InteractionContextType.Guild],
   options: [
     {
       type: ApplicationCommandOptionType.Subcommand,
@@ -43,17 +47,20 @@ export async function chatInput({
 }: ChatInputCommandContext) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
+  const user = store.get("user");
   const subcommand = interaction.options.getSubcommand();
 
   switch (subcommand) {
     case "enable":
-      await interaction.reply("Auto-share enabled.");
+      await setAutoShareEnabledStatus(interaction.guildId!, user.id, true);
+      await interaction.followUp("Auto-share enabled on this server.");
       break;
     case "disable":
-      await interaction.reply("Auto-share disabled.");
+      await setAutoShareEnabledStatus(interaction.guildId!, user.id, false);
+      await interaction.followUp("Auto-share disabled on this server.");
       break;
     case "status":
-      await interaction.reply("Auto-share status.");
+      await interaction.followUp("Auto-share status.");
       break;
   }
 }
