@@ -45,3 +45,11 @@ export const saveAutoShareConfig = async (
     },
   });
 };
+
+export const getAutoShareConfig = async (guildId: string) => {
+  return await prisma.serverAutoShareConfig.findUnique({
+    where: {
+      guildId,
+    },
+  });
+};

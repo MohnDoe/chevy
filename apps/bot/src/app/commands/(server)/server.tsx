@@ -20,6 +20,7 @@ import {
   ApplicationIntegrationType,
   bold,
   ButtonStyle,
+  channelMention,
   ChannelSelectMenuInteraction,
   ChannelType,
   Colors,
@@ -28,9 +29,11 @@ import {
   SeparatorSpacingSize,
   StringSelectMenuInteraction,
   TextChannel,
+  underline,
 } from "discord.js";
 import { AutoShareWorkoutFormat } from "../../../../../../packages/database/generated/prisma";
 import {
+  getAutoShareConfig,
   saveAutoShareConfig,
   upsertServer,
 } from "@/features/core/server.service";
@@ -99,27 +102,79 @@ export const command: CommandData = {
   ],
 };
 
-export async function chatInput({
-  interaction,
-  store,
-}: ChatInputCommandContext) {
+export async function chatInput({ interaction }: ChatInputCommandContext) {
+  const subcommandGroup = interaction.options.getSubcommandGroup();
+  const subcommand = interaction.options.getSubcommand();
+  const guildId = interaction.guildId!;
+
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
-  const subcommandGroup = interaction.options.getSubcommandGroup();
-  const subcommand = interaction.options.getSubcommand();
 
   if (subcommandGroup == "auto-share") {
     switch (subcommand) {
       case "info":
-        await interaction.followUp({
-          flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: settingsComponents(),
-        });
+        const serverAutoShareConfig = await getAutoShareConfig(guildId);
+
+        if (!serverAutoShareConfig) {
+          await interaction.followUp({
+            flags: MessageFlags.Ephemeral,
+            components: [
+              <TextDisplay>
+                You don't have auto-share set-up yet. Use `/server auto-share
+                configure` to set it up now !
+              </TextDisplay>,
+            ],
+          });
+        } else {
+          await interaction.followUp({
+            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+            components: [
+              <Container accentColor={Colors.Yellow}>
+                <TextDisplay>### What is auto-share?</TextDisplay>
+                <TextDisplay>
+                  Auto-share allows Chevy to share **automatically** new
+                  workouts from your members in a dedicated channel.
+                </TextDisplay>
+                <TextDisplay>
+                  You can configure auto-share with `/server auto-share
+                  configure`.
+                </TextDisplay>
+                <TextDisplay>
+                  -# Members can opt-in or out whenever they choose.
+                </TextDisplay>
+              </Container>,
+              <Separator
+                spacing={SeparatorSpacingSize.Small}
+                divider={false}
+              />,
+              <TextDisplay>
+                Auto-share is
+                {underline(
+                  serverAutoShareConfig.enabled ? "enabled" : "disabled"
+                )}
+                !
+              </TextDisplay>,
+              <TextDisplay>
+                New workouts will be shared
+                {serverAutoShareConfig.channelId
+                  ? `in ${channelMention(serverAutoShareConfig.channelId)}`
+                  : bold("nowhere")}
+                in a {bold(serverAutoShareConfig.workoutFormat)} format.
+              </TextDisplay>,
+              <Separator
+                spacing={SeparatorSpacingSize.Small}
+                divider={false}
+              />,
+              <TextDisplay>
+                -# **23 members** are currently opted-in to auto-share. 🎉
+              </TextDisplay>,
+            ],
+          });
+        }
         break;
 
       case "configure":
-        const guildId = interaction.guildId!;
         const enabled = interaction.options.getBoolean("enabled") as boolean;
         const channel =
           interaction.options.getChannel<ChannelType.GuildText>("channel")!;
@@ -154,117 +209,3 @@ export async function chatInput({
     components: [<TextDisplay>Unknown command.</TextDisplay>],
   });
 }
-
-const handleSettingsChange = async (
-  interaction: StringSelectMenuInteraction | ChannelSelectMenuInteraction,
-  context: StringSelectMenuKit | ChannelSelectMenuKit
-) => {
-  await interaction.deferUpdate();
-  await interaction.editReply({
-    components: settingsComponents(),
-  });
-};
-
-const settingsComponents = () => {
-  return (
-    <>
-      <TextDisplay>
-        Auto-share allows Chevy to share automatically a workout whenever a
-        member completes their Hevy workout.
-      </TextDisplay>
-      <Separator spacing={SeparatorSpacingSize.Large} />
-      <TextDisplay>## Current settings</TextDisplay>
-      <Container accentColor={Colors.DarkButNotBlack}>
-        <TextDisplay content={`### Auto-share status`} />
-        <ActionRow>
-          <StringSelectMenu
-            customId={`autoShareStatusSelect---${new Date().toISOString()}`}
-            maxValues={1}
-            minValues={1}
-            onSelect={(i, c) =>
-              handleSettingsChange(
-                i as unknown as StringSelectMenuInteraction,
-                c
-              )
-            }
-            onEnd={console.log}
-          >
-            <StringSelectMenuOption
-              label="Active"
-              value="active"
-              default={_active}
-            />
-            <StringSelectMenuOption
-              label="Inactive"
-              value="nactive"
-              default={!_active}
-            />
-          </StringSelectMenu>
-        </ActionRow>
-        <Separator divider={false} />
-        <TextDisplay content={`### Destination channel`} />
-        <ActionRow>
-          <ChannelSelectMenu
-            customId={`autoShareChannelSelect---${new Date().toISOString()}`}
-            channelTypes={[ChannelType.GuildText]}
-            // defaultValues={[
-            //   {
-            //     type: SelectMenuDefaultValueType.Channel,
-            //     id: channelId,
-            //   },
-            // ]}
-            onSelect={(i, c) =>
-              handleSettingsChange(
-                i as unknown as ChannelSelectMenuInteraction,
-                c
-              )
-            }
-            onEnd={console.log}
-          />
-        </ActionRow>
-        <Separator divider={false} />
-        <TextDisplay content={`### Format`} />
-        <ActionRow>
-          <StringSelectMenu
-            customId={`autoShareFormatSelect---${new Date().toISOString()}`}
-            maxValues={1}
-            minValues={1}
-            onSelect={(i, c) =>
-              handleSettingsChange(
-                i as unknown as StringSelectMenuInteraction,
-                c
-              )
-            }
-            onEnd={console.log}
-          >
-            {Object.entries(AUTOSHARE_WORKOUT_FORMAT_LABELS).map(
-              ([key, value]) => (
-                <StringSelectMenuOption
-                  label={value}
-                  value={key}
-                  default={key == _mode.toString()}
-                />
-              )
-            )}
-          </StringSelectMenu>
-        </ActionRow>
-      </Container>
-      <TextDisplay>
-        {_participantCount} members are currently auto-sharing on this server.
-      </TextDisplay>
-      <ActionRow>
-        {new ButtonKit()
-          .setLabel("Save")
-          .setStyle(ButtonStyle.Primary)
-          .setCustomId("changeAutoShareSettings")
-          .onClick(() => {}, { once: true })}
-
-        {new ButtonKit()
-          .setLabel("Cancel")
-          .setStyle(ButtonStyle.Secondary)
-          .setCustomId("cancelAutoShareSettings")
-          .onClick(() => {}, { once: true })}
-      </ActionRow>
-    </>
-  );
-};
