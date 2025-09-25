@@ -25,7 +25,7 @@ export const saveAutoShareConfig = async (
       guildId,
     },
     data: {
-      AutoShareConfig: {
+      ServerAutoShareConfig: {
         upsert: {
           where: {
             guildId,

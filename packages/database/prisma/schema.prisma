@@ -23,17 +23,19 @@ model User {
   Shares Share[]
 
   Workouts Workout[]
+
+  UserAutoShareConfig UserAutoShareConfig[]
 }
 
 model Workout {
-  id                 String   @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   hevyWorkoutId      String   @unique
   hevyWorkoutShortId String   @unique
   createdAt          DateTime
 
-  User               User     @relation(fields: [userId], references: [id])
-  userId             String   @db.Uuid
+  User   User   @relation(fields: [userId], references: [id])
+  userId String @db.Uuid
 
   Shares Share[]
 }
@@ -41,8 +43,9 @@ model Workout {
 model Server {
   guildId String @id @unique
 
-  AutoShareConfig ServerAutoShareConfig?
-  
+  ServerAutoShareConfig ServerAutoShareConfig?
+  UserAutoShareConfig   UserAutoShareConfig[]
+
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
@@ -54,14 +57,28 @@ enum AutoShareWorkoutFormat {
 }
 
 model ServerAutoShareConfig {
-  Server Server  @relation(fields: [guildId], references: [guildId])
+  Server  Server @relation(fields: [guildId], references: [guildId])
   guildId String @id @unique
 
+  enabled       Boolean                @default(false)
+  channelId     String?
+  workoutFormat AutoShareWorkoutFormat
+  updatedAt     DateTime               @updatedAt
+  createdAt     DateTime               @default(now())
+}
+
+model UserAutoShareConfig {
+  User    User   @relation(fields: [userId], references: [id])
+  userId  String @db.Uuid 
+  Server  Server @relation(fields: [guildId], references: [guildId])
+  guildId String
+
   enabled Boolean @default(false)
-  channelId String?
-  workoutFormat AutoShareWorkoutFormat 
-  updatedAt DateTime @updatedAt
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, guildId])
 }
 
 enum ShareReason {
@@ -70,10 +87,10 @@ enum ShareReason {
 }
 
 model Share {
-  id          String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  Workout     Workout     @relation(fields: [workoutId], references: [id])
-  workoutId   String      
+  Workout   Workout @relation(fields: [workoutId], references: [id])
+  workoutId String
 
   channelId   String
   channelType Int
@@ -81,8 +98,8 @@ model Share {
   commandUsed String?
   reason      ShareReason
 
-  sharedBy    User?       @relation(fields: [sharerId], references: [id]) // null if bot
-  sharerId    String?    @db.Uuid
-  
-  createdAt   DateTime    @default(now())
+  sharedBy User?   @relation(fields: [sharerId], references: [id]) // null if bot
+  sharerId String? @db.Uuid
+
+  createdAt DateTime @default(now())
 }
