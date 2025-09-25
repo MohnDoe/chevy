@@ -27,23 +27,19 @@ import {
   MessageFlags,
   SeparatorSpacingSize,
   StringSelectMenuInteraction,
+  TextChannel,
 } from "discord.js";
 import { AutoShareWorkoutFormat } from "../../../../../../packages/database/generated/prisma";
-import { upsertServer } from "@/features/core/server.service";
-
-const AUTOSHARE_WORKOUT_FORMAT_LABELS: Record<AutoShareWorkoutFormat, string> =
-  {
-    [AutoShareWorkoutFormat.line]: "Just a line",
-    [AutoShareWorkoutFormat.compact]: "Just some details",
-    [AutoShareWorkoutFormat.detailed]: "Full details!",
-  };
+import {
+  saveAutoShareConfig,
+  upsertServer,
+} from "@/features/core/server.service";
 
 export const metadata: CommandMetadata = {
   userPermissions: ["ManageGuild"],
 };
 
 const _active = true;
-const _channelId = "1418237114470109376";
 const _mode = AutoShareWorkoutFormat.line;
 const _participantCount = 23;
 
@@ -60,14 +56,14 @@ export const command: CommandData = {
       type: ApplicationCommandOptionType.SubcommandGroup,
       options: [
         {
-          name: "set",
+          name: "configure",
           description: "Configure auto-share feature.",
           type: ApplicationCommandOptionType.Subcommand,
           options: [
             {
-              name: "active",
+              name: "enabled",
               description:
-                "Should auto-share be active and sending new workouts?",
+                "Should auto-share be enabled and sending new workouts?",
               type: ApplicationCommandOptionType.Boolean,
               required: true,
             },
@@ -75,26 +71,21 @@ export const command: CommandData = {
               name: "channel",
               description: "Destination channel",
               type: ApplicationCommandOptionType.Channel,
+              channel_types: [ChannelType.GuildText],
               required: true,
             },
             {
               name: "format",
               description: "What does the message look like?",
               type: ApplicationCommandOptionType.String,
-              choices: Object.entries(AUTOSHARE_WORKOUT_FORMAT_LABELS).map(
-                ([name, value]) => ({
-                  name,
-                  value,
+              choices: Object.entries(AutoShareWorkoutFormat).map(
+                ([key, value]) => ({
+                  name: key,
+                  value: value,
                 })
               ),
 
               required: true,
-            },
-            {
-              name: "mention",
-              description:
-                "Who should Chevy ping when sharing? (Leave empty to disable)",
-              type: ApplicationCommandOptionType.Role,
             },
           ],
         },
@@ -127,8 +118,28 @@ export async function chatInput({
         });
         break;
 
-      case "set":
-        await upsertServer(interaction.guildId!);
+      case "configure":
+        const guildId = interaction.guildId!;
+        const enabled = interaction.options.getBoolean("enabled") as boolean;
+        const channel =
+          interaction.options.getChannel<ChannelType.GuildText>("channel")!;
+        const format = interaction.options.getString(
+          "format"
+        ) as AutoShareWorkoutFormat;
+        await upsertServer(guildId);
+
+        await saveAutoShareConfig(
+          guildId,
+          enabled,
+          channel as unknown as TextChannel,
+          format
+        );
+
+        await interaction.followUp({
+          flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+          components: [<TextDisplay>Settings saved.</TextDisplay>],
+        });
+
         break;
       default:
         await interaction.followUp({
