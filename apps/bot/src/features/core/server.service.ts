@@ -53,3 +53,12 @@ export const getAutoShareConfig = async (guildId: string) => {
     },
   });
 };
+
+export const getServerAutoShareParticipantsCount = async (guildId: string) => {
+  return await prisma.userAutoShareConfig.count({
+    where: {
+      guildId,
+      enabled: true,
+    },
+  });
+};

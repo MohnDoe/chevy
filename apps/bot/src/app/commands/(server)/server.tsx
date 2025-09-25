@@ -1,4 +1,3 @@
-import { prisma } from "@repo/db";
 import {
   ActionRow,
   ButtonKit,
@@ -34,6 +33,7 @@ import {
 import { AutoShareWorkoutFormat } from "../../../../../../packages/database/generated/prisma";
 import {
   getAutoShareConfig,
+  getServerAutoShareParticipantsCount,
   saveAutoShareConfig,
   upsertServer,
 } from "@/features/core/server.service";
@@ -127,6 +127,9 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
             ],
           });
         } else {
+          const participantCount = await getServerAutoShareParticipantsCount(
+            guildId
+          );
           await interaction.followUp({
             flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
             components: [
@@ -167,7 +170,8 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
                 divider={false}
               />,
               <TextDisplay>
-                -# **23 members** are currently opted-in to auto-share. 🎉
+                -# **{participantCount} members** are currently opted-in to
+                auto-share. 🎉
               </TextDisplay>,
             ],
           });
