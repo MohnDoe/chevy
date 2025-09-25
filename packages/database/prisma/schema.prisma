@@ -42,6 +42,9 @@ model Server {
   guildId String @id @unique
 
   AutoShareConfig ServerAutoShareConfig?
+  
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 enum AutoShareWorkoutFormat {
@@ -54,7 +57,7 @@ model ServerAutoShareConfig {
   Server Server  @relation(fields: [guildId], references: [guildId])
   guildId String @id @unique
 
-  isEnable Boolean @default(false)
+  enabled Boolean @default(false)
   channelId String?
   workoutFormat AutoShareWorkoutFormat 
   updatedAt DateTime @updatedAt
