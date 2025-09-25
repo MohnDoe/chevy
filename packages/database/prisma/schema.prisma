@@ -20,8 +20,6 @@ model User {
   updatedAt           DateTime @updatedAt
   lastInteraction     DateTime @default(now())
 
-  OwnedServers Server[]
-
   Shares Share[]
 
   Workouts Workout[]
@@ -41,12 +39,26 @@ model Workout {
 }
 
 model Server {
-  id        String @id @default(uuid())
-  discordId String @unique
-  settings  Json?
+  guildId String @id @unique
 
-  Owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId String @db.Uuid
+  AutoShareConfig ServerAutoShareConfig?
+}
+
+enum AutoShareWorkoutFormat {
+  line
+  compact
+  detailed
+}
+
+model ServerAutoShareConfig {
+  Server Server  @relation(fields: [guildId], references: [guildId])
+  guildId String @id @unique
+
+  isEnable Boolean @default(false)
+  channelId String?
+  workoutFormat AutoShareWorkoutFormat 
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 enum ShareReason {

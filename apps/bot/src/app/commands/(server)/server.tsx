@@ -1,3 +1,4 @@
+import { prisma } from "@repo/db";
 import {
   ActionRow,
   ButtonKit,
@@ -27,18 +28,14 @@ import {
   SeparatorSpacingSize,
   StringSelectMenuInteraction,
 } from "discord.js";
-
-enum AutoShareWorkoutFormat {
-  Line,
-  BitDetailed,
-  FullDetails,
-}
+import { AutoShareWorkoutFormat } from "../../../../../../packages/database/generated/prisma";
+import { upsertServer } from "@/features/core/server.service";
 
 const AUTOSHARE_WORKOUT_FORMAT_LABELS: Record<AutoShareWorkoutFormat, string> =
   {
-    [AutoShareWorkoutFormat.Line]: "Just a line",
-    [AutoShareWorkoutFormat.BitDetailed]: "Just some details",
-    [AutoShareWorkoutFormat.FullDetails]: "Full details!",
+    [AutoShareWorkoutFormat.line]: "Just a line",
+    [AutoShareWorkoutFormat.compact]: "Just some details",
+    [AutoShareWorkoutFormat.detailed]: "Full details!",
   };
 
 export const metadata: CommandMetadata = {
@@ -47,7 +44,7 @@ export const metadata: CommandMetadata = {
 
 const _active = true;
 const _channelId = "1418237114470109376";
-const _mode = AutoShareWorkoutFormat.Line;
+const _mode = AutoShareWorkoutFormat.line;
 const _participantCount = 23;
 
 export const command: CommandData = {
@@ -80,17 +77,6 @@ export const command: CommandData = {
               type: ApplicationCommandOptionType.Channel,
               required: true,
             },
-            // {
-            //   name: "mode",
-            //   description: "Choose a frequency",
-            //   type: ApplicationCommandOptionType.String,
-            //   choices: [
-            //     { name: "Real-time", value: "real-time" },
-            //     { name: "Daily", value: "daily" },
-            //     { name: "Weekly", value: "real-time" },
-            //   ],
-            //   required: true,
-            // },
             {
               name: "format",
               description: "What does the message look like?",
@@ -142,6 +128,7 @@ export async function chatInput({
         break;
 
       case "set":
+        await upsertServer(interaction.guildId!);
         break;
       default:
         await interaction.followUp({
