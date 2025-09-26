@@ -25,8 +25,7 @@ import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { handleDiscordAPIError } from "../discord/error.service";
-import { prisma } from "@repo/db";
-import { ShareReason } from "../../../../../packages/database/generated/prisma";
+import { prisma, ShareReason } from "@repo/db";
 
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
   `${workout.short_id}-${new Date().toISOString()}-${extra}`;

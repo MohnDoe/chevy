@@ -30,13 +30,13 @@ import {
   TextChannel,
   underline,
 } from "discord.js";
-import { AutoShareWorkoutFormat } from "../../../../../../packages/database/generated/prisma";
 import {
   getAutoShareConfig,
   getServerAutoShareParticipantsCount,
   saveAutoShareConfig,
   upsertServer,
 } from "@/features/core/server.service";
+import { AutoShareWorkoutFormat } from "@repo/db";
 
 export const metadata: CommandMetadata = {
   userPermissions: ["ManageGuild"],

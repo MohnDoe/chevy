@@ -1,9 +1,4 @@
-import { prisma } from "@repo/db";
-import {
-  Server,
-  User,
-  Workout,
-} from "../../../../../packages/database/generated/prisma";
+import { prisma, Server, User } from "@repo/db";
 import { getUserWorkouts } from "../hevy/hevy.api";
 import { updateUserLastWorkoutCheck } from "../core/user.service";
 import client from "@/app";
