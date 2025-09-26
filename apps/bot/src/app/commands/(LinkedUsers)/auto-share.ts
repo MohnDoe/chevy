@@ -12,6 +12,7 @@ import {
 } from "discord.js";
 
 import { setAutoShareEnabledStatus } from "@/features/core/user.service";
+import { getServerAutoShareParticipantsCount } from "@/features/core/server.service";
 
 export const metadata: CommandMetadata = {};
 
@@ -52,11 +53,11 @@ export async function chatInput({
 
   switch (subcommand) {
     case "enable":
-      await setAutoShareEnabledStatus(interaction.guildId!, user.id, true);
+      await setAutoShareEnabledStatus(interaction.guildId!, user, true);
       await interaction.followUp("Auto-share enabled on this server.");
       break;
     case "disable":
-      await setAutoShareEnabledStatus(interaction.guildId!, user.id, false);
+      await setAutoShareEnabledStatus(interaction.guildId!, user, false);
       await interaction.followUp("Auto-share disabled on this server.");
       break;
     case "status":

@@ -1,8 +1,14 @@
+import { upsertServer } from "@/features/core/server.service";
 import { Logger, type MiddlewareContext } from "commandkit";
 import { AnalyticsEvents, useAnalytics } from "commandkit/analytics";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
-  Logger.info("Setting up tracking filters and identifying user.");
+  Logger.info("Setting up tracking filters, identifying user and server.");
+
+  if (ctx.interaction.guildId && !ctx.store.has("server")) {
+    const server = await upsertServer(ctx.interaction.guildId);
+    ctx.store.set("server", server);
+  }
 
   const analytics = useAnalytics();
 

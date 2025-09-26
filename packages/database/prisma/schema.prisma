@@ -20,9 +20,6 @@ model User {
   updatedAt           DateTime @updatedAt
   lastInteraction     DateTime @default(now())
 
-  lastWorkoutCheck DateTime?
-  lastWorkoutId String?
-
   Shares Share[]
 
   Workouts Workout[]
@@ -78,6 +75,8 @@ model UserAutoShareConfig {
 
   enabled Boolean @default(false)
   
+  lastWorkoutCheck DateTime?
+  lastWorkoutId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

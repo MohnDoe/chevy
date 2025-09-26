@@ -1,6 +1,6 @@
 import { prisma, Server, User } from "@repo/db";
 import { getUserWorkouts } from "../hevy/hevy.api";
-import { updateUserLastWorkoutCheck } from "../core/user.service";
+import { getLastWorkoutCheck, updateUserLastWorkoutCheck } from "../core/user.service";
 import client from "@/app";
 import { HevyWorkout } from "../hevy/hevy.types";
 import { toComponent } from "../workout/workout.embeds";
@@ -21,15 +21,15 @@ const getEnabledServers = async (): Promise<Server[]> => {
 };
 
 const shareWorkoutToDiscordServer = async (
-  guildId: string,
+  server: Server,
   workout: HevyWorkout
 ) => {
-  const guild = client.guilds.cache.get(guildId);
+  const guild = client.guilds.cache.get(server.guildId);
   if (!guild) return;
 
   const serverConfig = await prisma.serverAutoShareConfig.findFirst({
     where: {
-      guildId,
+      guildId: server.guildId,
       enabled: true,
     },
   });
@@ -49,28 +49,31 @@ const shareWorkoutToDiscordServer = async (
 };
 
 const processUserWorkouts = async (user: User, server: Server) => {
+  const lastWorkoutCheck = await getLastWorkoutCheck(user.id, server.guildId);
+
+
   const latestWorkouts = await getUserWorkouts(user.hevyUsername!, 1, 1);
 
   if (latestWorkouts.length === 0) {
-    Logger.warn(`No workouts found for user ${user.hevyUsername}`);
+    Logger.warn(`S:${server.guildId} - U:${user.hevyUsername} | No workouts found for user ${user.hevyUsername}`);
     return;
   }
 
   const latestWorkout = latestWorkouts[0];
-  Logger.info(`Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`);
-  Logger.info(`Last workout check for user ${user.hevyUsername}: ${user.lastWorkoutCheck}`);
+  Logger.info(`S:${server.guildId} - U:${user.hevyUsername} | Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`);
+  Logger.info(`S:${server.guildId} - U:${user.hevyUsername} | Last workout check for user ${user.hevyUsername}: ${lastWorkoutCheck}`);
 
-
+  // TODO: FIX THIS
   if (
-    !user.lastWorkoutCheck ||
-    latestWorkout.created_at < user.lastWorkoutCheck
+    !lastWorkoutCheck ||
+    latestWorkout.created_at < lastWorkoutCheck
   ) {
-    await shareWorkoutToDiscordServer(server.guildId, latestWorkout);
+    await shareWorkoutToDiscordServer(server, latestWorkout);
   } else {
-    Logger.info(`No new workouts for user ${user.hevyUsername}`);
+    Logger.info(`S:${server.guildId} - U:${user.hevyUsername} | No new workouts for user ${user.hevyUsername}`);
   }
 
-  await updateUserLastWorkoutCheck(user.discordId);
+  await updateUserLastWorkoutCheck(user, server);
 };
 
 export const executeAutoShare = async () => {
@@ -93,10 +96,10 @@ export const executeAutoShare = async () => {
         UserAutoShareConfig: true,
       },
     });
-    Logger.info(`Found ${enabledUsers.length} enabled users in server ${server.guildId}`);
+    Logger.info(`S:${server.guildId} | Found ${enabledUsers.length} enabled users in server ${server.guildId}`);
 
     for (const user of enabledUsers) {
-      Logger.info(`Processing user ${user.discordId} - ${user.hevyUsername}`);
+      Logger.info(`S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyUsername}`);
       await processUserWorkouts(user, server);
     }
   }
