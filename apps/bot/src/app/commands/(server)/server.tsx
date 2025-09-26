@@ -118,7 +118,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
 
         if (!serverAutoShareConfig) {
           await interaction.followUp({
-            flags: MessageFlags.Ephemeral,
+            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
             components: [
               <TextDisplay>
                 You don't have auto-share set-up yet. Use `/server auto-share

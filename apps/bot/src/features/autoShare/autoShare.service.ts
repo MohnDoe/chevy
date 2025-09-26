@@ -52,28 +52,31 @@ const processUserWorkouts = async (user: User, server: Server) => {
   const latestWorkouts = await getUserWorkouts(user.hevyUsername!, 1, 1);
 
   if (latestWorkouts.length === 0) {
-    console.warn(`No workouts found for user ${user.hevyUsername}`);
+    Logger.warn(`No workouts found for user ${user.hevyUsername}`);
     return;
   }
 
   const latestWorkout = latestWorkouts[0];
-  Logger.info(`Latest workout: ${latestWorkout.name}`);
+  Logger.info(`Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`);
+  Logger.info(`Last workout check for user ${user.hevyUsername}: ${user.lastWorkoutCheck}`);
 
-  console.log(latestWorkout.created_at);
 
   if (
     !user.lastWorkoutCheck ||
     latestWorkout.created_at < user.lastWorkoutCheck
   ) {
     await shareWorkoutToDiscordServer(server.guildId, latestWorkout);
+  } else {
+    Logger.info(`No new workouts for user ${user.hevyUsername}`);
   }
 
   await updateUserLastWorkoutCheck(user.discordId);
 };
 
 export const executeAutoShare = async () => {
-  Logger.info("Executing auto share.");
   const enabledServers = await getEnabledServers();
+
+  Logger.info(`Found ${enabledServers.length} enabled servers`);
 
   for (const server of enabledServers) {
     Logger.info(`Processing server ${server.guildId}`);
@@ -90,6 +93,7 @@ export const executeAutoShare = async () => {
         UserAutoShareConfig: true,
       },
     });
+    Logger.info(`Found ${enabledUsers.length} enabled users in server ${server.guildId}`);
 
     for (const user of enabledUsers) {
       Logger.info(`Processing user ${user.discordId} - ${user.hevyUsername}`);
