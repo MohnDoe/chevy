@@ -82,7 +82,7 @@ export const getWorkout = async (
 export const getUserWorkouts = async (
   username: string,
   page = 1,
-  perPage = 50
+  perPage = 10
 ) => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(

@@ -44,3 +44,14 @@ export const getAllUserAutoShareConfigs = async (guildId: string) => {
     },
   });
 };
+
+export const updateUserLastWorkoutCheck = async (discordId: string) => {
+  return await prisma.user.update({
+    where: {
+      discordId,
+    },
+    data: {
+      lastWorkoutCheck: new Date(),
+    },
+  });
+};

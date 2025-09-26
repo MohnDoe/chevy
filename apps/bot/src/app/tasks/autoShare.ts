@@ -1,14 +1,15 @@
 import { task } from "@commandkit/tasks";
-import { Logger } from "commandkit";
 
 import autoShareConfig from "@/config/autoShare.config";
+import { executeAutoShare } from "@/features/autoShare/autoShare.service";
+import { Logger } from "commandkit";
 
 export default task({
   name: autoShareConfig.task.name,
   schedule: autoShareConfig.task.schedule,
+  immediate: true,
   async execute(ctx) {
-    Logger.info(
-      `Running ${autoShareConfig.task.name} tasks. Schedule : ${autoShareConfig.task.schedule}`
-    );
+    Logger.info("Executing auto share task");
+    await executeAutoShare();
   },
 });
