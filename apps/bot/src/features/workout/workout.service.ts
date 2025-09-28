@@ -52,7 +52,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -66,7 +67,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -80,7 +82,8 @@ const sharableWorkoutEphemeralOptions = async (
                 handleMessageClick(
                   i as unknown as ButtonInteraction,
                   c,
-                  workout
+                  workout,
+                  originalInteraction
                 ),
               { once: true, time: 60_000 }
             ),
@@ -130,13 +133,15 @@ export async function followUpWithWorkoutEphemeral(
 async function changeWorkoutFormat(
   interaction: ButtonInteraction,
   workout: HevyWorkout,
-  format: WorkoutComponentFormat
+  format: WorkoutComponentFormat,
+  originalInteraction?: ChatInputCommandInteraction
 ) {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
-      format
+      format,
+      originalInteraction
     )) as InteractionEditReplyOptions
   );
 }
@@ -179,8 +184,7 @@ const handleMessageClick = async (
   context: ButtonKit,
   workout: HevyWorkout,
   originalInteraction?:
-    | ChatInputCommandInteraction
-    | StringSelectMenuInteraction
+    ChatInputCommandInteraction
 ) => {
   context.dispose();
   const desiredFormat = interaction.customId.split("--")[1];
@@ -236,7 +240,8 @@ const handleMessageClick = async (
       await changeWorkoutFormat(
         interaction as unknown as ButtonInteraction,
         workout,
-        desiredFormat as WorkoutComponentFormat
+        desiredFormat as WorkoutComponentFormat,
+        originalInteraction
       );
 
       track({
