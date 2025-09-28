@@ -533,9 +533,13 @@ export const embedWorkout = (workout: HevyWorkout) => {
 };
 
 export const getWorkoutShortIdFromUrl = (url: string) => {
-  const match = url.match(
-    /^(?:https?:\/\/)?(?:www\.)?hevy\.com\/workout\/([A-Za-z0-9]+)\/\?$/
-  );
+  // Get shortId from URL like these:
+  // https://hevy.com/workout/lQy1QJnPgzY
+  // http://hevy.com/workout/lQy1QJnPgzY
+  // http://hevy.com/workout/lQy1QJnPgzY/
+  // hevy.com/workout/lQy1QJnPgzY
+  const match = url.match(/^(?:https?:\/\/)?(?:www\.)?hevy\.com\/workout\/([A-Za-z0-9]+)\/?$/);
+
   return match ? match[1] : null;
 };
 
