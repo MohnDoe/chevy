@@ -167,11 +167,11 @@ ${subtext("Records")}`;
       break;
   }
 
-  container = container.addSeparatorComponents(
-    new SeparatorBuilder()
-      .setSpacing(SeparatorSpacingSize.Small)
-      .setDivider(format == "standard")
-  );
+  // container = container.addSeparatorComponents(
+  //   new SeparatorBuilder()
+  //     .setSpacing(SeparatorSpacingSize.Small)
+  //     .setDivider(format == "standard")
+  // );
 
   if (format != "simple") {
     container = addExercises(container, workout.exercises, format);
@@ -193,13 +193,12 @@ ${subtext("Records")}`;
   container = container.addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
       subtext(
-        `${
-          linkedUser
-            ? `<@${linkedUser.discordId}>`
-            : hyperlink(
-                `**@${workout.username}**`,
-                `https://hevy.com/user/${workout.username}`
-              )
+        `${linkedUser
+          ? `<@${linkedUser.discordId}>`
+          : hyperlink(
+            `**@${workout.username}**`,
+            `https://hevy.com/user/${workout.username}`
+          )
         } • ${bold(
           integerToPositionString(workout.nth_workout)
         )} workout | ${time(workout.start_time, TimestampStyles.RelativeTime)}
@@ -218,6 +217,7 @@ const addExercises = (
 ) => {
   for (const [i, exercise] of exercises.entries()) {
     const exerciseVolume = getExerciseVolume(exercise);
+    let exerciseText = "";
     let exerciseTitle = "";
 
     const supersetIndicator = exercise.superset_id
@@ -244,7 +244,6 @@ const addExercises = (
         break;
       case "standard":
         exerciseTitle = `${bold(`${exercise.sets.length}x`)} ${exerciseTitle}`;
-
         break;
     }
 
@@ -252,43 +251,26 @@ const addExercises = (
       exerciseTitle = " " + exerciseTitle;
     }
 
-    // if (volume > 0) {
-    //   exerciseSection = exerciseSection
-    //     .addTextDisplayComponents(
-    //       new TextDisplayBuilder().setContent(exerciseTitle)
-    //     )
-    //     .setButtonAccessory(
-    //       new ButtonKit()
-    //         .setDisabled(true)
-    //         .setLabel(`${new Intl.NumberFormat("en-US").format(volume)} kg`)
-    //         .setStyle(ButtonStyle.Secondary)
-    //         .setCustomId(`${exercise.id}-${exercise.index}`)
-    //     );
-    // } else {
-    container = container.addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(exerciseTitle)
-    );
-    // }
+    // add exercise title
+    exerciseText += exerciseTitle;
 
     if (format == "detailed") {
+      // add sets
       const showSetNumber = exercise.sets.length > 1;
       let setsText = "";
       for (const [j, set] of exercise.sets.entries()) {
         setsText += subtext(setToTextDisplay(set, j + 1, showSetNumber));
         setsText += `\n`;
       }
-      container = container.addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(setsText)
-      );
+
+      exerciseText += `\n`;
+      exerciseText += setsText
+      exerciseText += `\n`;
     }
 
-    if (i < exercises.length - 1 && format == "detailed") {
-      container = container.addSeparatorComponents(
-        new SeparatorBuilder()
-          .setSpacing(SeparatorSpacingSize.Small)
-          .setDivider(false)
-      );
-    }
+    container = container.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(exerciseText)
+    );
   }
 
   return container;
@@ -546,8 +528,7 @@ export const getWorkoutShortIdFromUrl = (url: string) => {
 export const commandPrefix = (interaction: ChatInputCommandInteraction) =>
   new TextDisplayBuilder().setContent(
     subtext(
-      `${userMention(interaction.user.id)} used </${
-        interaction.commandName
+      `${userMention(interaction.user.id)} used </${interaction.commandName
       } ${interaction.options.getSubcommand()}:${interaction.commandId}>`
     )
   );
