@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { HevyWorkout } from "./hevy.types";
+import { HevyProfile, HevyWorkout } from "./hevy.types";
 
 const wait = require("node:timers/promises").setTimeout;
 dotenv.config();
@@ -53,7 +53,7 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
   return;
 };
 
-export const getUserProfile = async (username: string) => {
+export const getUserProfile = async (username: string): Promise<HevyProfile | null> => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/user_profile/${username}`
@@ -86,8 +86,7 @@ export const getUserWorkouts = async (
 ) => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
-      `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${
-        (page - 1) * perPage
+      `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${(page - 1) * perPage
       }`
     );
 

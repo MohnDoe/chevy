@@ -83,3 +83,35 @@ export interface HevyWorkout {
   preview_workout_likes: { username: string; profile_pic: string }[];
   is_liked_by_user: boolean;
 }
+
+export interface HevyRoutine {
+  id: string;
+  title: string;
+  short_id: string;
+  folder_id: number | null;
+}
+
+export interface HevyWeeklyWorkoutDuration {
+  week_start_date: string;
+  week_end_date: string;
+  total_seconds: number;
+}
+
+export interface HevyProfile {
+  username: string;
+  verified: boolean;
+  subscribed: boolean;
+  profile_pic: string;
+  full_name: string;
+  description: string;
+  workout_count: number;
+  is_blocked: boolean;
+  following_status: "following" | "not_following" | "pending";
+  is_followed_by_requester: boolean;
+  private_profile: boolean;
+  follower_count: number;
+  following_count: number;
+  routines: HevyRoutine[];
+  weekly_workout_durations: HevyWeeklyWorkoutDuration[];
+  mutual_followers: any[]; // You might want to define a more specific interface for mutual followers if needed
+}
