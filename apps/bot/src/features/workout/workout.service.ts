@@ -28,6 +28,7 @@ import { AutoShareWorkoutFormat, prisma, ShareReason } from "@repo/db";
 import { WorkoutComponentFormat } from "./workout.types";
 
 
+// TODO: create line format
 export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<AutoShareWorkoutFormat, WorkoutComponentFormat> = {
   line: "simple",
   compact: "standard",
@@ -233,8 +234,8 @@ const handleMessageClick = async (
         desiredFormat,
         originalInteraction?.isCommand()
           ? originalInteraction.commandName +
-              " " +
-              originalInteraction.options.getSubcommand()
+          " " +
+          originalInteraction.options.getSubcommand()
           : undefined
       );
 
@@ -321,11 +322,15 @@ export const saveWorkoutShare = async (
           },
         },
       },
-      sharedBy: {
-        connect: {
-          discordId: discordUserId,
-        },
-      },
+      sharedBy:
+        reason !== "autoShared"
+          ? {
+            connect: {
+              discordId: discordUserId,
+            },
+          }
+          : undefined,
+
     },
   });
 };

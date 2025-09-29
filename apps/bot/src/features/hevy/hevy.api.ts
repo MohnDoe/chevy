@@ -79,6 +79,7 @@ export const getWorkout = async (
   }
 };
 
+
 export const getUserWorkouts = async (
   username: string,
   page = 1,
@@ -86,8 +87,7 @@ export const getUserWorkouts = async (
 ) => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
-      `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${
-        (page - 1) * perPage
+      `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${(page - 1) * perPage
       }`
     );
 
