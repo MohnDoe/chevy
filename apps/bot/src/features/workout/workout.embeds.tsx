@@ -31,6 +31,7 @@ dayjs.extend(localizedFormat);
 
 import { getUserByHevyUsername } from "@/features/hevy/hevy.service";
 import { HevyExercise, HevySet, HevyWorkout } from "@/features/hevy/hevy.types";
+import { WorkoutComponentFormat } from "./workout.types";
 
 const SUPERSETS_PREFIXES = [
   "🟪",
@@ -59,8 +60,6 @@ const getExerciseVolume = (ex: HevyExercise) => {
     0
   );
 };
-
-export type WorkoutComponentFormat = "simple" | "standard" | "detailed";
 
 export const toComponent = async (
   workout: HevyWorkout,

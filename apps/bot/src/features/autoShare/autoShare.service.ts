@@ -1,13 +1,21 @@
-import { prisma, Server, User } from "@repo/db";
+import { Prisma, prisma, Server, ServerAutoShareConfig, User } from "@repo/db";
 import { getUserWorkouts } from "../hevy/hevy.api";
 import { getLastWorkoutCheck, updateUserLastWorkoutCheck } from "../core/user.service";
 import client from "@/app";
 import { HevyWorkout } from "../hevy/hevy.types";
-import { toComponent } from "../workout/workout.embeds";
+import { toComponent} from "../workout/workout.embeds";
 import { MessageFlags } from "discord.js";
 import { Logger } from "commandkit";
+import { AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT, saveWorkoutShare } from "../workout/workout.service";
+import { WorkoutComponentFormat } from "../workout/workout.types";
 
-const getEnabledServers = async (): Promise<Server[]> => {
+
+type ServerWithAutoShareConfig = Prisma.ServerGetPayload<{
+  include: { ServerAutoShareConfig: true };
+}>;
+
+
+const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   return await prisma.server.findMany({
     where: {
       ServerAutoShareConfig: {
@@ -22,7 +30,9 @@ const getEnabledServers = async (): Promise<Server[]> => {
 
 const shareWorkoutToDiscordServer = async (
   server: Server,
-  workout: HevyWorkout
+  user: User,
+  workout: HevyWorkout,
+  format: WorkoutComponentFormat
 ) => {
   const guild = client.guilds.cache.get(server.guildId);
   if (!guild) return;
@@ -38,17 +48,19 @@ const shareWorkoutToDiscordServer = async (
   const channel = guild.channels.cache.get(serverConfig.channelId!);
   if (!channel) return;
 
-  const workoutComponent = await toComponent(workout, "detailed");
+  const workoutComponent = await toComponent(workout, format);
 
   if (channel.isSendable()) {
     await channel.send({
       flags: MessageFlags.IsComponentsV2,
       components: [workoutComponent],
     });
+
+    saveWorkoutShare(workout, user.discordId, channel, "autoShared", format);
   }
 };
 
-const processUserWorkouts = async (user: User, server: Server) => {
+const processUserWorkouts = async (user: User, server: Server, format: WorkoutComponentFormat) => {
   const lastWorkoutCheck = await getLastWorkoutCheck(user.id, server.guildId);
 
 
@@ -68,7 +80,7 @@ const processUserWorkouts = async (user: User, server: Server) => {
     !lastWorkoutCheck ||
     latestWorkout.created_at < lastWorkoutCheck
   ) {
-    await shareWorkoutToDiscordServer(server, latestWorkout);
+    await shareWorkoutToDiscordServer(server, user, latestWorkout, format);
   } else {
     Logger.info(`S:${server.guildId} - U:${user.hevyUsername} | No new workouts for user ${user.hevyUsername}`);
   }
@@ -100,7 +112,7 @@ export const executeAutoShare = async () => {
 
     for (const user of enabledUsers) {
       Logger.info(`S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyUsername}`);
-      await processUserWorkouts(user, server);
+      await processUserWorkouts(user, server, AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT[server.ServerAutoShareConfig!.workoutFormat]);
     }
   }
 };

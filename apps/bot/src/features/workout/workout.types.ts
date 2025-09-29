@@ -1,0 +1,1 @@
+export type WorkoutComponentFormat = "simple" | "standard" | "detailed";

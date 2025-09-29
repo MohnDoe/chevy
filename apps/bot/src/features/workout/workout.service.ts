@@ -19,13 +19,20 @@ import { ButtonKit, StringSelectMenuKit } from "commandkit";
 import {
   commandPrefix,
   toComponent,
-  WorkoutComponentFormat,
 } from "./workout.embeds";
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { handleDiscordAPIError } from "../discord/error.service";
-import { prisma, ShareReason } from "@repo/db";
+import { AutoShareWorkoutFormat, prisma, ShareReason } from "@repo/db";
+import { WorkoutComponentFormat } from "./workout.types";
+
+
+export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<AutoShareWorkoutFormat, WorkoutComponentFormat> = {
+  line: "simple",
+  compact: "standard",
+  detailed: "detailed",
+};
 
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
   `${workout.short_id}-${new Date().toISOString()}-${extra}`;
@@ -112,10 +119,10 @@ const sharableWorkoutEphemeralOptions = async (
 };
 
 // From interactions.ts
-export async function followUpWithWorkoutEphemeral(
+export const followUpWithWorkoutEphemeral = async (
   interaction: ChatInputCommandInteraction,
   workout: HevyWorkout | null
-) {
+) => {
   if (workout) {
     await interaction.followUp(
       (await sharableWorkoutEphemeralOptions(
@@ -132,12 +139,12 @@ export async function followUpWithWorkoutEphemeral(
   }
 }
 
-async function changeWorkoutFormat(
+const changeWorkoutFormat = async (
   interaction: ButtonInteraction,
   workout: HevyWorkout,
   format: WorkoutComponentFormat,
   originalInteraction?: ChatInputCommandInteraction
-) {
+) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
@@ -148,7 +155,6 @@ async function changeWorkoutFormat(
   );
 }
 
-// From handlers.ts
 export const handleSelectWorkout = async (
   interaction: ButtonInteraction | StringSelectMenuInteraction,
   context: ButtonKit | StringSelectMenuKit,
@@ -221,7 +227,7 @@ const handleMessageClick = async (
 
       saveWorkoutShare(
         workout,
-        interaction.user,
+        interaction.user.id,
         interaction.channel,
         "commandUsed",
         desiredFormat,
@@ -283,9 +289,9 @@ const handleMessageClick = async (
   }
 };
 
-const saveWorkoutShare = async (
+export const saveWorkoutShare = async (
   workout: HevyWorkout,
-  discordUser: BaseInteraction["user"],
+  discordUserId: string,
   channel: BaseInteraction["channel"],
   reason: ShareReason,
   format: WorkoutComponentFormat,
@@ -309,7 +315,7 @@ const saveWorkoutShare = async (
             hevyWorkoutShortId: workout.short_id,
             User: {
               connect: {
-                discordId: discordUser.id,
+                discordId: discordUserId,
               },
             },
           },
@@ -317,7 +323,7 @@ const saveWorkoutShare = async (
       },
       sharedBy: {
         connect: {
-          discordId: discordUser.id,
+          discordId: discordUserId,
         },
       },
     },
