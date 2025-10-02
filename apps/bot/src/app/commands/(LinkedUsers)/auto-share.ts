@@ -74,7 +74,6 @@ export async function chatInput({
       let allAutoShareActiveServers = await getAllAutoShareActiveServers(user.id);
       allAutoShareActiveServers = allAutoShareActiveServers.filter(server => client.guilds.cache.get(server.guildId))
 
-      console.log(allAutoShareActiveServers);
       let components = [];
       if (allAutoShareActiveServers.length === 0) {
         components = [
