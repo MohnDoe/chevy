@@ -55,7 +55,7 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
 };
 
 export const getUserProfile = async (username: string) => {
-  'user cache';
+  'use cache';
   cacheLife('1d');
   cacheTag(`profile:username:${username}`);
   try {
@@ -72,7 +72,7 @@ export const getUserProfile = async (username: string) => {
 export const getWorkout = async (
   workoutShortId: string
 ): Promise<HevyWorkout> => {
-  'user cache';
+  'use cache';
   cacheLife('1h');
   cacheTag(`workout:shortId:${workoutShortId}`);
   try {
