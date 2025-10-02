@@ -6,6 +6,7 @@ import { toComponent } from "../workout/workout.embeds";
 import { MessageFlags } from "discord.js";
 import { Logger } from "commandkit";
 import { AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT, saveWorkoutShare } from "../workout/workout.service";
+import { cacheLife, cacheTag } from "@commandkit/cache";
 
 
 type ServerWithAutoShareConfig = Prisma.ServerGetPayload<{
@@ -26,6 +27,9 @@ type ShareWithWorkout = Prisma.ShareGetPayload<{
 
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
+  'use cache';
+  cacheLife('30d');
+  cacheTag('autoShare:enabledServers');
   return await prisma.server.findMany({
     where: {
       ServerAutoShareConfig: {
@@ -132,6 +136,27 @@ const getUserLastAutoShares = async (user: User, serverAutoShareConfig: ServerAu
   });
 }
 
+const getEnabledUsers = async (guildId: string): Promise<User[]> => {
+  'use cache';
+  cacheLife('30d');
+  cacheTag(`autoShare:enabledUsers:server:${guildId}`);
+
+  const enabledUsers = await prisma.user.findMany({
+    where: {
+      UserAutoShareConfig: {
+        some: {
+          guildId,
+          enabled: true,
+        },
+      },
+    },
+    include: {
+      UserAutoShareConfig: true,
+    },
+  });
+  return enabledUsers;
+
+}
 export const executeAutoShare = async () => {
   const enabledServers = await getEnabledServers();
 
@@ -139,19 +164,8 @@ export const executeAutoShare = async () => {
 
   for (const server of enabledServers) {
     Logger.info(`Processing server ${server.guildId}`);
-    const enabledUsers = await prisma.user.findMany({
-      where: {
-        UserAutoShareConfig: {
-          some: {
-            guildId: server.guildId,
-            enabled: true,
-          },
-        },
-      },
-      include: {
-        UserAutoShareConfig: true,
-      },
-    });
+    const enabledUsers = await getEnabledUsers(server.guildId);
+
     Logger.info(`S:${server.guildId} | Found ${enabledUsers.length} enabled users in server.`);
 
     for (const user of enabledUsers) {

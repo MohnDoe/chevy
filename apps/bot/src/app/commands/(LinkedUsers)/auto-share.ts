@@ -54,13 +54,16 @@ export async function chatInput({
   switch (subcommand) {
     case "enable":
       await setAutoShareEnabledStatus(interaction.guildId!, user, true);
+      // TODO : add some flair and explaination here
       await interaction.followUp("Auto-share enabled on this server.");
       break;
     case "disable":
+      // TODO : add some flair and explaination here
       await setAutoShareEnabledStatus(interaction.guildId!, user, false);
       await interaction.followUp("Auto-share disabled on this server.");
       break;
     case "status":
+      // TODO : add some flair and explaination here
       await interaction.followUp("Auto-share status.");
       break;
   }

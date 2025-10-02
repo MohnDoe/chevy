@@ -7,8 +7,9 @@ import { posthog } from "@commandkit/analytics/posthog";
 import { setDriver, tasks } from "@commandkit/tasks";
 import { BullMQDriver } from "@commandkit/tasks/bullmq";
 
-import dotenv from "dotenv";
 import { cache } from "@commandkit/cache";
+
+import dotenv from "dotenv";
 dotenv.config();
 
 
