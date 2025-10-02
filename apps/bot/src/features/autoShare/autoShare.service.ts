@@ -112,6 +112,13 @@ const getUserLastAutoShares = async (user: User, serverAutoShareConfig: ServerAu
       sharedBy: {
         is: null
       },
+      Workout: {
+        User: {
+          is: {
+            discordId: user.discordId
+          }
+        }
+      },
       channelId: serverAutoShareConfig.channelId!,
       reason: "autoShared",
     },

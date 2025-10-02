@@ -1,6 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { HevyWorkout } from "./hevy.types";
+import { cacheLife, cacheTag } from "@commandkit/cache";
 
 const wait = require("node:timers/promises").setTimeout;
 dotenv.config();
@@ -54,6 +55,9 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
 };
 
 export const getUserProfile = async (username: string) => {
+  'user cache';
+  cacheLife('1d');
+  cacheTag(`profile:username:${username}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/user_profile/${username}`
@@ -68,6 +72,9 @@ export const getUserProfile = async (username: string) => {
 export const getWorkout = async (
   workoutShortId: string
 ): Promise<HevyWorkout> => {
+  'user cache';
+  cacheLife('1h');
+  cacheTag(`workout:shortId:${workoutShortId}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/workout/${workoutShortId}`
@@ -85,6 +92,9 @@ export const getUserWorkouts = async (
   page = 1,
   perPage = 10
 ) => {
+  'use cache';
+  cacheLife('15m');
+  cacheTag(`workouts:user:username:${username}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${(page - 1) * perPage

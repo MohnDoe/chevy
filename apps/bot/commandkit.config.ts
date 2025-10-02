@@ -8,6 +8,7 @@ import { setDriver, tasks } from "@commandkit/tasks";
 import { BullMQDriver } from "@commandkit/tasks/bullmq";
 
 import dotenv from "dotenv";
+import { cache } from "@commandkit/cache";
 dotenv.config();
 
 
@@ -37,6 +38,7 @@ export default defineConfig({
         },
       },
     }),
+    cache(),
     tasks(),
   ],
 });
