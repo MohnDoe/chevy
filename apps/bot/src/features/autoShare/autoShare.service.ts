@@ -157,6 +157,30 @@ const getEnabledUsers = async (guildId: string): Promise<User[]> => {
   return enabledUsers;
 
 }
+
+export const getAllAutoShareActiveServers = async (userId: string) => {
+  return await prisma.server.findMany({
+    where: {
+      UserAutoShareConfig: {
+        some: {
+          userId,
+          enabled: true,
+        },
+      },
+      ServerAutoShareConfig: {
+        enabled: true,
+        channelId: {
+          not: null,
+        },
+      }
+    },
+    include: {
+      ServerAutoShareConfig: true,
+    },
+  })
+
+}
+
 export const executeAutoShare = async () => {
   const enabledServers = await getEnabledServers();
 
