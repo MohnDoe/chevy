@@ -11,14 +11,13 @@ import {
   MessageFlags,
 } from "discord.js";
 
-import { setAutoShareEnabledStatus } from "@/features/core/user.service";
-import { getServerAutoShareParticipantsCount } from "@/features/core/server.service";
+import { getUserAutoShareConfig, setAutoShareEnabledStatus } from "@/features/core/user.service";
 
 export const metadata: CommandMetadata = {};
 
 export const command: CommandData = {
   name: "auto-share",
-  description: "Chevy's auto-share feature settings.",
+  description: "Your auto-share settings on this server.",
   integration_types: [ApplicationIntegrationType.GuildInstall],
   type: ApplicationCommandType.ChatInput,
   contexts: [InteractionContextType.Guild],
@@ -49,22 +48,28 @@ export async function chatInput({
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const user = store.get("user");
+  const guildId = interaction.guildId!;
   const subcommand = interaction.options.getSubcommand();
 
   switch (subcommand) {
     case "enable":
-      await setAutoShareEnabledStatus(interaction.guildId!, user, true);
+      await setAutoShareEnabledStatus(guildId, user, true);
       // TODO : add some flair and explaination here
       await interaction.followUp("Auto-share enabled on this server.");
       break;
     case "disable":
       // TODO : add some flair and explaination here
-      await setAutoShareEnabledStatus(interaction.guildId!, user, false);
+      await setAutoShareEnabledStatus(guildId, user, false);
       await interaction.followUp("Auto-share disabled on this server.");
       break;
     case "status":
+      const userConfig = await getUserAutoShareConfig(guildId, user.id);
+
       // TODO : add some flair and explaination here
-      await interaction.followUp("Auto-share status.");
+      if (userConfig?.enabled)
+        await interaction.followUp("Auto-share is enabled on this server.");
+      else
+        await interaction.followUp("Auto-share is disabled on this server.");
       break;
   }
 }
