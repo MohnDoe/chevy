@@ -1,4 +1,4 @@
-import { Prisma, prisma, Server, ServerAutoShareConfig, User } from "@repo/db";
+import { Prisma, prisma, ServerAutoShareConfig, User } from "@repo/db";
 import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import client from "@/app";
 import { HevyWorkout } from "../hevy/hevy.types";
@@ -92,10 +92,10 @@ const processUserWorkouts = async (user: User, server: ServerWithAutoShareConfig
   Logger.info(`S:${server.guildId} - U:${user.hevyUsername} | Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`);
 
 
-  const lastAutoShares = await getUserLastAutoShares(user, server.ServerAutoShareConfig!)
+  const lastAutoSharesInServerChannel = await getUserLastAutoShares(user, server.ServerAutoShareConfig!)
 
-  if (lastAutoShares.length > 0) {
-    const lastAutoShare = lastAutoShares[0];
+  if (lastAutoSharesInServerChannel.length > 0) {
+    const lastAutoShare = lastAutoSharesInServerChannel[0];
 
     if (lastAutoShare.Workout.hevyWorkoutId === latestWorkout.id) {
       Logger.warn(`S:${server.guildId} - U:${user.hevyUsername} | This workout was already shared in this server.`);
