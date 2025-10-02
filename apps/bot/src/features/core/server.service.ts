@@ -1,7 +1,6 @@
-import { prisma } from "@repo/db";
-import { AutoShareWorkoutFormat } from "../../../../../packages/database/generated/prisma";
+import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
+import { AutoShareWorkoutFormat, prisma } from "@repo/db";
 import { TextChannel } from "discord.js";
-import { cache, cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
 
 export const upsertServer = async (guildId: string) => {
   return await prisma.server.upsert({
