@@ -1,50 +1,36 @@
 import {
-  ActionRow,
-  ButtonKit,
-  ChannelSelectMenu,
-  ChannelSelectMenuKit,
-  ChatInputCommandContext,
-  CommandData,
-  CommandMetadata,
-  Container,
-  Separator,
-  StringSelectMenu,
-  StringSelectMenuKit,
-  StringSelectMenuOption,
-  TextDisplay,
-} from "commandkit";
-import {
-  ApplicationCommandOptionType,
-  ApplicationCommandType,
-  ApplicationIntegrationType,
-  bold,
-  ButtonStyle,
-  channelMention,
-  ChannelSelectMenuInteraction,
-  ChannelType,
-  Colors,
-  InteractionContextType,
-  MessageFlags,
-  SeparatorSpacingSize,
-  StringSelectMenuInteraction,
-  TextChannel,
-  underline,
-} from "discord.js";
-import {
   getAutoShareConfig,
   getServerAutoShareParticipantsCount,
   saveAutoShareConfig,
   upsertServer,
 } from "@/features/core/server.service";
 import { AutoShareWorkoutFormat } from "@repo/db";
+import {
+  ChatInputCommandContext,
+  CommandData,
+  CommandMetadata,
+  Container,
+  Separator,
+  TextDisplay
+} from "commandkit";
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ApplicationIntegrationType,
+  bold,
+  channelMention,
+  ChannelType,
+  Colors,
+  InteractionContextType,
+  MessageFlags,
+  SeparatorSpacingSize,
+  TextChannel,
+  underline
+} from "discord.js";
 
 export const metadata: CommandMetadata = {
   userPermissions: ["ManageGuild"],
 };
-
-const _active = true;
-const _mode = AutoShareWorkoutFormat.line;
-const _participantCount = 23;
 
 export const command: CommandData = {
   name: "server",
