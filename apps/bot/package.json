@@ -1,6 +1,6 @@
 {
   "name": "bot",
-  "version": "0.1.7b",
+  "version": "0.1.7c",
   "description": "Discord bot.",
   "type": "module",
   "author": "MohnDoe",
@@ -26,3 +26,4 @@
     "@repo/db": "*"
   }
 }
+

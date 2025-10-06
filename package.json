@@ -1,6 +1,6 @@
 {
   "name": "chevy",
-  "version": "0.1.7b",
+  "version": "0.1.7c",
   "description": "Hevy companion",
   "author": "MohnDoe",
   "license": "MIT",
@@ -38,3 +38,4 @@
     "typescript": "^5.0.0"
   }
 }
+
