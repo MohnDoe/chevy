@@ -238,11 +238,11 @@ const generateLinkingInstructions = async (
     ];
 
     sendActivity(`Someone **linked their Hevy account**.`);
-    // TODO: move this elswhere
-    // track({
-    //   name: "hevy linking success",
-    //   id: "discord_user_" + discordUserId,
-    // });
+
+    track({
+      name: "hevy linking success",
+      id: "discord_user_" + user.discordId,
+    });
   }
 
   return components;
@@ -311,9 +311,10 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       });
 
       sendActivity(`Someone **unlinked their Hevy account**.`);
+
       track({
         name: "hevy unlinking success",
-        id: "discord_user_" + discordUserId,
+        id: "discord_user_" + user.discordId,
       });
       break;
 
