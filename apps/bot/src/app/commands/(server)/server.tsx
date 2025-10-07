@@ -4,6 +4,7 @@ import {
   saveAutoShareConfig,
   upsertServer,
 } from "@/features/core/server.service";
+import { commandMention } from "@/features/discord/command.service";
 import { AutoShareWorkoutFormat } from "@repo/db";
 import {
   ChatInputCommandContext,
@@ -11,7 +12,7 @@ import {
   CommandMetadata,
   Container,
   Separator,
-  TextDisplay
+  TextDisplay,
 } from "commandkit";
 import {
   ApplicationCommandOptionType,
@@ -25,7 +26,7 @@ import {
   MessageFlags,
   SeparatorSpacingSize,
   TextChannel,
-  underline
+  underline,
 } from "discord.js";
 
 export const metadata: CommandMetadata = {
@@ -71,7 +72,7 @@ export const command: CommandData = {
                 ([key, value]) => ({
                   name: key,
                   value: value,
-                })
+                }),
               ),
 
               required: true,
@@ -107,15 +108,15 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
             flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
             components: [
               <TextDisplay>
-                You don't have auto-share set-up yet. Use `/server auto-share
-                configure` to set it up now !
+                You don't have auto-share set-up yet. Use
+                {await commandMention(`/server auto-share configure`)} to set it
+                up now !
               </TextDisplay>,
             ],
           });
         } else {
-          const participantCount = await getServerAutoShareParticipantsCount(
-            guildId
-          );
+          const participantCount =
+            await getServerAutoShareParticipantsCount(guildId);
           await interaction.followUp({
             flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
             components: [
@@ -126,8 +127,8 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
                   workouts from your members in a dedicated channel.
                 </TextDisplay>
                 <TextDisplay>
-                  You can configure auto-share with `/server auto-share
-                  configure`.
+                  You can configure auto-share with
+                  {await commandMention(`/server auto-share configure`)}.
                 </TextDisplay>
                 <TextDisplay>
                   -# Members can opt-in or out whenever they choose.
@@ -140,7 +141,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
               <TextDisplay>
                 Auto-share is
                 {underline(
-                  serverAutoShareConfig.enabled ? "enabled" : "disabled"
+                  serverAutoShareConfig.enabled ? "enabled" : "disabled",
                 )}
                 !
               </TextDisplay>,
@@ -169,7 +170,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
         const channel =
           interaction.options.getChannel<ChannelType.GuildText>("channel")!;
         const format = interaction.options.getString(
-          "format"
+          "format",
         ) as AutoShareWorkoutFormat;
         await upsertServer(guildId);
 
@@ -177,7 +178,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
           guildId,
           enabled,
           channel as unknown as TextChannel,
-          format
+          format,
         );
 
         await interaction.followUp({

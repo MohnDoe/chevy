@@ -16,8 +16,12 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 
-import { getUserAutoShareConfig, setAutoShareEnabledStatus } from "@/features/core/user.service";
+import {
+  getUserAutoShareConfig,
+  setAutoShareEnabledStatus,
+} from "@/features/core/user.service";
 import { getAllAutoShareActiveServers } from "@/features/autoShare/autoShare.service";
+import { commandMention } from "@/features/discord/command.service";
 
 export const metadata: CommandMetadata = {};
 
@@ -50,7 +54,7 @@ export const command: CommandData = {
 export async function chatInput({
   interaction,
   store,
-  client
+  client,
 }: ChatInputCommandContext) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -71,43 +75,60 @@ export async function chatInput({
       break;
     case "status":
       const userConfig = await getUserAutoShareConfig(guildId, user.id);
-      let allAutoShareActiveServers = await getAllAutoShareActiveServers(user.id);
-      allAutoShareActiveServers = allAutoShareActiveServers.filter(server => client.guilds.cache.get(server.guildId))
+      let allAutoShareActiveServers = await getAllAutoShareActiveServers(
+        user.id,
+      );
+      allAutoShareActiveServers = allAutoShareActiveServers.filter((server) =>
+        client.guilds.cache.get(server.guildId),
+      );
 
       let components = [];
       if (allAutoShareActiveServers.length === 0) {
         components = [
           new ContainerBuilder().addTextDisplayComponents(
-            new TextDisplayBuilder().setContent("You don't particiapte in any auto-share.")
-          )]
+            new TextDisplayBuilder().setContent(
+              "You don't particiapte in any auto-share.",
+            ),
+          ),
+        ];
       } else {
         components = [
-          new TextDisplayBuilder().setContent('Your workouts will be auto-shared to the following servers :'),
+          new TextDisplayBuilder().setContent(
+            "Your workouts will be auto-shared to the following servers :",
+          ),
           new ContainerBuilder().addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
-              allAutoShareActiveServers.map(server => {
-                let text = '- ';
-                text += client.guilds.cache.get(server.guildId)!.name;
+              allAutoShareActiveServers
+                .map((server) => {
+                  let text = "- ";
+                  text += client.guilds.cache.get(server.guildId)!.name;
 
-                if (server.guildId == guildId) {
-                  text += ' ' + bold('(this server)');
-                }
+                  if (server.guildId == guildId) {
+                    text += " " + bold("(this server)");
+                  }
 
-                text += ` in ${channelMention(server.ServerAutoShareConfig!.channelId!)}`;
+                  text += ` in ${channelMention(server.ServerAutoShareConfig!.channelId!)}`;
 
-                return text;
-              }).join('\n')
-            )
+                  return text;
+                })
+                .join("\n"),
+            ),
           ),
-        ]
+        ];
       }
       if (!userConfig?.enabled) {
         components.push(
-          new ContainerBuilder().setAccentColor(Colors.Orange).addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(bold('Your auto-share is NOT enabled on this server.')),
-            new TextDisplayBuilder().setContent('Activate it with `/auto-share enable` !'),
-          )
-        )
+          new ContainerBuilder()
+            .setAccentColor(Colors.Orange)
+            .addTextDisplayComponents(
+              new TextDisplayBuilder().setContent(
+                bold("Your auto-share is NOT enabled on this server."),
+              ),
+              new TextDisplayBuilder().setContent(
+                `Activate it with ${await commandMention("auto-share enable")} !`,
+              ),
+            ),
+        );
       }
       await interaction.followUp({
         components,
