@@ -1,6 +1,7 @@
 import { defineConfig } from "commandkit";
 import { devtools } from "@commandkit/devtools";
 import { posthog } from "@commandkit/analytics/posthog";
+import { cache } from "@commandkit/cache";
 
 export default defineConfig({
   plugins: [
@@ -13,5 +14,6 @@ export default defineConfig({
         },
       },
     }),
+    cache(),
   ],
 });
