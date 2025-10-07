@@ -1,4 +1,4 @@
-
+import { revalidateTag } from "@commandkit/cache";
 import { prisma } from "@repo/db";
 
 export async function getUserByDiscordId(discordId: string) {
@@ -64,7 +64,7 @@ export async function setUserHevyUsername(discordId: string, username: string) {
 
 export async function setIsHevyProfilePrivate(
   discordId: string,
-  isPrivate: boolean
+  isPrivate: boolean,
 ) {
   return await prisma.user.update({
     where: {
@@ -78,7 +78,7 @@ export async function setIsHevyProfilePrivate(
 
 export async function setIsFollowingHevyBot(
   discordId: string,
-  follows: boolean
+  follows: boolean,
 ) {
   return await prisma.user.update({
     where: {
@@ -92,8 +92,10 @@ export async function setIsFollowingHevyBot(
 
 export async function setIsFollowedByHevyBot(
   discordId: string,
-  followed: boolean
+  followed: boolean,
 ) {
+  "use cache";
+  revalidateTag(`user:${discordId}:lastBotFollowRequestion`);
   return await prisma.user.update({
     where: {
       discordId,

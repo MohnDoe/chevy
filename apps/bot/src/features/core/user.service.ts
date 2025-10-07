@@ -4,7 +4,7 @@ import { prisma, User } from "@repo/db";
 export const setAutoShareEnabledStatus = async (
   guildId: string,
   user: User,
-  enabled: boolean
+  enabled: boolean,
 ) => {
   await prisma.userAutoShareConfig.upsert({
     where: {
@@ -29,17 +29,45 @@ export const setAutoShareEnabledStatus = async (
 
 export const getUserAutoShareConfig = async (
   guildId: string,
-  userId: string
+  userId: string,
 ) => {
-  'use cache';
+  "use cache";
   cacheTag(`autoShare:config:user:${userId}`);
-  cacheLife('30d');
+  cacheLife("30d");
   return prisma.userAutoShareConfig.findUnique({
     where: {
       userId_guildId: {
         guildId,
         userId,
       },
+    },
+  });
+};
+export const updateLastBotFollowRequest = async (user: User) => {
+  "use cache";
+  revalidateTag(`user:${user.discordId}:lastBotFollowRequestion`);
+  await prisma.user.update({
+    where: {
+      discordId: user.discordId,
+      id: user.id,
+    },
+    data: {
+      lastBotFollowRequest: new Date(),
+    },
+  });
+};
+
+export const getLastBotFollowRequest = async (user: User) => {
+  "use cache";
+  cacheTag(`user:${user.discordId}:lastBotFollowRequestion`);
+  cacheLife("30m");
+  return await prisma.user.findUnique({
+    where: {
+      discordId: user.discordId,
+      id: user.id,
+    },
+    select: {
+      lastBotFollowRequest: true,
     },
   });
 };

@@ -3,6 +3,7 @@ import { defineConfig, Logger } from "commandkit";
 import { devtools } from "@commandkit/devtools";
 
 import { posthog } from "@commandkit/analytics/posthog";
+import { cache } from "@commandkit/cache";
 
 import { setDriver, tasks } from "@commandkit/tasks";
 import { BullMQDriver } from "@commandkit/tasks/bullmq";
