@@ -8,10 +8,11 @@ const getCommandId = async (name: string): Promise<string | null> => {
     await client.application.commands.fetch();
   }
 
-  let commands = client.application.commands.cache;
-  commands.sweep((command) => command.name == name);
-  if (commands.size > 0) {
-    return commands.first()!.id;
+  const commands = client.application.commands.cache;
+
+  const correspondingCommand = commands.find((command) => command.name == name);
+  if (correspondingCommand) {
+    return correspondingCommand!.id;
   } else {
     return null;
   }
@@ -22,8 +23,6 @@ export const commandMention = async (name: string) => {
   const fullname = name;
   name = name.split(" ")[0].trim();
   const commandId = await getCommandId(name);
-
-  console.log(commandId);
 
   if (commandId) {
     return `</${fullname}:${commandId}>`;
