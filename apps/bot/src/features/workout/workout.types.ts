@@ -1,1 +1,5 @@
-export type WorkoutComponentFormat = "simple" | "standard" | "detailed";
+export type WorkoutComponentFormat =
+  | "simple"
+  | "standard"
+  | "detailed"
+  | "line";

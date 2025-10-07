@@ -29,8 +29,8 @@ export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<
   AutoShareWorkoutFormat,
   WorkoutComponentFormat
 > = {
-  line: "simple",
-  compact: "standard",
+  line: "line",
+  compact: "simple",
   detailed: "detailed",
 };
 
@@ -52,7 +52,7 @@ const sharableWorkoutEphemeralOptions = async (
       new ContainerBuilder().addActionRowComponents(
         new ActionRowBuilder<ButtonBuilder>().setComponents([
           new ButtonKit()
-            .setLabel("Simple")
+            .setLabel("Compact")
             .setDisabled(format == "simple")
             .setStyle(ButtonStyle.Secondary)
             .setCustomId(`changeWorkoutFormat--simple--${customIdSuffix}`)
