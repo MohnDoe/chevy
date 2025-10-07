@@ -1,9 +1,4 @@
-import {
-  type ChatInputCommand,
-  ChatInputCommandContext,
-  CommandMetadata,
-  ButtonKit,
-} from "commandkit";
+import { type ChatInputCommand, CommandMetadata, ButtonKit } from "commandkit";
 
 import {
   ButtonStyle,
@@ -25,7 +20,6 @@ import {
 } from "@/features/hevy/hevy.api";
 
 import {
-  getUserByDiscordId,
   setIsFollowedByHevyBot,
   setIsFollowingHevyBot,
   setIsHevyProfilePrivate,
@@ -35,16 +29,17 @@ import {
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
 import { track } from "commandkit/analytics";
 import { sendActivity } from "@/features/liveActivity/liveActivity.service";
+import {
+  getLastBotFollowRequest,
+  updateLastBotFollowRequest,
+} from "@/features/core/user.service";
+import { User } from "../../../../../../packages/database/generated/prisma";
+import dayjs from "dayjs";
 
-let targetHevyUsername: string | null = null;
-let discordUserId: string | null = null;
-let userFollowsHevyBot = false;
-let userIsFollowedByHevyBot = false;
-let hevyUserProfile: any | null = null;
-let hevyBotFollowRequestSent = false;
+const BOT_FOLLOW_REQUEST_DELAY_MINS = 1;
 
 export const getHevyUsernameOption = (
-  interaction: ChatInputCommandInteraction
+  interaction: ChatInputCommandInteraction,
 ) => {
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
 };
@@ -52,17 +47,22 @@ export const getHevyUsernameOption = (
 const followHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
     `${done ? "✅" : "⏳"}  Follow [**@${process.env
-      .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()})`
+      .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()})`,
   );
 
 const getFollowedByHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
     `${done ? "✅" : "⏳"}  Accept follow request from @${
       process.env.BOT_ON_HEVY_USERNAME
-    }`
+    }`,
   );
 
-const followHevyBotLinkButton = (isFollowing: boolean) =>
+const followHevyBotLinkButton = (
+  isFollowing: boolean,
+  targetHevyUsername: string,
+  privateProfile: boolean,
+  user: User,
+) =>
   new ButtonKit()
     .setLabel(isFollowing ? "Following" : "Check")
     .setStyle(ButtonStyle.Secondary)
@@ -74,25 +74,28 @@ const followHevyBotLinkButton = (isFollowing: boolean) =>
         await interaction.deferUpdate({ withResponse: true });
       }
 
-      userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
+      const userFollowsHevyBot = await checkIfUserFollowingBot(
+        targetHevyUsername!,
+      );
 
       if (userFollowsHevyBot) {
         await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
         await setIsFollowingHevyBot(interaction.user.id, true);
-        await setIsHevyProfilePrivate(
-          interaction.user.id,
-          hevyUserProfile.private_profile
-        );
+        await setIsHevyProfilePrivate(interaction.user.id, privateProfile);
       }
 
       context.dispose();
 
       await interaction.editReply({
-        components: await generateLinkingInstructions(),
+        components: await generateLinkingInstructions(targetHevyUsername, user),
       });
     });
 
-const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
+const refreshFollowedStatusButtonComponent = (
+  isFollowed: boolean,
+  targetHevyUsername: string,
+  user: User,
+) =>
   new ButtonKit()
     .setLabel(isFollowed ? "Followed" : "Check")
     .setStyle(ButtonStyle.Secondary)
@@ -104,8 +107,8 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
         await interaction.deferUpdate({ withResponse: true });
       }
 
-      userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-        targetHevyUsername!
+      const userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+        targetHevyUsername!,
       );
 
       if (userIsFollowedByHevyBot) {
@@ -115,24 +118,34 @@ const refreshFollowedStatusButtonComponent = (isFollowed: boolean) =>
 
       context.dispose();
       await interaction.editReply({
-        components: await generateLinkingInstructions(),
+        components: await generateLinkingInstructions(targetHevyUsername, user),
       });
     });
 
-const generatePrivateFollowInstructionsComponents = () => {
+const generatePrivateFollowInstructionsComponents = async (
+  hevyUsername: string,
+  user: User,
+) => {
+  const userIsFollowedByHevyBot =
+    await checkIfUserUserIsFollowedByBot(hevyUsername);
+
   let components: (ContainerBuilder | TextDisplayBuilder)[] = [
     userIsFollowedByHevyBot
       ? new ContainerBuilder().addTextDisplayComponents(
-          getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
+          getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
         )
       : new ContainerBuilder().addSectionComponents((section) =>
           section
             .addTextDisplayComponents(
-              getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot)
+              getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
             )
             .setButtonAccessory(
-              refreshFollowedStatusButtonComponent(userIsFollowedByHevyBot)
-            )
+              refreshFollowedStatusButtonComponent(
+                userIsFollowedByHevyBot,
+                hevyUsername,
+                user,
+              ),
+            ),
         ),
   ];
 
@@ -143,7 +156,7 @@ const generatePrivateFollowInstructionsComponents = () => {
         `Your account is set to private, @${process.env
           .BOT_ON_HEVY_USERNAME!} won't have access to your workouts, routines, etc. if you are not mutual followers.
         
-A follow request was sent out to your account, you need to accept it to proceed.`
+A follow request was sent out to your account, you need to accept it to proceed.`,
       ),
     ];
   }
@@ -151,37 +164,68 @@ A follow request was sent out to your account, you need to accept it to proceed.
   return components;
 };
 
-const generateLinkingInstructions = async () => {
+const generateLinkingInstructions = async (
+  hevyUsername: string,
+  user: User,
+) => {
+  const userFollowsHevyBot = await checkIfUserFollowingBot(hevyUsername);
+  const hevyUserProfile = await getUserProfile(hevyUsername);
+  const userIsFollowedByHevyBot =
+    await checkIfUserUserIsFollowedByBot(hevyUsername);
   let components: (TextDisplayBuilder | ContainerBuilder | SeparatorBuilder)[] =
     [
       new TextDisplayBuilder().setContent(
-        "# Welcome to your Hevy companion bot !"
+        "# Welcome to your Hevy companion bot !",
       ),
       new TextDisplayBuilder().setContent(
-        `In order to verify that you are the owner of the Hevy account **@${targetHevyUsername}** you need to follow the following steps :`
+        `In order to verify that you are the owner of the Hevy account **@${hevyUsername}** you need to follow the following steps :`,
       ),
       userFollowsHevyBot
         ? new ContainerBuilder().addTextDisplayComponents(
-            followHevyBotTextComponent(userFollowsHevyBot)
+            followHevyBotTextComponent(userFollowsHevyBot),
           )
         : new ContainerBuilder().addSectionComponents((section) =>
             section
               .addTextDisplayComponents(
-                followHevyBotTextComponent(userFollowsHevyBot)
+                followHevyBotTextComponent(userFollowsHevyBot),
               )
-              .setButtonAccessory(followHevyBotLinkButton(userFollowsHevyBot))
+              .setButtonAccessory(
+                followHevyBotLinkButton(
+                  userFollowsHevyBot,
+                  hevyUsername,
+                  hevyUserProfile.private_profile,
+                  user,
+                ),
+              ),
           ),
     ];
 
   if (userFollowsHevyBot) {
     if (hevyUserProfile && hevyUserProfile.private_profile) {
-      if (!hevyBotFollowRequestSent && !userIsFollowedByHevyBot) {
-        await followUserOnHevy(targetHevyUsername!);
-        hevyBotFollowRequestSent = true;
+      const lastBotFollowRequest = await getLastBotFollowRequest(user);
+      let shouldSendFollowRequest =
+        lastBotFollowRequest === null ||
+        lastBotFollowRequest.lastBotFollowRequest === null;
+
+      // some delay to avoid send follow requests
+      if (!shouldSendFollowRequest) {
+        shouldSendFollowRequest = dayjs(
+          lastBotFollowRequest!.lastBotFollowRequest,
+        )
+          .add(BOT_FOLLOW_REQUEST_DELAY_MINS, "minutes")
+          .isBefore(new Date());
+      }
+
+      if (shouldSendFollowRequest) {
+        await followUserOnHevy(hevyUsername);
+        await updateLastBotFollowRequest(user);
       }
       components = [
         ...components,
-        ...generatePrivateFollowInstructionsComponents(),
+        ...(await generatePrivateFollowInstructionsComponents(
+          hevyUsername,
+          user,
+        )),
       ];
     }
   }
@@ -190,32 +234,33 @@ const generateLinkingInstructions = async () => {
     components = [
       ...components,
       new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Large),
-      successfulyLinkedToHevy(targetHevyUsername!),
+      successfulyLinkedToHevy(hevyUsername),
     ];
 
     sendActivity(`Someone **linked their Hevy account**.`);
+
     track({
       name: "hevy linking success",
-      id: "discord_user_" + discordUserId,
+      id: "discord_user_" + user.discordId,
     });
   }
 
   return components;
 };
 
-export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
+export const chatInput: ChatInputCommand = async ({ interaction }) => {
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
     withResponse: true,
   });
-  discordUserId = interaction.user.id;
+  const discordUserId = interaction.user.id;
+  const user = await upsertUser(discordUserId);
   switch (interaction.options.getSubcommand()) {
     case "link":
-      await upsertUser(discordUserId);
-      targetHevyUsername = getHevyUsernameOption(
-        interaction as unknown as ChatInputCommandInteraction
+      const targetHevyUsername = getHevyUsernameOption(
+        interaction as unknown as ChatInputCommandInteraction,
       );
-      hevyUserProfile = await getUserProfile(targetHevyUsername);
+      const hevyUserProfile = await getUserProfile(targetHevyUsername);
 
       if (!hevyUserProfile) {
         await interaction.followUp({
@@ -225,19 +270,21 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
         return;
       }
 
-      userFollowsHevyBot = await checkIfUserFollowingBot(targetHevyUsername!);
+      const userFollowsHevyBot = await checkIfUserFollowingBot(
+        targetHevyUsername!,
+      );
 
       if (userFollowsHevyBot) {
         await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
         await setIsFollowingHevyBot(interaction.user.id, true);
         await setIsHevyProfilePrivate(
           interaction.user.id,
-          hevyUserProfile.private_profile
+          hevyUserProfile.private_profile,
         );
       }
 
-      userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-        targetHevyUsername!
+      const userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+        targetHevyUsername!,
       );
 
       if (userIsFollowedByHevyBot) {
@@ -247,14 +294,12 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
 
       await interaction.followUp({
         flags: MessageFlags.IsComponentsV2,
-        components: await generateLinkingInstructions(),
+        components: await generateLinkingInstructions(targetHevyUsername, user),
       });
 
       break;
 
     case "unlink":
-      const user = await getUserByDiscordId(discordUserId);
-
       if (user) {
         await setUserHevyUsername(user.discordId, "");
         await setIsFollowedByHevyBot(user.discordId, false);
@@ -266,9 +311,10 @@ export const chatInput: ChatInputCommand = async ({ interaction, client }) => {
       });
 
       sendActivity(`Someone **unlinked their Hevy account**.`);
+
       track({
         name: "hevy unlinking success",
-        id: "discord_user_" + discordUserId,
+        id: "discord_user_" + user.discordId,
       });
       break;
 
@@ -296,9 +342,9 @@ export const command = new SlashCommandBuilder()
         option
           .setName("username")
           .setDescription("Your Hevy username")
-          .setRequired(true)
-      )
+          .setRequired(true),
+      ),
   )
   .addSubcommand((sc) =>
-    sc.setName("unlink").setDescription("Unlink your Hevy account.")
+    sc.setName("unlink").setDescription("Unlink your Hevy account."),
   );

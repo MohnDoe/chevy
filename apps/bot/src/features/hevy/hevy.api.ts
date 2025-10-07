@@ -2,7 +2,6 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { HevyWorkout } from "./hevy.types";
 
-const wait = require("node:timers/promises").setTimeout;
 dotenv.config();
 
 const HEVY_API_URL = "https://api.hevyapp.com";
@@ -36,7 +35,7 @@ export const checkIfUserFollowingBot = async (userHevyUsername: string) => {
 };
 
 export const checkIfUserUserIsFollowedByBot = async (
-  userHevyUsername: string
+  userHevyUsername: string,
 ) => {
   const userProfile = await getUserProfile(userHevyUsername);
 
@@ -56,7 +55,7 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
 export const getUserProfile = async (username: string) => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
-      `/user_profile/${username}`
+      `/user_profile/${username}`,
     );
     return hevyResponse.data;
   } catch (error) {
@@ -66,11 +65,11 @@ export const getUserProfile = async (username: string) => {
 };
 
 export const getWorkout = async (
-  workoutShortId: string
+  workoutShortId: string,
 ): Promise<HevyWorkout> => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
-      `/workout/${workoutShortId}`
+      `/workout/${workoutShortId}`,
     );
     return hevyResponse.data;
   } catch (error) {
@@ -82,13 +81,13 @@ export const getWorkout = async (
 export const getUserWorkouts = async (
   username: string,
   page = 1,
-  perPage = 50
+  perPage = 50,
 ) => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${
         (page - 1) * perPage
-      }`
+      }`,
     );
 
     return hevyResponse.data.workouts as HevyWorkout[];
