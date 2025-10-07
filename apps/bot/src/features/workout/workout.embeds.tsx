@@ -65,6 +65,7 @@ export const toComponent = async (
   workout: HevyWorkout,
   format: WorkoutComponentFormat,
 ): Promise<ContainerBuilder> => {
+  // TODO : make this better pls
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
     0,

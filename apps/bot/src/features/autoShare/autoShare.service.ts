@@ -29,7 +29,7 @@ type ShareWithWorkout = Prisma.ShareGetPayload<{
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   "use cache";
-  cacheLife("30d");
+  cacheLife("1d");
   cacheTag("autoShare:enabledServers");
   return await prisma.server.findMany({
     where: {
@@ -58,14 +58,9 @@ const shareWorkoutToDiscordServer = async (
   const guild = client.guilds.cache.get(server.guildId);
   if (!guild) return;
 
-  const serverConfig = await prisma.serverAutoShareConfig.findFirst({
-    where: {
-      guildId: server.guildId,
-      enabled: true,
-    },
-  });
-  if (!serverConfig?.enabled && !serverConfig?.channelId) return;
+  const serverConfig = server.ServerAutoShareConfig;
 
+  if (!serverConfig?.enabled && !serverConfig?.channelId) return;
   const channel = guild.channels.cache.get(serverConfig.channelId!);
   if (!channel) return;
 
@@ -81,13 +76,13 @@ const shareWorkoutToDiscordServer = async (
       saveWorkoutShare(workout, user.discordId, channel, "autoShared", format);
     } catch (error) {
       Logger.error(
-        `S:${server.guildId} - U:${user.hevyUsername} | Error sending message to channel ${serverConfig.channelId}: ${error}`,
+        `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Error sending message to channel ${serverConfig.channelId}: ${error}`,
       );
-      Logger.error(error);
+      Logger.error("[auto-share ]" + error);
     }
   } else {
     Logger.warn(
-      `S:${server.guildId} - U:${user.hevyUsername} | Channel ${serverConfig.channelId} is not sendable.`,
+      `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Channel ${serverConfig.channelId} is not sendable.`,
     );
   }
 };
@@ -96,18 +91,25 @@ const processUserWorkouts = async (
   user: User,
   server: ServerWithAutoShareConfig,
 ) => {
+  if (!user.hevyUsername) {
+    Logger.warn(
+      `[auto-share] S:${server.guildId} - U:${user.discordId} | User does not have a Hevy username configured. Skipping.`,
+    );
+    return;
+  }
+
   const latestWorkouts = await getUserWorkouts(user.hevyUsername!, 1, 1);
 
   if (latestWorkouts.length === 0) {
     Logger.warn(
-      `S:${server.guildId} - U:${user.hevyUsername} | No workouts found for user ${user.hevyUsername}`,
+      `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | No workouts found for user ${user.hevyUsername}`,
     );
     return;
   }
 
   const latestWorkout = await getWorkout(latestWorkouts[0].short_id);
   Logger.info(
-    `S:${server.guildId} - U:${user.hevyUsername} | Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
+    `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
   );
 
   const lastAutoSharesInServerChannel = await getUserLastAutoShares(
@@ -120,7 +122,7 @@ const processUserWorkouts = async (
 
     if (lastAutoShare.Workout.hevyWorkoutId === latestWorkout.id) {
       Logger.warn(
-        `S:${server.guildId} - U:${user.hevyUsername} | This workout was already shared in this server.`,
+        `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | This workout was already shared in this server.`,
       );
       return;
     }
@@ -160,7 +162,7 @@ const getUserLastAutoShares = async (
 
 const getEnabledUsers = async (guildId: string): Promise<User[]> => {
   "use cache";
-  cacheLife("30d");
+  cacheLife("1d");
   cacheTag(`autoShare:enabledUsers:server:${guildId}`);
 
   const enabledUsers = await prisma.user.findMany({
@@ -203,22 +205,28 @@ export const getAllAutoShareActiveServers = async (userId: string) => {
 
 export const executeAutoShare = async () => {
   const enabledServers = await getEnabledServers();
-
-  Logger.info(`Found ${enabledServers.length} enabled servers`);
-
-  for (const server of enabledServers) {
-    Logger.info(`Processing server ${server.guildId}`);
-    const enabledUsers = await getEnabledUsers(server.guildId);
-
-    Logger.info(
-      `S:${server.guildId} | Found ${enabledUsers.length} enabled users in server.`,
-    );
-
-    for (const user of enabledUsers) {
-      Logger.info(
-        `S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyUsername}`,
-      );
-      await processUserWorkouts(user, server);
-    }
+  if (enabledServers.length === 0) {
+    Logger.info("[auto-share] No enabled servers found for auto-sharing.");
+    return;
   }
+
+  Logger.info(`[auto-share] Found ${enabledServers.length} enabled servers`);
+
+  Promise.all(
+    enabledServers.map(async (server) => {
+      Logger.info(`[auto-share] Processing server ${server.guildId}`);
+      const enabledUsers = await getEnabledUsers(server.guildId);
+
+      Logger.info(
+        `[auto-share] S:${server.guildId} | Found ${enabledUsers.length} enabled users in server.`,
+      );
+
+      for (const user of enabledUsers) {
+        Logger.info(
+          `[auto-share] S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyUsername}`,
+        );
+        await processUserWorkouts(user, server);
+      }
+    }),
+  );
 };
