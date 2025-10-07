@@ -16,10 +16,7 @@ import {
 import { track } from "commandkit/analytics";
 
 import { ButtonKit, StringSelectMenuKit } from "commandkit";
-import {
-  commandPrefix,
-  toComponent,
-} from "./workout.embeds";
+import { commandPrefix, toComponent } from "./workout.embeds";
 import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
@@ -27,9 +24,11 @@ import { handleDiscordAPIError } from "../discord/error.service";
 import { AutoShareWorkoutFormat, prisma, ShareReason } from "@repo/db";
 import { WorkoutComponentFormat } from "./workout.types";
 
-
 // TODO: create line format
-export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<AutoShareWorkoutFormat, WorkoutComponentFormat> = {
+export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<
+  AutoShareWorkoutFormat,
+  WorkoutComponentFormat
+> = {
   line: "simple",
   compact: "standard",
   detailed: "detailed",
@@ -41,7 +40,7 @@ const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
 const sharableWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
   format: WorkoutComponentFormat,
-  originalInteraction?: ChatInputCommandInteraction
+  originalInteraction?: ChatInputCommandInteraction,
 ): Promise<InteractionReplyOptions | InteractionEditReplyOptions> => {
   const workoutComponent = await toComponent(workout, format);
   const customIdSuffix = generateButtonCustomIdSuffix(workout, format);
@@ -63,9 +62,9 @@ const sharableWorkoutEphemeralOptions = async (
                   i as unknown as ButtonInteraction,
                   c,
                   workout,
-                  originalInteraction
+                  originalInteraction,
                 ),
-              { once: true, time: 60_000 }
+              { once: true, time: 60_000 },
             ),
           new ButtonKit()
             .setLabel(`Standard`)
@@ -78,9 +77,9 @@ const sharableWorkoutEphemeralOptions = async (
                   i as unknown as ButtonInteraction,
                   c,
                   workout,
-                  originalInteraction
+                  originalInteraction,
                 ),
-              { once: true, time: 60_000 }
+              { once: true, time: 60_000 },
             ),
           new ButtonKit()
             .setLabel("Detailed")
@@ -93,11 +92,11 @@ const sharableWorkoutEphemeralOptions = async (
                   i as unknown as ButtonInteraction,
                   c,
                   workout,
-                  originalInteraction
+                  originalInteraction,
                 ),
-              { once: true, time: 60_000 }
+              { once: true, time: 60_000 },
             ),
-        ])
+        ]),
       ),
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
@@ -110,9 +109,9 @@ const sharableWorkoutEphemeralOptions = async (
                 i as unknown as ButtonInteraction,
                 c,
                 workout,
-                originalInteraction
+                originalInteraction,
               ),
-            { once: true, time: 60_000 }
+            { once: true, time: 60_000 },
           ),
       ]),
     ],
@@ -122,15 +121,15 @@ const sharableWorkoutEphemeralOptions = async (
 // From interactions.ts
 export const followUpWithWorkoutEphemeral = async (
   interaction: ChatInputCommandInteraction,
-  workout: HevyWorkout | null
+  workout: HevyWorkout | null,
 ) => {
   if (workout) {
     await interaction.followUp(
       (await sharableWorkoutEphemeralOptions(
         workout,
         "standard",
-        interaction
-      )) as InteractionReplyOptions
+        interaction,
+      )) as InteractionReplyOptions,
     );
   } else {
     await interaction.reply({
@@ -138,37 +137,37 @@ export const followUpWithWorkoutEphemeral = async (
       flags: MessageFlags.Ephemeral,
     });
   }
-}
+};
 
 const changeWorkoutFormat = async (
   interaction: ButtonInteraction,
   workout: HevyWorkout,
   format: WorkoutComponentFormat,
-  originalInteraction?: ChatInputCommandInteraction
+  originalInteraction?: ChatInputCommandInteraction,
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
       format,
-      originalInteraction
-    )) as InteractionEditReplyOptions
+      originalInteraction,
+    )) as InteractionEditReplyOptions,
   );
-}
+};
 
 export const handleSelectWorkout = async (
   interaction: ButtonInteraction | StringSelectMenuInteraction,
   context: ButtonKit | StringSelectMenuKit,
   workout: HevyWorkout,
-  originalInteraction?: ChatInputCommandInteraction
+  originalInteraction?: ChatInputCommandInteraction,
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
   await interaction.editReply(
     (await sharableWorkoutEphemeralOptions(
       workout,
       "standard",
-      originalInteraction
-    )) as InteractionEditReplyOptions
+      originalInteraction,
+    )) as InteractionEditReplyOptions,
   );
   context.dispose();
 };
@@ -176,7 +175,7 @@ export const handleSelectWorkout = async (
 export const handleWorkoutSelectMenuSelection = async (
   interaction: StringSelectMenuInteraction,
   context: StringSelectMenuKit,
-  originalInteraction?: ChatInputCommandInteraction
+  originalInteraction?: ChatInputCommandInteraction,
 ) => {
   const selection = interaction.values[0];
   const workout = await getWorkout(selection);
@@ -184,7 +183,7 @@ export const handleWorkoutSelectMenuSelection = async (
     interaction as unknown as StringSelectMenuInteraction,
     context,
     workout,
-    originalInteraction
+    originalInteraction,
   );
 };
 
@@ -192,11 +191,11 @@ const handleMessageClick = async (
   interaction: ButtonInteraction,
   context: ButtonKit,
   workout: HevyWorkout,
-  originalInteraction?: ChatInputCommandInteraction
+  originalInteraction?: ChatInputCommandInteraction,
 ) => {
   context.dispose();
   const desiredFormat = interaction.customId.split(
-    "--"
+    "--",
   )[1] as WorkoutComponentFormat;
 
   if (interaction.customId.startsWith("sendInChat")) {
@@ -234,9 +233,9 @@ const handleMessageClick = async (
         desiredFormat,
         originalInteraction?.isCommand()
           ? originalInteraction.commandName +
-          " " +
-          originalInteraction.options.getSubcommand()
-          : undefined
+              " " +
+              originalInteraction.options.getSubcommand()
+          : undefined,
       );
 
       sendActivity(`Someone **shared a workout**.`);
@@ -262,7 +261,7 @@ const handleMessageClick = async (
         interaction as unknown as ButtonInteraction,
         workout,
         desiredFormat,
-        originalInteraction
+        originalInteraction,
       );
 
       track({
@@ -296,7 +295,7 @@ export const saveWorkoutShare = async (
   channel: BaseInteraction["channel"],
   reason: ShareReason,
   format: WorkoutComponentFormat,
-  commandUsed?: string
+  commandUsed?: string,
 ) => {
   return prisma.share.create({
     data: {
@@ -325,12 +324,11 @@ export const saveWorkoutShare = async (
       sharedBy:
         reason !== "autoShared"
           ? {
-            connect: {
-              discordId: discordUserId,
-            },
-          }
+              connect: {
+                discordId: discordUserId,
+              },
+            }
           : undefined,
-
     },
   });
 };
