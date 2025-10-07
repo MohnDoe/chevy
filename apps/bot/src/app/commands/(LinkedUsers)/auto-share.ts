@@ -13,6 +13,7 @@ import {
   ContainerBuilder,
   InteractionContextType,
   MessageFlags,
+  subtext,
   TextDisplayBuilder,
 } from "discord.js";
 
@@ -65,13 +66,39 @@ export async function chatInput({
   switch (subcommand) {
     case "enable":
       await setAutoShareEnabledStatus(guildId, user, true);
-      // TODO : add some flair and explaination here
-      await interaction.followUp("Auto-share enabled on this server.");
+      await interaction.followUp({
+        flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+        components: [
+          new ContainerBuilder()
+            .setAccentColor(Colors.Green)
+            .addTextDisplayComponents((td) =>
+              td.setContent("Auto-share enabled successfuly on this server."),
+            ),
+          new TextDisplayBuilder().setContent(
+            subtext(
+              `You can disable it with ${await commandMention("auto-share disable")} any time.`,
+            ),
+          ),
+        ],
+      });
       break;
     case "disable":
-      // TODO : add some flair and explaination here
       await setAutoShareEnabledStatus(guildId, user, false);
-      await interaction.followUp("Auto-share disabled on this server.");
+      await interaction.followUp({
+        flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+        components: [
+          new ContainerBuilder()
+            .setAccentColor(Colors.Green)
+            .addTextDisplayComponents((td) =>
+              td.setContent("Auto-share disabled successfuly on this server."),
+            ),
+          new TextDisplayBuilder().setContent(
+            subtext(
+              `You can re-enable it with ${await commandMention("auto-share enable")} any time.`,
+            ),
+          ),
+        ],
+      });
       break;
     case "status":
       const userConfig = await getUserAutoShareConfig(guildId, user.id);
@@ -94,7 +121,7 @@ export async function chatInput({
       } else {
         components = [
           new TextDisplayBuilder().setContent(
-            "Your workouts will be auto-shared to the following servers :",
+            "Your workouts are automatically shared in the following servers:",
           ),
           new ContainerBuilder().addTextDisplayComponents(
             new TextDisplayBuilder().setContent(
@@ -125,7 +152,24 @@ export async function chatInput({
                 bold("Your auto-share is NOT enabled on this server."),
               ),
               new TextDisplayBuilder().setContent(
-                `Activate it with ${await commandMention("auto-share enable")} !`,
+                subtext(
+                  `Activate it with ${await commandMention("auto-share enable")} any time.`,
+                ),
+              ),
+            ),
+        );
+      } else {
+        components.push(
+          new ContainerBuilder()
+            .setAccentColor(Colors.Green)
+            .addTextDisplayComponents(
+              new TextDisplayBuilder().setContent(
+                bold("Your auto-share is enabled on this server."),
+              ),
+              new TextDisplayBuilder().setContent(
+                subtext(
+                  `You can disable it with ${await commandMention("auto-share disable")} any time.`,
+                ),
               ),
             ),
         );
