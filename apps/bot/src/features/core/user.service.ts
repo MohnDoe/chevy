@@ -3,7 +3,8 @@ import { User } from "../../../../../packages/database/generated/prisma";
 import { prisma } from "@repo/db";
 
 export const updateLastBotFollowRequest = async (user: User) => {
-  revalidateTag(`user:${user.id}:lastBotFollowRequestion`);
+  "use cache";
+  revalidateTag(`user:${user.discordId}:lastBotFollowRequestion`);
   await prisma.user.update({
     where: {
       discordId: user.discordId,
@@ -16,9 +17,9 @@ export const updateLastBotFollowRequest = async (user: User) => {
 };
 
 export const getLastBotFollowRequest = async (user: User) => {
-  "use cashe";
-  cacheTag(`user:${user.id}:lastBotFollowRequestion`);
-  cacheLife("1h");
+  "use cache";
+  cacheTag(`user:${user.discordId}:lastBotFollowRequestion`);
+  cacheLife("30m");
   return await prisma.user.findUnique({
     where: {
       discordId: user.discordId,

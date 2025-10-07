@@ -203,14 +203,17 @@ const generateLinkingInstructions = async (
   if (userFollowsHevyBot) {
     if (hevyUserProfile && hevyUserProfile.private_profile) {
       const lastBotFollowRequest = await getLastBotFollowRequest(user);
-      let shouldSendFollowRequest = lastBotFollowRequest === null;
+      let shouldSendFollowRequest =
+        lastBotFollowRequest === null ||
+        lastBotFollowRequest.lastBotFollowRequest === null;
 
-      if (lastBotFollowRequest !== null) {
+      // some delay to avoid send follow requests
+      if (!shouldSendFollowRequest) {
         shouldSendFollowRequest = dayjs(
-          lastBotFollowRequest.lastBotFollowRequest,
+          lastBotFollowRequest!.lastBotFollowRequest,
         )
           .add(BOT_FOLLOW_REQUEST_DELAY_MINS, "minutes")
-          .isAfter(new Date());
+          .isBefore(new Date());
       }
 
       if (shouldSendFollowRequest) {
