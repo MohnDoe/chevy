@@ -8,17 +8,12 @@ import { cache } from "@commandkit/cache";
 import { setDriver, tasks } from "@commandkit/tasks";
 import { BullMQDriver } from "@commandkit/tasks/bullmq";
 
-import { cache } from "@commandkit/cache";
-
 import dotenv from "dotenv";
 dotenv.config();
 
-
 const bullMQHost = process.env.CHEVY_BULLMQ_REDIS_HOST;
 if (!bullMQHost) {
-  throw new Error(
-    "Missing environment variable: CHEVY_BULLMQ_REDIS_HOST"
-  );
+  throw new Error("Missing environment variable: CHEVY_BULLMQ_REDIS_HOST");
 }
 
 Logger.info("Using BullMQ driver for tasks");
@@ -26,7 +21,7 @@ setDriver(
   new BullMQDriver({
     host: bullMQHost,
     port: 6379,
-  })
+  }),
 );
 
 export default defineConfig({
