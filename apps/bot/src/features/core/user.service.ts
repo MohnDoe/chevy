@@ -24,9 +24,34 @@ export const setAutoShareEnabledStatus = async (
   });
   await revalidateTag(`autoShare:enabledUsers:server:${guildId}`);
   await revalidateTag(`autoShare:config:user:${user.id}`);
-  await revalidateTag(`autoShare:participants:server:${guildId}`);
 };
 
+export const setAutoShareEnabledStatusInAllServers = async (
+  user: User,
+  enabled: boolean,
+  guildIdToUpsert?: string,
+) => {
+  const updatedConfigs = await prisma.userAutoShareConfig.updateManyAndReturn({
+    where: {
+      userId: user.id,
+    },
+    data: {
+      enabled,
+    },
+  });
+
+  if (guildIdToUpsert)
+    await setAutoShareEnabledStatus(guildIdToUpsert, user, enabled);
+
+  await Promise.all(
+    updatedConfigs.map(
+      async (config) =>
+        await revalidateTag(`autoShare:enabledUsers:server:${config.guildId}`),
+    ),
+  );
+
+  await revalidateTag(`autoShare:config:user:${user.id}`);
+};
 export const getUserAutoShareConfig = async (
   guildId: string,
   userId: string,
