@@ -12,6 +12,7 @@ import {
   CommandMetadata,
   Container,
   Separator,
+  StringSelectMenuOption,
   TextDisplay,
 } from "commandkit";
 import {
@@ -20,11 +21,17 @@ import {
   ApplicationIntegrationType,
   bold,
   channelMention,
+  ChannelSelectMenuBuilder,
   ChannelType,
   Colors,
   InteractionContextType,
+  LabelBuilder,
   MessageFlags,
+  ModalBuilder,
   SeparatorSpacingSize,
+  StringSelectMenuBuilder,
+  StringSelectMenuComponent,
+  StringSelectMenuOptionBuilder,
   TextChannel,
   underline,
 } from "discord.js";
@@ -84,6 +91,11 @@ export const command: CommandData = {
           description: "Explanations, current configuration and stats",
           type: ApplicationCommandOptionType.Subcommand,
         },
+        {
+          name: "configure-modal",
+          description: "Test configure via modal",
+          type: ApplicationCommandOptionType.Subcommand,
+        },
       ],
     },
   ],
@@ -94,13 +106,13 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
   const subcommand = interaction.options.getSubcommand();
   const guildId = interaction.guildId!;
 
-  await interaction.deferReply({
-    flags: MessageFlags.Ephemeral,
-  });
-
   if (subcommandGroup == "auto-share") {
     switch (subcommand) {
       case "info":
+        await interaction.deferReply({
+          flags: MessageFlags.Ephemeral,
+        });
+
         const serverAutoShareConfig = await getAutoShareConfig(guildId);
 
         if (!serverAutoShareConfig) {
@@ -166,6 +178,10 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
         break;
 
       case "configure":
+        await interaction.deferReply({
+          flags: MessageFlags.Ephemeral,
+        });
+
         const enabled = interaction.options.getBoolean("enabled") as boolean;
         const channel =
           interaction.options.getChannel<ChannelType.GuildText>("channel")!;
@@ -186,6 +202,53 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
           components: [<TextDisplay>Settings saved.</TextDisplay>],
         });
 
+        break;
+      case "configure-modal":
+        const modal = new ModalBuilder()
+          .setCustomId("server-configure-modal")
+          .setTitle("Auto-share configuration");
+
+        modal.addLabelComponents([
+          new LabelBuilder()
+            .setLabel("Destination")
+            .setChannelSelectMenuComponent(
+              new ChannelSelectMenuBuilder()
+                .addChannelTypes([ChannelType.GuildText])
+                .setCustomId("test-channel")
+                .setPlaceholder("select a channel"),
+            ),
+          new LabelBuilder()
+            .setLabel("Format")
+
+            .setStringSelectMenuComponent(
+              new StringSelectMenuBuilder()
+                .addOptions(
+                  Object.entries(AutoShareWorkoutFormat).map(([key, value]) =>
+                    new StringSelectMenuOptionBuilder()
+                      .setLabel(value)
+                      .setValue(key),
+                  ),
+                )
+                .setCustomId("test-format"),
+            ),
+          new LabelBuilder()
+            .setLabel("Enabled")
+
+            .setStringSelectMenuComponent(
+              new StringSelectMenuBuilder()
+                .addOptions([
+                  new StringSelectMenuOptionBuilder()
+                    .setLabel("True")
+                    .setValue("True"),
+                  new StringSelectMenuOptionBuilder()
+                    .setLabel("False")
+                    .setValue("False"),
+                ])
+                .setCustomId("test-enabled"),
+            ),
+        ]);
+
+        await interaction.showModal(modal);
         break;
       default:
         await interaction.followUp({
