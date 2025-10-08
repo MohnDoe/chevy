@@ -1,11 +1,7 @@
 import {
-  blockQuote,
   bold,
-  ButtonStyle,
   ChatInputCommandInteraction,
-  ComponentBuilder,
   ContainerBuilder,
-  ContainerComponent,
   EmbedBuilder,
   hyperlink,
   inlineCode,
@@ -32,6 +28,7 @@ dayjs.extend(localizedFormat);
 import { getUserByHevyUsername } from "@/features/hevy/hevy.service";
 import { HevyExercise, HevySet, HevyWorkout } from "@/features/hevy/hevy.types";
 import { WorkoutComponentFormat } from "./workout.types";
+import { getWorkoutUrl } from "../hevy/hevy.parser";
 
 const SUPERSETS_PREFIXES = [
   "🟪",
@@ -133,7 +130,7 @@ ${subtext("Records")}`;
   // WORKOUT TITLE
   let container = new ContainerBuilder().addTextDisplayComponents(
     new TextDisplayBuilder().setContent(
-      `## [${workout.name}](https://hevy.com/workout/${workout.short_id})`,
+      `## ${hyperlink(workout.name, getWorkoutUrl(workout))}`,
     ),
   );
 
@@ -211,7 +208,7 @@ const addExercises = (
   exercises: HevyExercise[],
   format: WorkoutComponentFormat,
 ) => {
-  for (const [i, exercise] of exercises.entries()) {
+  for (const [_i, exercise] of exercises.entries()) {
     const exerciseVolume = getExerciseVolume(exercise);
     let exerciseText = "";
     let exerciseTitle = "";

@@ -3,13 +3,19 @@ import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import client from "@/app";
 import { HevyWorkout } from "../hevy/hevy.types";
 import { toComponent } from "../workout/workout.embeds";
-import { MessageFlags } from "discord.js";
+import {
+  hyperlink,
+  MessageFlags,
+  TextDisplayBuilder,
+  userMention,
+} from "discord.js";
 import { Logger } from "commandkit";
 import {
   AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT,
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { cacheLife, cacheTag } from "@commandkit/cache";
+import { getWorkoutUrl } from "../hevy/hevy.parser";
 
 type ServerWithAutoShareConfig = Prisma.ServerGetPayload<{
   where: {
@@ -65,12 +71,23 @@ const shareWorkoutToDiscordServer = async (
   if (!channel) return;
 
   const workoutComponent = await toComponent(workout, format);
-
+  const lineComponent = new TextDisplayBuilder().setContent(
+    `${userMention(user.discordId)} just completed ${hyperlink("a workout on Hevy", getWorkoutUrl(workout), workout.name)}.`,
+  );
+  const prefixComponent = new TextDisplayBuilder().setContent(
+    `${userMention(user.discordId)} just finished a workout on Hevy.`,
+  );
   if (channel.isSendable()) {
     try {
       await channel.send({
-        flags: MessageFlags.IsComponentsV2,
-        components: [workoutComponent],
+        allowedMentions: {
+          users: [],
+        },
+        flags: MessageFlags.IsComponentsV2 | MessageFlags.SuppressNotifications,
+        components:
+          format == "line"
+            ? [lineComponent]
+            : [prefixComponent, workoutComponent],
       });
 
       saveWorkoutShare(workout, user.discordId, channel, "autoShared", format);
