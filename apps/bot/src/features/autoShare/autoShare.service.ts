@@ -1,37 +1,22 @@
-import { Prisma, prisma, ServerAutoShareConfig, User } from "@repo/db";
-import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import client from "@/app";
-import { HevyWorkout } from "../hevy/hevy.types";
-import { toComponent } from "../workout/workout.embeds";
+import { cacheLife, cacheTag } from "@commandkit/cache";
+import { prisma, ServerAutoShareConfig, User } from "@repo/db";
+import { Logger } from "commandkit";
 import {
   hyperlink,
   MessageFlags,
   TextDisplayBuilder,
   userMention,
 } from "discord.js";
-import { Logger } from "commandkit";
+import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
+import { getWorkoutUrl } from "../hevy/hevy.parser";
+import { HevyWorkout } from "../hevy/hevy.types";
+import { toComponent } from "../workout/workout.embeds";
 import {
   AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT,
   saveWorkoutShare,
 } from "../workout/workout.service";
-import { cacheLife, cacheTag } from "@commandkit/cache";
-import { getWorkoutUrl } from "../hevy/hevy.parser";
-
-type ServerWithAutoShareConfig = Prisma.ServerGetPayload<{
-  where: {
-    ServerAutoShareConfig: {
-      enabled: true;
-      channelId: {
-        not: null;
-      };
-    };
-  };
-  include: { ServerAutoShareConfig: true };
-}>;
-
-type ShareWithWorkout = Prisma.ShareGetPayload<{
-  include: { Workout: true };
-}>;
+import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   "use cache";

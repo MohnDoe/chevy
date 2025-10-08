@@ -8,7 +8,6 @@ import {
   ApplicationCommandType,
   ApplicationIntegrationType,
   bold,
-  channelMention,
   Colors,
   ContainerBuilder,
   InteractionContextType,
@@ -24,6 +23,7 @@ import {
 } from "@/features/core/user.service";
 import { getAllAutoShareActiveServers } from "@/features/autoShare/autoShare.service";
 import { commandMention } from "@/features/discord/command.service";
+import { listServers } from "@/features/autoShare/autoShare.embeds";
 
 export const metadata: CommandMetadata = {};
 
@@ -89,6 +89,12 @@ export async function chatInput({
   const subcommandGroup = interaction.options.getSubcommandGroup();
   const subcommand = interaction.options.getSubcommand();
 
+  let allAutoShareActiveServers = await getAllAutoShareActiveServers(user.id);
+  // filter out servers the bot is not in anymore
+  allAutoShareActiveServers = allAutoShareActiveServers.filter((server) =>
+    client.guilds.cache.get(server.guildId),
+  );
+
   if (subcommandGroup) {
     // TODO : add status in the response : listing all servers and status.
     const enabled = subcommandGroup == "enable";
@@ -110,6 +116,7 @@ export async function chatInput({
               .setAccentColor(Colors.Green)
               .addTextDisplayComponents((td) => td.setContent(newStatusText)),
             new TextDisplayBuilder().setContent(subtext(toggleText)),
+            listServers(allAutoShareActiveServers, guildId),
           ],
         });
         break;
@@ -127,6 +134,7 @@ export async function chatInput({
             new ContainerBuilder()
               .setAccentColor(Colors.Green)
               .addTextDisplayComponents((td) => td.setContent(newStatusText)),
+            listServers(allAutoShareActiveServers, guildId),
           ],
         });
 
@@ -137,13 +145,6 @@ export async function chatInput({
     switch (subcommand) {
       case "status":
         const userConfig = await getUserAutoShareConfig(guildId, user.id);
-        let allAutoShareActiveServers = await getAllAutoShareActiveServers(
-          user.id,
-        );
-        // filter out servers the bot is not in anymore
-        allAutoShareActiveServers = allAutoShareActiveServers.filter((server) =>
-          client.guilds.cache.get(server.guildId),
-        );
 
         let components = [];
         if (allAutoShareActiveServers.length === 0) {
@@ -159,24 +160,7 @@ export async function chatInput({
             new TextDisplayBuilder().setContent(
               "Your workouts are automatically shared in the following servers:",
             ),
-            new ContainerBuilder().addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(
-                allAutoShareActiveServers
-                  .map((server) => {
-                    let text = "- ";
-                    text += client.guilds.cache.get(server.guildId)!.name;
-
-                    if (server.guildId == guildId) {
-                      text += " " + bold("(this server)");
-                    }
-
-                    text += ` in ${channelMention(server.ServerAutoShareConfig!.channelId!)}`;
-
-                    return text;
-                  })
-                  .join("\n"),
-              ),
-            ),
+            listServers(allAutoShareActiveServers, interaction.guildId),
           ];
         }
         if (!userConfig?.enabled) {

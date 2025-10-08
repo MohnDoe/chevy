@@ -58,7 +58,7 @@ export const getUserAutoShareConfig = async (
 ) => {
   "use cache";
   cacheTag(`autoShare:config:user:${userId}`);
-  cacheLife("30d");
+  cacheLife("10m");
   return prisma.userAutoShareConfig.findUnique({
     where: {
       userId_guildId: {
