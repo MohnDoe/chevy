@@ -205,7 +205,7 @@ const generateLinkingInstructions = async (
       new SeparatorBuilder().setDivider(false),
       new TextDisplayBuilder().setContent(
         subtext(
-          `If after 15 minutes the bot haven't message you yet, you can re-run the command ${commandMention("hevy link")}!`,
+          `If after 15 minutes the bot haven't message you yet, you can re-run the command ${await commandMention("hevy link")}!`,
         ),
       ),
     ];
