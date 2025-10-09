@@ -11,8 +11,8 @@ import {
   CommandData,
   CommandMetadata,
   Container,
+  ModalKit,
   Separator,
-  StringSelectMenuOption,
   TextDisplay,
 } from "commandkit";
 import {
@@ -30,7 +30,6 @@ import {
   ModalBuilder,
   SeparatorSpacingSize,
   StringSelectMenuBuilder,
-  StringSelectMenuComponent,
   StringSelectMenuOptionBuilder,
   TextChannel,
   underline,
@@ -204,9 +203,14 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
 
         break;
       case "configure-modal":
-        const modal = new ModalBuilder()
+        const modal = new ModalKit()
           .setCustomId("server-configure-modal")
-          .setTitle("Auto-share configuration");
+          .setTitle("Auto-share configuration")
+          .filter((i) => i.user.id == interaction.user.id)
+          .onSubmit(async (i) => {
+            await i.reply({ content: "good job" });
+            console.log(i);
+          });
 
         modal.addLabelComponents([
           new LabelBuilder()
@@ -262,6 +266,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
 
         await interaction.showModal(modal);
         break;
+
       default:
         await interaction.followUp({
           components: [<TextDisplay>Unknown command.</TextDisplay>],
