@@ -7,7 +7,7 @@ import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const user = await isDiscordUserAlreadyLinked(userDiscordId);
+  const userVerification = await isDiscordUserAlreadyLinked(userDiscordId);
   track({
     name: "hevy command used",
     id: "discord_user_" + ctx.interaction.user.id,
@@ -26,10 +26,12 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     ).options.getSubcommand()
   ) {
     case "link":
-      if (user) {
+      if (userVerification) {
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: [successfulyLinkedToHevy(user.hevyUsername!)],
+          components: [
+            successfulyLinkedToHevy(userVerification.User.hevyUsername!),
+          ],
         });
         track({
           name: "hevy account was already linked",
@@ -44,7 +46,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       }
       break;
     case "unlink":
-      if (!user) {
+      if (!userVerification) {
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral,
           content: `Successfuly unlinked!`,

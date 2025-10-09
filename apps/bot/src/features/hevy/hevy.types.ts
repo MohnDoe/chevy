@@ -57,7 +57,7 @@ export interface HevyWorkout {
   index: number;
   media: any[];
   user_id: string;
-  comments: any[];
+  comments: HevyWorkoutComment[];
   end_time: number;
   short_id: string;
   username: string;
@@ -81,5 +81,17 @@ export interface HevyWorkout {
   include_warmup_sets: boolean;
   is_biometrics_public: boolean;
   preview_workout_likes: { username: string; profile_pic: string }[];
+  is_liked_by_user: boolean;
+}
+
+export interface HevyWorkoutComment {
+  id: number;
+  comment: string;
+  username: string;
+  verified: boolean;
+  full_name: string;
+  created_at: Date;
+  like_count: number;
+  profile_pic: string;
   is_liked_by_user: boolean;
 }

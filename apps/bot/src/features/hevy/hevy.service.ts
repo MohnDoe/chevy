@@ -13,40 +13,23 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   return await prisma.user.findUnique({
     where: {
       hevyUsername,
-      OR: [
-        {
-          hevyProfilePrivate: true,
-          isFollowedByHevyBot: true,
-        },
-        {
-          hevyProfilePrivate: false,
-          isFollowingHevyBot: true,
-        },
-      ],
+      hevyUserVerification: {
+        status: "verified",
+      },
     },
   });
 }
 
 export async function isDiscordUserAlreadyLinked(discordId: string) {
-  return await prisma.user.findUnique({
+  return await prisma.hevyUserVerification.findFirst({
     where: {
-      discordId,
-      OR: [
-        {
-          hevyUsername: {
-            not: null,
-          },
-          hevyProfilePrivate: true,
-          isFollowedByHevyBot: true,
-        },
-        {
-          hevyUsername: {
-            not: null,
-          },
-          hevyProfilePrivate: false,
-          isFollowingHevyBot: true,
-        },
-      ],
+      User: {
+        discordId,
+      },
+      status: "verified",
+    },
+    include: {
+      User: true,
     },
   });
 }
@@ -72,20 +55,6 @@ export async function setIsHevyProfilePrivate(
     },
     data: {
       hevyProfilePrivate: isPrivate,
-    },
-  });
-}
-
-export async function setIsFollowingHevyBot(
-  discordId: string,
-  follows: boolean,
-) {
-  return await prisma.user.update({
-    where: {
-      discordId,
-    },
-    data: {
-      isFollowingHevyBot: follows,
     },
   });
 }

@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { HevyWorkout } from "./hevy.types";
+import { HevyWorkout, HevyWorkoutComment } from "./hevy.types";
 
 dotenv.config();
 
@@ -95,4 +95,14 @@ export const getUserWorkouts = async (
     console.error(error);
     return [];
   }
+};
+
+export const getWorkoutComments = async (
+  workoutShortId: string,
+): Promise<HevyWorkoutComment[]> => {
+  const workout = await getWorkout(workoutShortId);
+
+  if (workout) return workout.comments;
+
+  return [];
 };

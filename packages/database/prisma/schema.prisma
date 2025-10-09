@@ -35,6 +35,6 @@ model HevyUserVerification {
   workoutId        String
   verificationCode String                 @unique
   status           UserVerificationStatus @default(pending)
-  User             User                   @relation(fields: [userHevyUsername], references: [hevyUsername])
-  userHevyUsername String                 @unique
+  User             User                   @relation(fields: [userDiscordId], references: [discordId])
+  userDiscordId    String                 @unique
 }
