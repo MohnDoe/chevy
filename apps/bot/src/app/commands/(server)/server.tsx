@@ -1,4 +1,7 @@
-import { configModal } from "@/features/autoShare/autoShare.embeds";
+import {
+  configInfosContainer,
+  configModal,
+} from "@/features/autoShare/autoShare.embeds";
 import {
   getAutoShareConfig,
   getServerAutoShareParticipantsCount,
@@ -83,67 +86,31 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
         });
 
         const serverAutoShareConfig = await getAutoShareConfig(guildId);
+        const participantCount = serverAutoShareConfig
+          ? await getServerAutoShareParticipantsCount(guildId)
+          : 0;
+        await interaction.followUp({
+          flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+          components: [
+            configInfosContainer(serverAutoShareConfig, participantCount),
+            <Separator spacing={SeparatorSpacingSize.Small} divider={false} />,
+            <Container accentColor={Colors.DarkButNotBlack}>
+              <TextDisplay>### What is auto-share?</TextDisplay>
+              <TextDisplay>
+                Auto-share allows Chevy to share **automatically** new workouts
+                from your members in a dedicated channel.
+              </TextDisplay>
+              <TextDisplay>
+                You can configure auto-share with
+                {await commandMention(`/server auto-share configure`)}.
+              </TextDisplay>
+              <TextDisplay>
+                -# Members can opt-in or out whenever they choose.
+              </TextDisplay>
+            </Container>,
+          ],
+        });
 
-        if (!serverAutoShareConfig) {
-          await interaction.followUp({
-            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-            components: [
-              <TextDisplay>
-                You don't have auto-share set-up yet. Use
-                {await commandMention(`/server auto-share configure`)} to set it
-                up now !
-              </TextDisplay>,
-            ],
-          });
-        } else {
-          const participantCount =
-            await getServerAutoShareParticipantsCount(guildId);
-          await interaction.followUp({
-            flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-            components: [
-              <Container accentColor={Colors.Yellow}>
-                <TextDisplay>### What is auto-share?</TextDisplay>
-                <TextDisplay>
-                  Auto-share allows Chevy to share **automatically** new
-                  workouts from your members in a dedicated channel.
-                </TextDisplay>
-                <TextDisplay>
-                  You can configure auto-share with
-                  {await commandMention(`/server auto-share configure`)}.
-                </TextDisplay>
-                <TextDisplay>
-                  -# Members can opt-in or out whenever they choose.
-                </TextDisplay>
-              </Container>,
-              <Separator
-                spacing={SeparatorSpacingSize.Small}
-                divider={false}
-              />,
-              <TextDisplay>
-                Auto-share is
-                {underline(
-                  serverAutoShareConfig.enabled ? "enabled" : "disabled",
-                )}
-                !
-              </TextDisplay>,
-              <TextDisplay>
-                New workouts will be shared
-                {serverAutoShareConfig.channelId
-                  ? `in ${channelMention(serverAutoShareConfig.channelId)}`
-                  : bold("nowhere")}
-                in a {bold(serverAutoShareConfig.workoutFormat)} format.
-              </TextDisplay>,
-              <Separator
-                spacing={SeparatorSpacingSize.Small}
-                divider={false}
-              />,
-              <TextDisplay>
-                -# **{participantCount} members** are currently opted-in to
-                auto-share. 🎉
-              </TextDisplay>,
-            ],
-          });
-        }
         break;
 
       case "configure":
@@ -158,25 +125,38 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
               "config-enabled-select",
             )[0];
 
+            const enabled = statusValue === "true";
+
             const channel = i.fields.getSelectedChannels(
               "config-channel-select",
               true,
             );
+
             const format = i.fields.getStringSelectValues(
               "config-format-select",
             )[0];
+
             await upsertServer(guildId);
 
-            await saveAutoShareConfig(
+            const newServer = await saveAutoShareConfig(
               guildId,
-              statusValue === "true",
+              enabled,
               channel as unknown as TextChannel,
               format as AutoShareWorkoutFormat,
             );
+            const participantCount = enabled
+              ? await getServerAutoShareParticipantsCount(guildId)
+              : 0;
 
             await i.followUp({
               flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-              components: [<TextDisplay>Settings saved.</TextDisplay>],
+              components: [
+                <TextDisplay>**Settings saved!**</TextDisplay>,
+                configInfosContainer(
+                  newServer.ServerAutoShareConfig,
+                  participantCount,
+                ),
+              ],
             });
           },
         );

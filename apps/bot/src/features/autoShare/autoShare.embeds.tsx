@@ -2,23 +2,32 @@ import client from "@/app";
 import {
   ChannelSelectMenuBuilder,
   ChannelType,
+  Colors,
   ContainerBuilder,
   LabelBuilder,
+  MessageFlags,
   ModalSubmitInteraction,
+  SeparatorSpacingSize,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   TextDisplayBuilder,
   bold,
   channelMention,
+  underline,
 } from "discord.js";
 import { ServerWithAutoShareConfig } from "./autoShare.types";
 import {
   CommandKitModalBuilderInteractionCollectorDispatch,
+  Container,
   ModalKit,
   ModalKitPredicate,
+  Separator,
+  TextDisplay,
 } from "commandkit";
-import { AutoShareWorkoutFormat } from "@repo/db";
+import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import handler from "@/app/events/clientReady/log";
+import { getServerAutoShareParticipantsCount } from "../core/server.service";
+import { commandMention } from "../discord/command.service";
 
 export const listServers = (
   servers: ServerWithAutoShareConfig[],
@@ -108,3 +117,35 @@ export const configModal = (
             .setCustomId("config-format-select"),
         ),
     ]);
+
+export const configInfosContainer = (
+  serverAutoShareConfig: ServerAutoShareConfig | null,
+  participantCount: number,
+) => (
+  <Container
+    accentColor={serverAutoShareConfig?.enabled ? Colors.Green : Colors.Orange}
+  >
+    <TextDisplay>
+      {`## ${serverAutoShareConfig?.enabled ? "✅" : "❌"} Auto-share is currently ${underline(serverAutoShareConfig?.enabled ? "enabled" : "disabled")} on this server.`}
+    </TextDisplay>
+    <Separator />
+    {serverAutoShareConfig?.enabled ? (
+      <>
+        <TextDisplay>
+          {serverAutoShareConfig!.channelId
+            ? `New workouts will be shared in: ${channelMention(serverAutoShareConfig!.channelId)}`
+            : `No destination channel new workouts is set up.\nUse ${commandMention("server auto-share configure")} to select a channel! ${bold("Auto-share won't work until you do.")}`}
+        </TextDisplay>
+        <TextDisplay>
+          {`Workouts will be shared in a the format: \`${serverAutoShareConfig?.workoutFormat}\`.`}
+        </TextDisplay>
+        <Separator />
+        <TextDisplay>
+          -# Server members currently particiapating: `{participantCount}`
+        </TextDisplay>
+      </>
+    ) : (
+      <TextDisplay>{`Use ${commandMention("server auto-share configure")} to set-up auto-share on this server.`}</TextDisplay>
+    )}
+  </Container>
+);

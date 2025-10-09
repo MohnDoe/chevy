@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
 import { AutoShareWorkoutFormat, prisma } from "@repo/db";
 import { TextChannel } from "discord.js";
+import { ServerWithAutoShareConfig } from "../autoShare/autoShare.types";
 
 export const upsertServer = async (guildId: string) => {
   return await prisma.server.upsert({
@@ -19,13 +20,16 @@ export const saveAutoShareConfig = async (
   enabled: boolean,
   channel: TextChannel,
   format: AutoShareWorkoutFormat,
-) => {
+): Promise<ServerWithAutoShareConfig> => {
   await revalidateTag(`autoShare:enabledServers`);
   await revalidateTag(`autoShare:config:server:${guildId}`);
 
-  await prisma.server.update({
+  return await prisma.server.update({
     where: {
       guildId,
+    },
+    include: {
+      ServerAutoShareConfig: true,
     },
     data: {
       ServerAutoShareConfig: {
