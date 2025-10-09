@@ -210,18 +210,45 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
 
         modal.addLabelComponents([
           new LabelBuilder()
+            .setLabel("Enabled")
+            .setDescription(
+              "Should Chevy automatically share workouts from your members?",
+            )
+            .setStringSelectMenuComponent(
+              new StringSelectMenuBuilder()
+                .setRequired(true)
+                .addOptions([
+                  new StringSelectMenuOptionBuilder()
+                    .setLabel("True")
+                    .setEmoji("✅")
+                    .setValue("true"),
+                  new StringSelectMenuOptionBuilder()
+                    .setLabel("False")
+                    .setEmoji("❌")
+                    .setValue("false"),
+                ])
+                .setCustomId("config-enabled-select"),
+            ),
+          new LabelBuilder()
             .setLabel("Destination")
+            .setDescription(
+              "Where the new workouts will be automatically shared.",
+            )
             .setChannelSelectMenuComponent(
               new ChannelSelectMenuBuilder()
+                .setRequired(true)
+                .setMaxValues(1)
+                .setMinValues(1)
                 .addChannelTypes([ChannelType.GuildText])
-                .setCustomId("test-channel")
-                .setPlaceholder("select a channel"),
+                .setCustomId("config-channel-select")
+                .setPlaceholder("Select a channel"),
             ),
           new LabelBuilder()
             .setLabel("Format")
-
+            .setDescription("What format should the workout be in?")
             .setStringSelectMenuComponent(
               new StringSelectMenuBuilder()
+                .setRequired(true)
                 .addOptions(
                   Object.entries(AutoShareWorkoutFormat).map(([key, value]) =>
                     new StringSelectMenuOptionBuilder()
@@ -229,22 +256,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
                       .setValue(key),
                   ),
                 )
-                .setCustomId("test-format"),
-            ),
-          new LabelBuilder()
-            .setLabel("Enabled")
-
-            .setStringSelectMenuComponent(
-              new StringSelectMenuBuilder()
-                .addOptions([
-                  new StringSelectMenuOptionBuilder()
-                    .setLabel("True")
-                    .setValue("True"),
-                  new StringSelectMenuOptionBuilder()
-                    .setLabel("False")
-                    .setValue("False"),
-                ])
-                .setCustomId("test-enabled"),
+                .setCustomId("config-format-select"),
             ),
         ]);
 
