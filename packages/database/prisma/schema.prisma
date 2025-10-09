@@ -13,11 +13,28 @@ model User {
   discordId            String    @unique
   hevyUsername         String?   @unique
   hevyProfilePrivate   Boolean   @default(false)
-  isFollowingHevyBot   Boolean   @default(false)
   isFollowedByHevyBot  Boolean   @default(false)
-  hevyApiKey           String?   @unique
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
   lastInteraction      DateTime  @default(now())
   lastBotFollowRequest DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hevyUserVerification HevyUserVerification?
+}
+
+enum UserVerificationStatus {
+  verified
+  pending
+}
+
+model HevyUserVerification {
+  id               String                 @id @unique @default(cuid())
+  createdAt        DateTime               @default(now())
+  lastCheck        DateTime?
+  workoutId        String
+  verificationCode String                 @unique
+  status           UserVerificationStatus @default(pending)
+  User             User                   @relation(fields: [userHevyUsername], references: [hevyUsername])
+  userHevyUsername String                 @unique
 }
