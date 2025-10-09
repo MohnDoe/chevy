@@ -1,3 +1,4 @@
+import { configModal } from "@/features/autoShare/autoShare.embeds";
 import {
   getAutoShareConfig,
   getServerAutoShareParticipantsCount,
@@ -9,6 +10,7 @@ import { AutoShareWorkoutFormat } from "@repo/db";
 import {
   ChatInputCommandContext,
   CommandData,
+  CommandKitModalBuilderInteractionCollectorDispatch,
   CommandMetadata,
   Container,
   ModalKit,
@@ -19,6 +21,7 @@ import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ApplicationIntegrationType,
+  Awaitable,
   bold,
   channelMention,
   ChannelSelectMenuBuilder,
@@ -28,6 +31,7 @@ import {
   LabelBuilder,
   MessageFlags,
   ModalBuilder,
+  ModalSubmitInteraction,
   SeparatorSpacingSize,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -55,44 +59,10 @@ export const command: CommandData = {
           name: "configure",
           description: "Configure auto-share feature.",
           type: ApplicationCommandOptionType.Subcommand,
-          options: [
-            {
-              name: "enabled",
-              description:
-                "Should auto-share be enabled and sending new workouts?",
-              type: ApplicationCommandOptionType.Boolean,
-              required: true,
-            },
-            {
-              name: "channel",
-              description: "Destination channel",
-              type: ApplicationCommandOptionType.Channel,
-              channel_types: [ChannelType.GuildText],
-              required: true,
-            },
-            {
-              name: "format",
-              description: "What does the message look like?",
-              type: ApplicationCommandOptionType.String,
-              choices: Object.entries(AutoShareWorkoutFormat).map(
-                ([key, value]) => ({
-                  name: key,
-                  value: value,
-                }),
-              ),
-
-              required: true,
-            },
-          ],
         },
         {
           name: "info",
           description: "Explanations, current configuration and stats",
-          type: ApplicationCommandOptionType.Subcommand,
-        },
-        {
-          name: "configure-modal",
-          description: "Test configure via modal",
           type: ApplicationCommandOptionType.Subcommand,
         },
       ],
@@ -177,93 +147,39 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
         break;
 
       case "configure":
-        await interaction.deferReply({
-          flags: MessageFlags.Ephemeral,
-        });
+        const modal = configModal(
+          (i) => i.user.id === interaction.user.id,
+          async (i) => {
+            await i.deferReply({
+              flags: MessageFlags.Ephemeral,
+            });
 
-        const enabled = interaction.options.getBoolean("enabled") as boolean;
-        const channel =
-          interaction.options.getChannel<ChannelType.GuildText>("channel")!;
-        const format = interaction.options.getString(
-          "format",
-        ) as AutoShareWorkoutFormat;
-        await upsertServer(guildId);
+            const statusValue = i.fields.getStringSelectValues(
+              "config-enabled-select",
+            )[0];
 
-        await saveAutoShareConfig(
-          guildId,
-          enabled,
-          channel as unknown as TextChannel,
-          format,
+            const channel = i.fields.getSelectedChannels(
+              "config-channel-select",
+              true,
+            );
+            const format = i.fields.getStringSelectValues(
+              "config-format-select",
+            )[0];
+            await upsertServer(guildId);
+
+            await saveAutoShareConfig(
+              guildId,
+              statusValue === "true",
+              channel as unknown as TextChannel,
+              format as AutoShareWorkoutFormat,
+            );
+
+            await i.followUp({
+              flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
+              components: [<TextDisplay>Settings saved.</TextDisplay>],
+            });
+          },
         );
-
-        await interaction.followUp({
-          flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: [<TextDisplay>Settings saved.</TextDisplay>],
-        });
-
-        break;
-      case "configure-modal":
-        const modal = new ModalKit()
-          .setCustomId("server-configure-modal")
-          .setTitle("Auto-share configuration")
-          .filter((i) => i.user.id == interaction.user.id)
-          .onSubmit(async (i) => {
-            await i.reply({ content: "good job" });
-            console.log(i);
-          });
-
-        modal.addLabelComponents([
-          new LabelBuilder()
-            .setLabel("Enabled")
-            .setDescription(
-              "Should Chevy automatically share workouts from your members?",
-            )
-            .setStringSelectMenuComponent(
-              new StringSelectMenuBuilder()
-                .setRequired(true)
-                .addOptions([
-                  new StringSelectMenuOptionBuilder()
-                    .setLabel("True")
-                    .setEmoji("✅")
-                    .setValue("true"),
-                  new StringSelectMenuOptionBuilder()
-                    .setLabel("False")
-                    .setEmoji("❌")
-                    .setValue("false"),
-                ])
-                .setCustomId("config-enabled-select"),
-            ),
-          new LabelBuilder()
-            .setLabel("Destination")
-            .setDescription(
-              "Where the new workouts will be automatically shared.",
-            )
-            .setChannelSelectMenuComponent(
-              new ChannelSelectMenuBuilder()
-                .setRequired(true)
-                .setMaxValues(1)
-                .setMinValues(1)
-                .addChannelTypes([ChannelType.GuildText])
-                .setCustomId("config-channel-select")
-                .setPlaceholder("Select a channel"),
-            ),
-          new LabelBuilder()
-            .setLabel("Format")
-            .setDescription("What format should the workout be in?")
-            .setStringSelectMenuComponent(
-              new StringSelectMenuBuilder()
-                .setRequired(true)
-                .addOptions(
-                  Object.entries(AutoShareWorkoutFormat).map(([key, value]) =>
-                    new StringSelectMenuOptionBuilder()
-                      .setLabel(value)
-                      .setValue(key),
-                  ),
-                )
-                .setCustomId("config-format-select"),
-            ),
-        ]);
-
         await interaction.showModal(modal);
         break;
 
