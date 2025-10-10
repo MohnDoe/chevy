@@ -21,7 +21,10 @@ export const generateVerificationCode = (length: number) => {
   return result;
 };
 
-export const insertVerificationCode = async (discordId: string) => {
+export const insertVerificationCode = async (
+  discordId: string,
+  hevyUsername: string,
+) => {
   let verificationCode = "";
   let isCodeUnique = false;
   let userVerification = null;
@@ -34,11 +37,8 @@ export const insertVerificationCode = async (discordId: string) => {
         data: {
           verificationCode: verificationCode,
           workoutId: WORKOUT_SHORT_ID,
-          User: {
-            connect: {
-              discordId,
-            },
-          },
+          userDiscordId: discordId,
+          userHevyUsername: hevyUsername,
         },
       });
       isCodeUnique = true;
@@ -57,15 +57,17 @@ export const insertVerificationCode = async (discordId: string) => {
   }
 };
 
-export const getUserLatestPendingVerification = async (discordId: string) => {
+export const getUserLatestPendingVerification = async (
+  discordId: string,
+  hevyUsername: string,
+) => {
   const expiryDate = dayjs()
     .subtract(VERIFICATION_CODE_LIFESPAN_DAYS, "days")
     .toDate();
   return await prisma.hevyUserVerification.findFirst({
     where: {
-      User: {
-        discordId,
-      },
+      userDiscordId: discordId,
+      userHevyUsername: hevyUsername,
       status: "pending",
       createdAt: {
         gt: expiryDate,
@@ -77,22 +79,36 @@ export const getUserLatestPendingVerification = async (discordId: string) => {
   });
 };
 
-export const findOrCreateUserVerification = async (discordId: string) => {
-  let hevyUserVerification = await getUserLatestPendingVerification(discordId);
+export const findOrCreateUserVerification = async (
+  discordId: string,
+  hevyUsername: string,
+) => {
+  let hevyUserVerification = await getUserLatestPendingVerification(
+    discordId,
+    hevyUsername,
+  );
 
   if (!hevyUserVerification) {
-    hevyUserVerification = (await insertVerificationCode(discordId)) ?? null;
+    hevyUserVerification =
+      (await insertVerificationCode(discordId, hevyUsername)) ?? null;
   }
 
   return hevyUserVerification;
 };
 
-export const isUserVerified = async (hevyUsername: string) => {
+export const isUserVerified = async (
+  discordId: string,
+  hevyUsername: string,
+) => {
   return await prisma.user.findUnique({
     where: {
+      discordId,
       hevyUsername,
-      hevyUserVerification: {
-        status: "verified",
+      hevyUserVerifications: {
+        some: {
+          userDiscordId: discordId,
+          userHevyUsername: hevyUsername,
+        },
       },
     },
   });

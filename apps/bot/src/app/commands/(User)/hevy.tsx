@@ -53,7 +53,15 @@ export const command = new SlashCommandBuilder()
     InteractionContextType.PrivateChannel,
   ])
   .addSubcommand((sc) =>
-    sc.setName("link").setDescription("Link your Hevy account."),
+    sc
+      .setName("link")
+      .setDescription("Link your Hevy account.")
+      .addStringOption((o) =>
+        o
+          .setName("username")
+          .setDescription("Your Hevy username.")
+          .setRequired(true),
+      ),
   )
   .addSubcommand((sc) =>
     sc.setName("unlink").setDescription("Unlink your Hevy account."),
@@ -174,8 +182,8 @@ const generatePrivateFollowInstructionsComponents = async (
     components = [
       ...components,
       new TextDisplayBuilder().setContent(
-        `Your account is set to private, @${process.env
-          .BOT_ON_HEVY_USERNAME!} won't have access to your workouts, routines, etc. if you are not mutual followers.
+        `Your account is set to private, the bot (@${process.env
+          .BOT_ON_HEVY_USERNAME!} on Hevy) won't have access to your workouts, routines, etc. if you are not mutual followers.
         
 A follow request was sent out to your account, you need to accept it to proceed.`,
       ),
@@ -195,7 +203,7 @@ const generateLinkingInstructions = async (
       ),
       new TextDisplayBuilder().setContent(
         [
-          `In order to link your Hevy account to Chevy you need to follow these simple steps:`,
+          `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
           `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
           `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
           `3. Wait for verification, bot will check for new verification every **5 minutes**.`,
@@ -222,8 +230,13 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
   const user = await upsertUser(discordUserId);
   switch (interaction.options.getSubcommand()) {
     case "link":
-      const userVerification =
-        await findOrCreateUserVerification(discordUserId);
+      const hevyUsername = getHevyUsernameOption(
+        interaction as unknown as ChatInputCommandInteraction,
+      );
+      const userVerification = await findOrCreateUserVerification(
+        discordUserId,
+        hevyUsername,
+      );
 
       if (!userVerification) {
         // oops
