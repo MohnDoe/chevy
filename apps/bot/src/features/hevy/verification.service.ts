@@ -236,8 +236,12 @@ export const executeVerificationTask = async () => {
       await sendSuccessfullVerificationDM(verification);
 
       if (hevyProfile.private_profile) {
-        await followUserOnHevy(verification.userHevyUsername);
-        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
+        Logger.info(
+          `[verification] #${verification.verificationCode} : private profile.`,
+        );
+
+        followUserOnHevy(verification.userHevyUsername);
+        sendPrivateAccountInstructionsDM(verification.userDiscordId);
       }
     }
   }
