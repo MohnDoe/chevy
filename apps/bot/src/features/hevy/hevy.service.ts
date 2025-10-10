@@ -13,8 +13,11 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   return await prisma.user.findUnique({
     where: {
       hevyUsername,
-      hevyUserVerification: {
-        status: "verified",
+      hevyUserVerifications: {
+        some: {
+          userHevyUsername: hevyUsername,
+          status: "verified",
+        },
       },
     },
   });

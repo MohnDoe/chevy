@@ -32,12 +32,13 @@ enum UserVerificationStatus {
 
 model HevyUserVerification {
   id               String                 @id @unique @default(cuid())
-  createdAt        DateTime               @default(now())
   lastCheck        DateTime?
   workoutId        String
   verificationCode String                 @unique
   status           UserVerificationStatus @default(pending)
-  User             User                   @relation(fields: [userDiscordId, userHevyUsername], references: [discordId, hevyUsername])
+  User             User                   @relation(fields: [userDiscordId], references: [discordId])
   userDiscordId    String
   userHevyUsername String
+
+  createdAt DateTime @default(now())
 }
