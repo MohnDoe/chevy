@@ -96,6 +96,7 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       break;
 
     case "unlink":
+      // TODO: correctly unlink using UserVerification
       if (user) {
         await setUserHevyUsername(user.discordId, "");
         await setIsFollowedByHevyBot(user.discordId, false);
