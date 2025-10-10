@@ -2,12 +2,18 @@ import { ButtonKit } from "commandkit";
 import {
   ButtonStyle,
   ContainerBuilder,
+  hyperlink,
   SeparatorBuilder,
+  subtext,
   TextDisplayBuilder,
 } from "discord.js";
-import { User } from "../../../../../packages/database/generated/prisma";
+import {
+  HevyUserVerification,
+  User,
+} from "../../../../../packages/database/generated/prisma";
 import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { setIsFollowedByHevyBot } from "./hevy.service";
+import { commandMention } from "../discord/command.service";
 
 export const generatePrivateFollowInstructionsComponents = async (
   user: User,
@@ -91,3 +97,31 @@ const getFollowedByHevyBotTextComponent = (done: boolean) =>
       ` ` +
       `@${process.env.BOT_ON_HEVY_USERNAME}`,
   );
+export const generateLinkingInstructions = async (
+  userVerification: HevyUserVerification,
+) => {
+  let components: (TextDisplayBuilder | ContainerBuilder | SeparatorBuilder)[] =
+    [
+      new TextDisplayBuilder().setContent(
+        "# Welcome to your Hevy companion bot !",
+      ),
+      new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          [
+            `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
+            `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
+            `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
+            `3. Wait for verification, bot will check for new verification every **5 minutes**.`,
+            `4. If everything is fine, the bot has read your comment, your account is verified. And a message will be sent to you.`,
+          ].join("\n"),
+        ),
+      ),
+      new TextDisplayBuilder().setContent(
+        subtext(
+          `If after 15 minutes the bot haven't message you yet, you can re-run the command ${await commandMention("hevy link")}!`,
+        ),
+      ),
+    ];
+
+  return components;
+};

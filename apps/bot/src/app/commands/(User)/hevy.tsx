@@ -1,48 +1,25 @@
-import { type ChatInputCommand, CommandMetadata, ButtonKit } from "commandkit";
+import { type ChatInputCommand, CommandMetadata } from "commandkit";
 
 import {
-  ButtonStyle,
   ChatInputCommandInteraction,
-  ContainerBuilder,
-  hyperlink,
   InteractionContextType,
   MessageFlags,
-  SeparatorBuilder,
-  SeparatorSpacingSize,
   SlashCommandBuilder,
-  subtext,
   TextDisplayBuilder,
 } from "discord.js";
 
-import {
-  checkIfUserFollowingBot,
-  checkIfUserUserIsFollowedByBot,
-  followUserOnHevy,
-  getUserProfile,
-} from "@/features/hevy/hevy.api";
+import { getUserProfile } from "@/features/hevy/hevy.api";
 
+import { getHevyUsernameOption } from "@/features/discord/utils.service";
 import {
   setIsFollowedByHevyBot,
-  setIsHevyProfilePrivate,
   setUserHevyUsername,
   upsertUser,
 } from "@/features/hevy/hevy.service";
-import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
-import { track } from "commandkit/analytics";
-import { sendActivity } from "@/features/liveActivity/liveActivity.service";
-import {
-  getLastBotFollowRequest,
-  updateLastBotFollowRequest,
-} from "@/features/core/user.service";
-import {
-  HevyUserVerification,
-  User,
-} from "../../../../../../packages/database/generated/prisma";
-import dayjs from "dayjs";
+import { generateLinkingInstructions } from "@/features/hevy/verification.embeds";
 import { findOrCreateUserVerification } from "@/features/hevy/verification.service";
-import { commandMention } from "@/features/discord/command.service";
-
-const BOT_FOLLOW_REQUEST_DELAY_MINS = 1;
+import { sendActivity } from "@/features/liveActivity/liveActivity.service";
+import { track } from "commandkit/analytics";
 
 export const command = new SlashCommandBuilder()
   .setName("hevy")
@@ -66,41 +43,6 @@ export const command = new SlashCommandBuilder()
   .addSubcommand((sc) =>
     sc.setName("unlink").setDescription("Unlink your Hevy account."),
   );
-
-export const getHevyUsernameOption = (
-  interaction: ChatInputCommandInteraction,
-) => {
-  return interaction.options.getString("username")!.trim().toLocaleLowerCase();
-};
-
-const generateLinkingInstructions = async (
-  userVerification: HevyUserVerification,
-) => {
-  let components: (TextDisplayBuilder | ContainerBuilder | SeparatorBuilder)[] =
-    [
-      new TextDisplayBuilder().setContent(
-        "# Welcome to your Hevy companion bot !",
-      ),
-      new ContainerBuilder().addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          [
-            `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
-            `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
-            `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
-            `3. Wait for verification, bot will check for new verification every **5 minutes**.`,
-            `4. If everything is fine, the bot has read your comment, your account is verified. And a message will be sent to you.`,
-          ].join("\n"),
-        ),
-      ),
-      new TextDisplayBuilder().setContent(
-        subtext(
-          `If after 15 minutes the bot haven't message you yet, you can re-run the command ${await commandMention("hevy link")}!`,
-        ),
-      ),
-    ];
-
-  return components;
-};
 
 export const chatInput: ChatInputCommand = async ({ interaction }) => {
   await interaction.deferReply({
