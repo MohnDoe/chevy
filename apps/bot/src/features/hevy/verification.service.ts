@@ -1,13 +1,17 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
-import { getWorkoutComments } from "./hevy.api";
+import { getUserProfile, getWorkoutComments } from "./hevy.api";
 import verificationConfig from "@/config/verification.config";
 import dayjs from "dayjs";
-import { HevyUserVerification } from "../../../../../packages/database/generated/prisma";
-import { getUserByDiscordId, setUserHevyUsername } from "./hevy.service";
+import {
+  getUserByDiscordId,
+  setIsHevyProfilePrivate,
+  setUserHevyUsername,
+} from "./hevy.service";
 import { sendSuccessfullVerificationDM } from "../core/user.service";
 import verification from "@/app/tasks/verification";
+import { HevyUserVerificationWithUser } from "./verification.types";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -70,7 +74,9 @@ export const insertVerificationCode = async (
   return userVerification;
 };
 
-const markVerificationAsDone = async (verification: HevyUserVerification) => {
+const markVerificationAsDone = async (
+  verification: HevyUserVerificationWithUser,
+) => {
   await prisma.hevyUserVerification.updateMany({
     where: {
       userHevyUsername: verification.userHevyUsername,
@@ -108,7 +114,9 @@ export const getUserLatestPendingVerification = async (
   });
 };
 
-export const getRemainingPendingVerifications = async () => {
+export const getRemainingPendingVerifications = async (): Promise<
+  HevyUserVerificationWithUser[]
+> => {
   const expiryDate = getVerificationCodesExpiryDate();
 
   return await prisma.hevyUserVerification.findMany({
@@ -117,6 +125,9 @@ export const getRemainingPendingVerifications = async () => {
       createdAt: {
         gt: expiryDate,
       },
+    },
+    include: {
+      User: true,
     },
   });
 };
@@ -164,7 +175,7 @@ export const getVerificationWorkoutComments = async () => {
 };
 
 export const isVerificationCodePostedOnHevy = async (
-  verification: HevyUserVerification,
+  verification: HevyUserVerificationWithUser,
 ) => {
   const comments = await getVerificationWorkoutComments();
 
@@ -210,9 +221,12 @@ export const executeVerificationTask = async () => {
         verification.userDiscordId,
         verification.userHevyUsername,
       );
+      const hevyProfile = await getUserProfile(verification.userHevyUsername);
+      await setIsHevyProfilePrivate(
+        verification.userDiscordId,
+        hevyProfile.private_profile,
+      );
       await sendSuccessfullVerificationDM(verification);
     }
   }
-
-  console.log(pendingVerifications);
 };

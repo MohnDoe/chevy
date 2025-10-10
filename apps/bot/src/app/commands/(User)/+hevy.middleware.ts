@@ -33,9 +33,10 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       if (userVerification) {
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: [
-            successfulyLinkedToHevy(userVerification.userHevyUsername, true),
-          ],
+          components: await successfulyLinkedToHevy(
+            userVerification.User,
+            true,
+          ),
         });
         track({
           name: "hevy account was already linked",

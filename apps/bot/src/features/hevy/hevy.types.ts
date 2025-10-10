@@ -95,3 +95,24 @@ export interface HevyWorkoutComment {
   profile_pic: string;
   is_liked_by_user: boolean;
 }
+
+export interface HevyProfile {
+  username: string;
+  verified: boolean;
+  subscribed: boolean;
+  profie_pic: string;
+  full_name: string;
+  workout_count: number;
+  is_blocked: boolean;
+  following_status: string;
+  is_followed_by_requester: boolean;
+  private_profile: boolean;
+  follower_count: number;
+  following_count: number;
+  routines: any[];
+  weekly_workout_durations: any[];
+  mutual_followers: {
+    username: string;
+    profile_pic: string;
+  }[];
+}

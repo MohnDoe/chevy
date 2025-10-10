@@ -1,6 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { HevyWorkout, HevyWorkoutComment } from "./hevy.types";
+import { HevyProfile, HevyWorkout, HevyWorkoutComment } from "./hevy.types";
 
 dotenv.config();
 
@@ -52,7 +52,9 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
   return;
 };
 
-export const getUserProfile = async (username: string) => {
+export const getUserProfile = async (
+  username: string,
+): Promise<HevyProfile> => {
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/user_profile/${username}`,

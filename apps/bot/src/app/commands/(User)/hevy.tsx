@@ -73,126 +73,6 @@ export const getHevyUsernameOption = (
   return interaction.options.getString("username")!.trim().toLocaleLowerCase();
 };
 
-const followHevyBotTextComponent = (done: boolean) =>
-  new TextDisplayBuilder().setContent(
-    `${done ? "✅" : "⏳"}  Follow [**@${process.env
-      .BOT_ON_HEVY_USERNAME!}** on Hevy](https://www.hevy.com/user/${process.env.BOT_ON_HEVY_USERNAME!.toLocaleLowerCase()})`,
-  );
-
-const getFollowedByHevyBotTextComponent = (done: boolean) =>
-  new TextDisplayBuilder().setContent(
-    `${done ? "✅" : "⏳"}  Accept follow request from @${
-      process.env.BOT_ON_HEVY_USERNAME
-    }`,
-  );
-
-// const followHevyBotLinkButton = (
-//   isFollowing: boolean,
-//   targetHevyUsername: string,
-//   privateProfile: boolean,
-//   user: User,
-// ) =>
-//   new ButtonKit()
-//     .setLabel(isFollowing ? "Following" : "Check")
-//     .setStyle(ButtonStyle.Secondary)
-//     .setEmoji(isFollowing ? "✅" : "🔄")
-//     .setCustomId("followsHevyBotCheckButton")
-//     .setDisabled(isFollowing)
-//     .onClick(async (interaction, context) => {
-//       if (!interaction.deferred) {
-//         await interaction.deferUpdate({ withResponse: true });
-//       }
-//
-//       const userFollowsHevyBot = await checkIfUserFollowingBot(
-//         targetHevyUsername!,
-//       );
-//
-//       if (userFollowsHevyBot) {
-//         await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
-//         await setIsFollowingHevyBot(interaction.user.id, true);
-//         await setIsHevyProfilePrivate(interaction.user.id, privateProfile);
-//       }
-//
-//       context.dispose();
-//
-//       await interaction.editReply({
-//         components: await generateLinkingInstructions(targetHevyUsername, user),
-//       });
-//     });
-
-const refreshFollowedStatusButtonComponent = (
-  isFollowed: boolean,
-  targetHevyUsername: string,
-  user: User,
-) =>
-  new ButtonKit()
-    .setLabel(isFollowed ? "Followed" : "Check")
-    .setStyle(ButtonStyle.Secondary)
-    .setEmoji(isFollowed ? "✅" : "🔄")
-    .setCustomId("refreshFollowedStatusButton")
-    .setDisabled(isFollowed)
-    .onClick(async (interaction, context) => {
-      if (!interaction.deferred) {
-        await interaction.deferUpdate({ withResponse: true });
-      }
-
-      const userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-        targetHevyUsername!,
-      );
-
-      if (userIsFollowedByHevyBot) {
-        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
-        await setIsFollowedByHevyBot(interaction.user.id, true);
-      }
-
-      context.dispose();
-      await interaction.editReply({
-        components: await generateLinkingInstructions(targetHevyUsername, user),
-      });
-    });
-
-const generatePrivateFollowInstructionsComponents = async (
-  hevyUsername: string,
-  user: User,
-) => {
-  const userIsFollowedByHevyBot =
-    await checkIfUserUserIsFollowedByBot(hevyUsername);
-
-  let components: (ContainerBuilder | TextDisplayBuilder)[] = [
-    userIsFollowedByHevyBot
-      ? new ContainerBuilder().addTextDisplayComponents(
-          getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
-        )
-      : new ContainerBuilder().addSectionComponents((section) =>
-          section
-            .addTextDisplayComponents(
-              getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
-            )
-            .setButtonAccessory(
-              refreshFollowedStatusButtonComponent(
-                userIsFollowedByHevyBot,
-                hevyUsername,
-                user,
-              ),
-            ),
-        ),
-  ];
-
-  if (!userIsFollowedByHevyBot) {
-    components = [
-      ...components,
-      new TextDisplayBuilder().setContent(
-        `Your account is set to private, the bot (@${process.env
-          .BOT_ON_HEVY_USERNAME!} on Hevy) won't have access to your workouts, routines, etc. if you are not mutual followers.
-        
-A follow request was sent out to your account, you need to accept it to proceed.`,
-      ),
-    ];
-  }
-
-  return components;
-};
-
 const generateLinkingInstructions = async (
   userVerification: HevyUserVerification,
 ) => {
@@ -201,16 +81,17 @@ const generateLinkingInstructions = async (
       new TextDisplayBuilder().setContent(
         "# Welcome to your Hevy companion bot !",
       ),
-      new TextDisplayBuilder().setContent(
-        [
-          `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
-          `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
-          `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
-          `3. Wait for verification, bot will check for new verification every **5 minutes**.`,
-          `4. If everything is fine, the bot has read your comment, your account is verified. And a message will be sent to you.`,
-        ].join("\n"),
+      new ContainerBuilder().addTextDisplayComponents(
+        new TextDisplayBuilder().setContent(
+          [
+            `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
+            `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
+            `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
+            `3. Wait for verification, bot will check for new verification every **5 minutes**.`,
+            `4. If everything is fine, the bot has read your comment, your account is verified. And a message will be sent to you.`,
+          ].join("\n"),
+        ),
       ),
-      new SeparatorBuilder().setDivider(false),
       new TextDisplayBuilder().setContent(
         subtext(
           `If after 15 minutes the bot haven't message you yet, you can re-run the command ${await commandMention("hevy link")}!`,
@@ -233,21 +114,43 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       const hevyUsername = getHevyUsernameOption(
         interaction as unknown as ChatInputCommandInteraction,
       );
-      const userVerification = await findOrCreateUserVerification(
+      const hevyProfile = await getUserProfile(hevyUsername);
+
+      if (!hevyProfile) {
+        await interaction.editReply({
+          flags: MessageFlags.IsComponentsV2,
+          components: [
+            new TextDisplayBuilder().setContent(
+              `Couldn't find the Hevy profile @${hevyUsername}. Please retry with an existing profile.`,
+            ),
+          ],
+        });
+        return;
+      }
+
+      const pendingUserVerification = await findOrCreateUserVerification(
         discordUserId,
         hevyUsername,
       );
 
-      if (!userVerification) {
+      if (!pendingUserVerification) {
         // oops
+        await interaction.editReply({
+          flags: MessageFlags.IsComponentsV2,
+          components: [
+            new TextDisplayBuilder().setContent(
+              `An error occured during the verification process. Please try again later.`,
+            ),
+          ],
+        });
       } else {
         await interaction.editReply({
           flags: MessageFlags.IsComponentsV2,
-          components: await generateLinkingInstructions(userVerification),
+          components: await generateLinkingInstructions(
+            pendingUserVerification,
+          ),
         });
       }
-
-      console.log(userVerification);
       break;
 
     case "unlink":

@@ -1,12 +1,10 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
-import {
-  HevyUserVerification,
-  User,
-} from "../../../../../packages/database/generated/prisma";
+import { User } from "../../../../../packages/database/generated/prisma";
 import { prisma } from "@repo/db";
 import client from "@/app";
 import { MessageFlags } from "discord.js";
 import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
+import { HevyUserVerificationWithUser } from "../hevy/verification.types";
 
 export const updateLastBotFollowRequest = async (user: User) => {
   "use cache";
@@ -38,15 +36,13 @@ export const getLastBotFollowRequest = async (user: User) => {
 };
 
 export const sendSuccessfullVerificationDM = async (
-  verification: HevyUserVerification,
+  verification: HevyUserVerificationWithUser,
 ) => {
   const user = client.users.cache.get(verification.userDiscordId);
   if (user) {
     await user.send({
       flags: MessageFlags.IsComponentsV2,
-      components: [
-        successfulyLinkedToHevy(verification.userHevyUsername, false),
-      ],
+      components: await successfulyLinkedToHevy(verification.User, false),
     });
   }
 };
