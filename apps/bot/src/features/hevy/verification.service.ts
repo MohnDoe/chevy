@@ -1,7 +1,11 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
-import { getUserProfile, getWorkoutComments } from "./hevy.api";
+import {
+  followUserOnHevy,
+  getUserProfile,
+  getWorkoutComments,
+} from "./hevy.api";
 import verificationConfig from "@/config/verification.config";
 import dayjs from "dayjs";
 import {
@@ -9,7 +13,10 @@ import {
   setIsHevyProfilePrivate,
   setUserHevyUsername,
 } from "./hevy.service";
-import { sendSuccessfullVerificationDM } from "../core/user.service";
+import {
+  sendPrivateAccountInstructionsDM,
+  sendSuccessfullVerificationDM,
+} from "../core/user.service";
 import verification from "@/app/tasks/verification";
 import { HevyUserVerificationWithUser } from "./verification.types";
 
@@ -227,6 +234,11 @@ export const executeVerificationTask = async () => {
         hevyProfile.private_profile,
       );
       await sendSuccessfullVerificationDM(verification);
+
+      if (hevyProfile.private_profile) {
+        await followUserOnHevy(verification.userHevyUsername);
+        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
+      }
     }
   }
 };

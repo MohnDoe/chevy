@@ -1,5 +1,4 @@
 import { ContainerBuilder, TextDisplayBuilder } from "discord.js";
-import { generatePrivateFollowInstructionsComponents } from "./verification.embeds";
 import { User } from "../../../../../packages/database/generated/prisma";
 
 export const successfulyLinkedToHevy = async (user: User, already: boolean) => {
@@ -15,13 +14,6 @@ export const successfulyLinkedToHevy = async (user: User, already: boolean) => {
           ),
     ),
   ];
-
-  if (user.hevyProfilePrivate) {
-    const privateLinkingComponenents =
-      await generatePrivateFollowInstructionsComponents(user);
-
-    components = [...components, ...privateLinkingComponenents];
-  }
 
   return components;
 };

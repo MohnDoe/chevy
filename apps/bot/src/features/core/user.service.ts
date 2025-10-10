@@ -5,6 +5,8 @@ import client from "@/app";
 import { MessageFlags } from "discord.js";
 import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
 import { HevyUserVerificationWithUser } from "../hevy/verification.types";
+import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
+import { getUserByDiscordId } from "../hevy/hevy.service";
 
 export const updateLastBotFollowRequest = async (user: User) => {
   "use cache";
@@ -43,6 +45,24 @@ export const sendSuccessfullVerificationDM = async (
     await user.send({
       flags: MessageFlags.IsComponentsV2,
       components: await successfulyLinkedToHevy(verification.User, false),
+    });
+  }
+};
+
+export const sendPrivateAccountInstructionsDM = async (
+  userDiscordId: string,
+) => {
+  const discordUser = client.users.cache.get(userDiscordId);
+
+  if (discordUser) {
+    const user = await getUserByDiscordId(userDiscordId);
+    if (!user) return;
+    await discordUser.send({
+      flags: MessageFlags.IsComponentsV2,
+      components: await generatePrivateFollowInstructionsComponents(
+        user,
+        user.isFollowedByHevyBot,
+      ),
     });
   }
 };

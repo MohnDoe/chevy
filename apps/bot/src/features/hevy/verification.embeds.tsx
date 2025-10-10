@@ -1,39 +1,17 @@
 import { ContainerBuilder, TextDisplayBuilder, ButtonStyle } from "discord.js";
 import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { ButtonKit } from "commandkit";
-import { setUserHevyUsername, setIsFollowedByHevyBot } from "./hevy.service";
+import { setIsFollowedByHevyBot } from "./hevy.service";
 import { User } from "../../../../../packages/database/generated/prisma";
 
 export const generatePrivateFollowInstructionsComponents = async (
   user: User,
+  isFollowedByHevyBot: boolean,
 ) => {
-  const userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-    user.hevyUsername!,
-  );
+  let components: (ContainerBuilder | TextDisplayBuilder)[] = [];
 
-  let components: (ContainerBuilder | TextDisplayBuilder)[] = [
-    userIsFollowedByHevyBot
-      ? new ContainerBuilder().addTextDisplayComponents(
-          getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
-        )
-      : new ContainerBuilder().addSectionComponents((section) =>
-          section
-            .addTextDisplayComponents(
-              getFollowedByHevyBotTextComponent(userIsFollowedByHevyBot),
-            )
-            .setButtonAccessory(
-              refreshFollowedStatusButtonComponent(
-                userIsFollowedByHevyBot,
-                user.hevyUsername!,
-                user,
-              ),
-            ),
-        ),
-  ];
-
-  if (!userIsFollowedByHevyBot) {
+  if (!isFollowedByHevyBot) {
     components = [
-      ...components,
       new TextDisplayBuilder().setContent(
         `Your account is set to private, the bot (@${process.env
           .BOT_ON_HEVY_USERNAME!} on Hevy) won't have access to your workouts, routines, etc. if you are not mutual followers.
@@ -43,14 +21,33 @@ A follow request was sent out to your account, you need to accept it to proceed.
     ];
   }
 
+  components = [
+    ...components,
+    ...[
+      isFollowedByHevyBot
+        ? new ContainerBuilder().addTextDisplayComponents(
+            getFollowedByHevyBotTextComponent(isFollowedByHevyBot),
+          )
+        : new ContainerBuilder().addSectionComponents((section) =>
+            section
+              .addTextDisplayComponents(
+                getFollowedByHevyBotTextComponent(isFollowedByHevyBot),
+              )
+              .setButtonAccessory(
+                refreshFollowedStatusButtonComponent(user, isFollowedByHevyBot),
+              ),
+          ),
+    ],
+  ];
+
   return components;
 };
+
 const refreshFollowedStatusButtonComponent = (
-  isFollowed: boolean,
-  targetHevyUsername: string,
   user: User,
-) =>
-  new ButtonKit()
+  isFollowed: boolean,
+) => {
+  return new ButtonKit()
     .setLabel(isFollowed ? "Followed" : "Check")
     .setStyle(ButtonStyle.Secondary)
     .setEmoji(isFollowed ? "✅" : "🔄")
@@ -61,23 +58,27 @@ const refreshFollowedStatusButtonComponent = (
         await interaction.deferUpdate({ withResponse: true });
       }
 
-      const userIsFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-        targetHevyUsername!,
+      const isFollowedNow = await checkIfUserUserIsFollowedByBot(
+        user.hevyUsername!,
       );
 
-      if (userIsFollowedByHevyBot) {
-        await setUserHevyUsername(interaction.user.id, targetHevyUsername!);
+      if (isFollowedNow) {
         await setIsFollowedByHevyBot(interaction.user.id, true);
       }
 
       context.dispose();
       await interaction.editReply({
-        components: await generatePrivateFollowInstructionsComponents(user),
+        components: await generatePrivateFollowInstructionsComponents(
+          user,
+          isFollowedNow,
+        ),
       });
     });
+};
+
 const getFollowedByHevyBotTextComponent = (done: boolean) =>
   new TextDisplayBuilder().setContent(
-    `${done ? "✅" : "⏳"}  Accept follow request from @${
-      process.env.BOT_ON_HEVY_USERNAME
-    }`,
+    `${done ? "✅ Your private account is followed by " : "⏳ Accept follow request from "}` +
+      ` ` +
+      `@${process.env.BOT_ON_HEVY_USERNAME}`,
   );
