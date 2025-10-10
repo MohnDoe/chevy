@@ -15,6 +15,7 @@ import {
 import { setIsHevyProfilePrivate, setUserHevyUsername } from "./hevy.service";
 import { HevyUserVerificationWithUser } from "./verification.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
+import { track } from "commandkit/analytics";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -89,6 +90,11 @@ const markVerificationAsDone = async (
     data: {
       status: "verified",
     },
+  });
+  sendActivity(`Someone **linked their Hevy account**.`);
+  track({
+    name: "hevy linking success",
+    id: "discord_user_" + verification.User.discordId,
   });
 };
 
@@ -230,8 +236,6 @@ export const executeVerificationTask = async () => {
         hevyProfile.private_profile,
       );
       await sendSuccessfullVerificationDM(verification);
-
-      sendActivity(`Someone **linked their Hevy account**.`);
 
       if (hevyProfile.private_profile) {
         Logger.info(
