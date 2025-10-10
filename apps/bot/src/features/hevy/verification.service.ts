@@ -5,6 +5,9 @@ import { getWorkoutComments } from "./hevy.api";
 import verificationConfig from "@/config/verification.config";
 import dayjs from "dayjs";
 import { HevyUserVerification } from "../../../../../packages/database/generated/prisma";
+import { getUserByDiscordId, setUserHevyUsername } from "./hevy.service";
+import { sendSuccessfullVerificationDM } from "../core/user.service";
+import verification from "@/app/tasks/verification";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -171,13 +174,13 @@ export const isVerificationCodePostedOnHevy = async (
       comment.username === verification.userHevyUsername,
   );
 
-  if (!correspondingComment) return null;
+  if (!correspondingComment) return false;
 
-  return correspondingComment.username;
+  return true;
 };
 
 export const executeVerificationTask = async () => {
-  Logger.info("[verification] Executing.");
+  Logger.info("[verification] Executing task.");
 
   const pendingVerifications = await getRemainingPendingVerifications();
 
@@ -186,12 +189,28 @@ export const executeVerificationTask = async () => {
     return;
   }
 
-  for await (const pendingVerification of pendingVerifications) {
-    const verificationDone =
-      await isVerificationCodePostedOnHevy(pendingVerification);
+  Logger.info(
+    `[verification] ${pendingVerifications.length} pending verifications found.`,
+  );
 
-    if (verificationDone) {
-      await markVerificationAsDone(pendingVerification);
+  for await (const verification of pendingVerifications) {
+    Logger.info(
+      `[verification] Handling verification : ${verification.userHevyUsername} - code: ${verification.verificationCode} - date: ${verification.createdAt}`,
+    );
+    const isVerificationDone =
+      await isVerificationCodePostedOnHevy(verification);
+
+    Logger.info(
+      `[verification] Verification #${verification.verificationCode} done? ${isVerificationDone}`,
+    );
+
+    if (isVerificationDone) {
+      await markVerificationAsDone(verification);
+      await setUserHevyUsername(
+        verification.userDiscordId,
+        verification.userHevyUsername,
+      );
+      await sendSuccessfullVerificationDM(verification);
     }
   }
 

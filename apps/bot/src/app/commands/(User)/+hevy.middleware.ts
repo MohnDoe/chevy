@@ -1,6 +1,10 @@
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { track } from "commandkit/analytics";
-import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  TextDisplayBuilder,
+} from "discord.js";
 
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
 import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
@@ -30,7 +34,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
           components: [
-            successfulyLinkedToHevy(userVerification.User.hevyUsername!),
+            successfulyLinkedToHevy(userVerification.userHevyUsername, true),
           ],
         });
         track({
