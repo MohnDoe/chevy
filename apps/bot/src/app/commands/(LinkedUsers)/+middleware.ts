@@ -1,13 +1,13 @@
-import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
+import { getUserVerification } from "@/features/hevy/hevy.service";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { useAnalytics } from "commandkit/analytics";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const userVerification = await isDiscordUserAlreadyLinked(userDiscordId);
+  const userVerification = await getUserVerification(userDiscordId);
 
-  if (!userVerification) {
+  if (!userVerification || userVerification.status !== "verified") {
     // TODO: add linking instructions here
     (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
       content: "You are not linked to Hevy yet.",

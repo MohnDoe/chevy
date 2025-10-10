@@ -1,23 +1,18 @@
+import verificationConfig from "@/config/verification.config";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
+import dayjs from "dayjs";
+import {
+  sendPrivateAccountInstructionsDM,
+  sendSuccessfullVerificationDM,
+} from "../core/user.service";
 import {
   followUserOnHevy,
   getUserProfile,
   getWorkoutComments,
 } from "./hevy.api";
-import verificationConfig from "@/config/verification.config";
-import dayjs from "dayjs";
-import {
-  getUserByDiscordId,
-  setIsHevyProfilePrivate,
-  setUserHevyUsername,
-} from "./hevy.service";
-import {
-  sendPrivateAccountInstructionsDM,
-  sendSuccessfullVerificationDM,
-} from "../core/user.service";
-import verification from "@/app/tasks/verification";
+import { setIsHevyProfilePrivate, setUserHevyUsername } from "./hevy.service";
 import { HevyUserVerificationWithUser } from "./verification.types";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
