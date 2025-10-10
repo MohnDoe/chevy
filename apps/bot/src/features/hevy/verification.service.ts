@@ -14,6 +14,7 @@ import {
 } from "./hevy.api";
 import { setIsHevyProfilePrivate, setUserHevyUsername } from "./hevy.service";
 import { HevyUserVerificationWithUser } from "./verification.types";
+import { sendActivity } from "../liveActivity/liveActivity.service";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -229,6 +230,8 @@ export const executeVerificationTask = async () => {
         hevyProfile.private_profile,
       );
       await sendSuccessfullVerificationDM(verification);
+
+      sendActivity(`Someone **linked their Hevy account**.`);
 
       if (hevyProfile.private_profile) {
         Logger.info(
