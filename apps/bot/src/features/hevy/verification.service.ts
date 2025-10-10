@@ -3,9 +3,11 @@ import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
 import { getWorkoutComments } from "./hevy.api";
 import { HevyUserVerification } from "../../../../../packages/database/generated/prisma";
+import dayjs from "dayjs";
 
 const VERIFICATION_CODE_LENGTH = 12;
 const WORKOUT_SHORT_ID = "XgezVT8rCLT";
+const VERIFICATION_CODE_LIFESPAN_DAYS = 1;
 
 export const generateVerificationCode = (length: number) => {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -55,14 +57,28 @@ export const insertVerificationCode = async (discordId: string) => {
   }
 };
 
-export const findOrCreateUserVerification = async (discordId: string) => {
-  let hevyUserVerification = await prisma.hevyUserVerification.findFirst({
+export const getUserLatestPendingVerification = async (discordId: string) => {
+  const expiryDate = dayjs()
+    .subtract(VERIFICATION_CODE_LIFESPAN_DAYS, "days")
+    .toDate();
+  return await prisma.hevyUserVerification.findFirst({
     where: {
       User: {
         discordId,
       },
+      status: "pending",
+      createdAt: {
+        gt: expiryDate,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
     },
   });
+};
+
+export const findOrCreateUserVerification = async (discordId: string) => {
+  let hevyUserVerification = await getUserLatestPendingVerification(discordId);
 
   if (!hevyUserVerification) {
     hevyUserVerification = (await insertVerificationCode(discordId)) ?? null;
