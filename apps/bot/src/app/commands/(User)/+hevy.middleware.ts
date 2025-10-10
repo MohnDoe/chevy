@@ -2,16 +2,23 @@ import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { track } from "commandkit/analytics";
 import {
   ChatInputCommandInteraction,
+  ContainerBuilder,
   MessageFlags,
+  SeparatorBuilder,
   TextDisplayBuilder,
 } from "discord.js";
 
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
-import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
+import { generatePrivateFollowInstructionsComponents } from "@/features/hevy/verification.embeds";
+import { getUserVerification } from "@/features/hevy/hevy.service";
+import {
+  checkIfUserUserIsFollowedByBot,
+  followUserOnHevy,
+} from "@/features/hevy/hevy.api";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const userVerification = await isDiscordUserAlreadyLinked(userDiscordId);
+  const userVerification = await getUserVerification(userDiscordId);
   track({
     name: "hevy command used",
     id: "discord_user_" + ctx.interaction.user.id,
@@ -30,13 +37,33 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     ).options.getSubcommand()
   ) {
     case "link":
-      if (userVerification) {
+      if (userVerification?.status == "verified") {
+        let components: (
+          | ContainerBuilder
+          | TextDisplayBuilder
+          | SeparatorBuilder
+        )[] = await successfulyLinkedToHevy(userVerification.User, true);
+
+        if (userVerification.User.hevyProfilePrivate) {
+          const isFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+            userVerification.User.hevyUsername!,
+          );
+          if (!isFollowedByHevyBot) {
+            await followUserOnHevy(userVerification.User.hevyUsername!);
+          }
+
+          components = [
+            ...components,
+            ...(await generatePrivateFollowInstructionsComponents(
+              userVerification.User,
+              isFollowedByHevyBot,
+            )),
+          ];
+        }
+
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: await successfulyLinkedToHevy(
-            userVerification.User,
-            true,
-          ),
+          components,
         });
         track({
           name: "hevy account was already linked",

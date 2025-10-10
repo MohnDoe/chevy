@@ -24,7 +24,7 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   });
 }
 
-export async function isDiscordUserAlreadyLinked(
+export async function getUserVerification(
   discordId: string,
 ): Promise<HevyUserVerificationWithUser | null> {
   return await prisma.hevyUserVerification.findFirst({
@@ -32,7 +32,6 @@ export async function isDiscordUserAlreadyLinked(
       User: {
         discordId,
       },
-      status: "verified",
     },
     include: {
       User: true,

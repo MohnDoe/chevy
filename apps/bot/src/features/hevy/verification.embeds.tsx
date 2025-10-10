@@ -1,23 +1,32 @@
-import { ContainerBuilder, TextDisplayBuilder, ButtonStyle } from "discord.js";
-import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { ButtonKit } from "commandkit";
-import { setIsFollowedByHevyBot } from "./hevy.service";
+import {
+  ButtonStyle,
+  ContainerBuilder,
+  SeparatorBuilder,
+  TextDisplayBuilder,
+} from "discord.js";
 import { User } from "../../../../../packages/database/generated/prisma";
+import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
+import { setIsFollowedByHevyBot } from "./hevy.service";
 
 export const generatePrivateFollowInstructionsComponents = async (
   user: User,
   isFollowedByHevyBot: boolean,
 ) => {
-  let components: (ContainerBuilder | TextDisplayBuilder)[] = [];
+  let components: (ContainerBuilder | TextDisplayBuilder | SeparatorBuilder)[] =
+    [new SeparatorBuilder().setDivider(true)];
 
   if (!isFollowedByHevyBot) {
     components = [
-      new TextDisplayBuilder().setContent(
-        `Your account is set to private, the bot (@${process.env
-          .BOT_ON_HEVY_USERNAME!} on Hevy) won't have access to your workouts, routines, etc. if you are not mutual followers.
+      ...components,
+      ...[
+        new TextDisplayBuilder().setContent(
+          `Your account is set to private, the bot (@${process.env
+            .BOT_ON_HEVY_USERNAME!} on Hevy) won't have access to your workouts, routines, etc. if you are not mutual followers.
         
 A follow request was sent out to your account, you need to accept it to proceed.`,
-      ),
+        ),
+      ],
     ];
   }
 

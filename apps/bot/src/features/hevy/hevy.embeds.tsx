@@ -7,10 +7,10 @@ export const successfulyLinkedToHevy = async (user: User, already: boolean) => {
       // TODO : add unlink instructions ?
       already
         ? new TextDisplayBuilder().setContent(
-            `You are already linked to Hevy as **@${user.hevyUsername}**!`,
+            `✅ You are already linked to Hevy as **@${user.hevyUsername}**!`,
           )
         : new TextDisplayBuilder().setContent(
-            `✅  You are successfully linked to Hevy as **@${user.hevyUsername}**!`,
+            `✅ You are successfully linked to Hevy as **@${user.hevyUsername}**!`,
           ),
     ),
   ];
