@@ -20,6 +20,7 @@ import { generateLinkingInstructions } from "@/features/hevy/verification.embeds
 import { findOrCreateUserVerification } from "@/features/hevy/verification.service";
 import { sendActivity } from "@/features/liveActivity/liveActivity.service";
 import { track } from "commandkit/analytics";
+import { unlinkHevy } from "@/features/core/user.service";
 
 export const command = new SlashCommandBuilder()
   .setName("hevy")
@@ -96,9 +97,8 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       break;
 
     case "unlink":
-      // TODO: correctly unlink using UserVerification
       if (user) {
-        await setUserHevyUsername(user.discordId, "");
+        await unlinkHevy(user.discordId);
         await setIsFollowedByHevyBot(user.discordId, false);
       }
       await interaction.followUp({

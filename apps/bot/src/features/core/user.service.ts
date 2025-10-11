@@ -66,3 +66,19 @@ export const sendPrivateAccountInstructionsDM = async (
     });
   }
 };
+
+export const unlinkHevy = async (discordId: string) => {
+  return await prisma.user.update({
+    where: {
+      discordId,
+    },
+    data: {
+      hevyUsername: null,
+      hevyVerification: {
+        delete: {
+          userDiscordId: discordId,
+        },
+      },
+    },
+  });
+};

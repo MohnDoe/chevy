@@ -14,11 +14,9 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   return await prisma.user.findUnique({
     where: {
       hevyUsername,
-      hevyUserVerifications: {
-        some: {
-          userHevyUsername: hevyUsername,
-          status: "verified",
-        },
+      hevyVerification: {
+        userHevyUsername: hevyUsername,
+        status: "verified",
       },
     },
   });
@@ -27,11 +25,9 @@ export async function getUserByHevyUsername(hevyUsername: string) {
 export async function getUserVerification(
   discordId: string,
 ): Promise<HevyUserVerificationWithUser | null> {
-  return await prisma.hevyUserVerification.findFirst({
+  return await prisma.hevyVerification.findUnique({
     where: {
-      User: {
-        discordId,
-      },
+      userDiscordId: discordId,
     },
     include: {
       User: true,

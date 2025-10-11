@@ -51,7 +51,7 @@ export const insertVerificationCode = async (
       `${discordId} - Attemping inserting code : ${verificationCode}`,
     );
     try {
-      userVerification = await prisma.hevyUserVerification.create({
+      userVerification = await prisma.hevyVerification.create({
         data: {
           verificationCode: verificationCode,
           workoutId: verificationConfig.workoutShortId,
@@ -81,7 +81,7 @@ export const insertVerificationCode = async (
 const markVerificationAsDone = async (
   verification: HevyUserVerificationWithUser,
 ) => {
-  await prisma.hevyUserVerification.updateMany({
+  await prisma.hevyVerification.updateMany({
     where: {
       userHevyUsername: verification.userHevyUsername,
       userDiscordId: verification.userDiscordId,
@@ -108,7 +108,7 @@ export const getUserLatestPendingVerification = async (
   hevyUsername: string,
 ) => {
   const expiryDate = getVerificationCodesExpiryDate();
-  return await prisma.hevyUserVerification.findFirst({
+  return await prisma.hevyVerification.findUnique({
     where: {
       userDiscordId: discordId,
       userHevyUsername: hevyUsername,
@@ -116,9 +116,6 @@ export const getUserLatestPendingVerification = async (
       createdAt: {
         gt: expiryDate,
       },
-    },
-    orderBy: {
-      createdAt: "desc",
     },
   });
 };
@@ -128,7 +125,7 @@ export const getRemainingPendingVerifications = async (): Promise<
 > => {
   const expiryDate = getVerificationCodesExpiryDate();
 
-  return await prisma.hevyUserVerification.findMany({
+  return await prisma.hevyVerification.findMany({
     where: {
       status: "pending",
       createdAt: {
@@ -145,38 +142,20 @@ export const findOrCreateUserVerification = async (
   discordId: string,
   hevyUsername: string,
 ) => {
-  let hevyUserVerification = await getUserLatestPendingVerification(
+  let hevyVerification = await getUserLatestPendingVerification(
     discordId,
     hevyUsername,
   );
 
-  if (hevyUserVerification == null) {
+  if (hevyVerification == null) {
     Logger.info(`No verification for this user. Creating one.`);
-    hevyUserVerification =
+    hevyVerification =
       (await insertVerificationCode(discordId, hevyUsername)) ?? null;
   } else {
     Logger.info(`User verification already exists. Returning it.`);
   }
 
-  return hevyUserVerification;
-};
-
-export const isUserVerified = async (
-  discordId: string,
-  hevyUsername: string,
-) => {
-  return await prisma.user.findUnique({
-    where: {
-      discordId,
-      hevyUsername,
-      hevyUserVerifications: {
-        some: {
-          userDiscordId: discordId,
-          userHevyUsername: hevyUsername,
-        },
-      },
-    },
-  });
+  return hevyVerification;
 };
 
 export const getVerificationWorkoutComments = async () => {
