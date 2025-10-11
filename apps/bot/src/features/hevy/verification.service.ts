@@ -3,7 +3,6 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
 import { track } from "commandkit/analytics";
-import dayjs from "dayjs";
 import {
   sendPrivateAccountInstructionsDM,
   sendSuccessfullVerificationDM,
@@ -104,24 +103,15 @@ const markVerificationAsDone = async (
   });
 };
 
-const getVerificationCodesExpiryDate = () =>
-  dayjs()
-    .subtract(verificationConfig.codeLifeSpanInDays as number, "days")
-    .toDate();
-
 export const getUserLatestPendingVerification = async (
   discordId: string,
   hevyUsername: string,
 ) => {
-  const expiryDate = getVerificationCodesExpiryDate();
   return await prisma.hevyVerification.findUnique({
     where: {
       userDiscordId: discordId,
       username: hevyUsername,
       status: "pending",
-      createdAt: {
-        gt: expiryDate,
-      },
     },
   });
 };
@@ -144,14 +134,9 @@ export const getRemainingPrivateVerifications = async (): Promise<
 export const getRemainingPendingVerifications = async (): Promise<
   HevyUserVerificationWithUser[]
 > => {
-  const expiryDate = getVerificationCodesExpiryDate();
-
   return await prisma.hevyVerification.findMany({
     where: {
       status: "pending",
-      createdAt: {
-        gt: expiryDate,
-      },
     },
     include: {
       User: true,

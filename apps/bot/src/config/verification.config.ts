@@ -17,5 +17,4 @@ export default {
   },
   codeLength: process.env.CHEVY_CODE_LENGTH || 12,
   workoutShortId,
-  codeLifeSpanInDays: process.env.CHEVY_VERIFICATION_CODE_LIFESPAN_DAYS || 1,
 };
