@@ -17,6 +17,8 @@ import { setIsHevyProfilePrivate, setUserHevyUsername } from "./hevy.service";
 import { HevyUserVerificationWithUser } from "./verification.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { track } from "commandkit/analytics";
+import verification from "@/app/tasks/verification";
+import { HevyVerification } from "../../../../../packages/database/generated/prisma";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -121,6 +123,21 @@ export const getUserLatestPendingVerification = async (
   });
 };
 
+export const getRemainingPrivateVerifications = async (): Promise<
+  HevyUserVerificationWithUser[]
+> => {
+  return await prisma.hevyVerification.findMany({
+    where: {
+      status: "verified",
+      privateProfile: true,
+      followedByBot: false,
+    },
+    include: {
+      User: true,
+    },
+  });
+};
+
 export const getRemainingPendingVerifications = async (): Promise<
   HevyUserVerificationWithUser[]
 > => {
@@ -218,15 +235,43 @@ export const executeVerificationTask = async () => {
       );
       await sendSuccessfullVerificationDM(verification);
       await deleteComment(correspondingComment.id);
+    }
+  }
+};
 
-      if (hevyProfile.private_profile) {
-        Logger.info(
-          `[verification] #${verification.verificationCode} : private profile.`,
-        );
+export const markPrivateInstructionsAsSent = async (userDiscordId: string) => {
+  await prisma.hevyVerification.update({
+    where: {
+      userDiscordId,
+    },
+    data: {
+      privateInstructionsSent: true,
+    },
+  });
+};
 
-        await followUserOnHevy(verification.username);
-        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
-      }
+export const executePrivateVerifications = async () => {
+  Logger.info("[private instructions] Executing task.");
+  const remainingPrivateVerifications =
+    await getRemainingPrivateVerifications();
+
+  if (remainingPrivateVerifications.length === 0) {
+    Logger.info("[private instructions] No pending private profile. Stopping.");
+    return;
+  }
+
+  Logger.info(
+    `[private instructions] ${remainingPrivateVerifications.length} pending private profiles found.`,
+  );
+
+  for await (const verification of remainingPrivateVerifications) {
+    Logger.info(`[private instructions] #${verification.username}`);
+
+    await followUserOnHevy(verification.username);
+
+    if (!verification.privateInstructionsSent) {
+      await sendPrivateAccountInstructionsDM(verification.userDiscordId);
+      await markPrivateInstructionsAsSent(verification.userDiscordId);
     }
   }
 };

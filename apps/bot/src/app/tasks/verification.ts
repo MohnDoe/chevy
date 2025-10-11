@@ -1,7 +1,10 @@
 import { task } from "@commandkit/tasks";
 
 import verificationConfig from "@/config/verification.config";
-import { executeVerificationTask } from "@/features/hevy/verification.service";
+import {
+  executePrivateVerifications,
+  executeVerificationTask,
+} from "@/features/hevy/verification.service";
 
 export default task({
   name: verificationConfig.task.name,
@@ -11,5 +14,6 @@ export default task({
     console.log(`Executing task: ${verificationConfig.task.name}`);
     console.log(`Schedule: ${verificationConfig.task.schedule}`);
     await executeVerificationTask();
+    await executePrivateVerifications();
   },
 });

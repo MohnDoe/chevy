@@ -44,7 +44,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           | SeparatorBuilder
         )[] = await successfulyLinkedToHevy(userVerification, true);
 
-        if (userVerification.followedByBot) {
+        if (userVerification.privateProfile) {
           const isFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
             userVerification.username!,
           );
@@ -56,7 +56,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
             ...components,
             ...(await generatePrivateFollowInstructionsComponents(
               userVerification,
-              isFollowedByHevyBot,
+              userVerification.followedByBot, // current status
             )),
           ];
         }

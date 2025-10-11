@@ -1,5 +1,6 @@
 import { ButtonKit } from "commandkit";
 import {
+  bold,
   ButtonStyle,
   ContainerBuilder,
   hyperlink,
@@ -17,7 +18,7 @@ export const generatePrivateFollowInstructionsComponents = async (
   isFollowedByHevyBot: boolean,
 ) => {
   let components: (ContainerBuilder | TextDisplayBuilder | SeparatorBuilder)[] =
-    [new SeparatorBuilder().setDivider(true)];
+    [];
 
   if (!isFollowedByHevyBot) {
     components = [
@@ -119,6 +120,11 @@ export const generateLinkingInstructions = async (
       new TextDisplayBuilder().setContent(
         subtext(
           `If after 15 minutes the bot haven't message you yet, you can re-run the command ${await commandMention("hevy link")}!`,
+        ),
+      ),
+      new TextDisplayBuilder().setContent(
+        bold(
+          `If your profile is set to private, a follow request will be sent to your account. You will have to accept it!`,
         ),
       ),
     ];
