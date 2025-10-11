@@ -225,6 +225,7 @@ export const executeVerificationTask = async () => {
     );
 
     if (isVerificationDone) {
+      // TODO : delete comment
       await markVerificationAsDone(verification);
       await setUserHevyUsername(
         verification.userDiscordId,

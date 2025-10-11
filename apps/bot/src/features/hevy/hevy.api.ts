@@ -1,6 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { HevyProfile, HevyWorkout, HevyWorkoutComment } from "./hevy.types";
+import { Logger } from "commandkit";
 
 dotenv.config();
 
@@ -45,6 +46,7 @@ export const checkIfUserUserIsFollowedByBot = async (
 };
 
 export const followUserOnHevy = async (userHevyUsername: string) => {
+  Logger.info(`[Hevy API] Sending follow request to ${userHevyUsername}`);
   await HevyBotAPIClient.post(`/follow`, {
     username: userHevyUsername,
   });
