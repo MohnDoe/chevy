@@ -15,6 +15,7 @@ import {
   checkIfUserUserIsFollowedByBot,
   followUserOnHevy,
 } from "@/features/hevy/hevy.api";
+import { commandMention } from "@/features/discord/command.service";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
@@ -78,11 +79,13 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       }
       break;
     case "unlink":
-      if (!userVerification) {
-        (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
-          flags: MessageFlags.Ephemeral,
-          content: `Successfuly unlinked!`,
-        });
+      if (!userVerification || userVerification.status !== "verified") {
+        await (ctx.interaction as unknown as ChatInputCommandInteraction).reply(
+          {
+            flags: MessageFlags.Ephemeral,
+            content: `You are not linked to Hevy yet. Please use the command ${await commandMention("hevy link")} to link your account.`,
+          },
+        );
 
         track({
           name: "hevy account was already unlinked",

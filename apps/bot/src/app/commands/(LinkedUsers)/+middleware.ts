@@ -10,7 +10,7 @@ export async function beforeExecute(ctx: MiddlewareContext) {
 
   if (!userVerification || userVerification.status !== "verified") {
     (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
-      content: `This command requires you to be linked to Hevy. Please use the command ${commandMention("hevy link")} and finish the linking process before trying again.`,
+      content: `This command requires you to be linked to Hevy. Please use the command ${await commandMention("hevy link")} and finish the linking process before trying again.`,
       flags: MessageFlags.Ephemeral,
     });
     stopMiddlewares();

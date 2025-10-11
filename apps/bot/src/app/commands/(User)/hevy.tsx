@@ -10,16 +10,13 @@ import {
 
 import { getUserProfile } from "@/features/hevy/hevy.api";
 
+import { unlinkHevy } from "@/features/core/user.service";
+import { commandMention } from "@/features/discord/command.service";
 import { getHevyUsernameOption } from "@/features/discord/utils.service";
-import {
-  setIsFollowedByHevyBot,
-  upsertUser,
-} from "@/features/hevy/hevy.service";
 import { generateLinkingInstructions } from "@/features/hevy/verification.embeds";
 import { findOrCreateUserVerification } from "@/features/hevy/verification.service";
 import { sendActivity } from "@/features/liveActivity/liveActivity.service";
 import { track } from "commandkit/analytics";
-import { unlinkHevy } from "@/features/core/user.service";
 
 export const command = new SlashCommandBuilder()
   .setName("hevy")
@@ -50,7 +47,6 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
     withResponse: true,
   });
   const discordUserId = interaction.user.id;
-  const user = await upsertUser(discordUserId);
   switch (interaction.options.getSubcommand()) {
     case "link":
       const hevyUsername = getHevyUsernameOption(
@@ -96,20 +92,17 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       break;
 
     case "unlink":
-      if (user) {
-        await unlinkHevy(user.discordId);
-        await setIsFollowedByHevyBot(user.discordId, false);
-      }
+      await unlinkHevy(discordUserId);
       await interaction.followUp({
         flags: MessageFlags.Ephemeral,
-        content: "Successfuly unlinked.",
+        content: `Successfuly unlinked. You can still link your account with ${await commandMention("hevy link")} whenever you want.`,
       });
 
       sendActivity(`Someone **unlinked their Hevy account**.`);
 
       track({
         name: "hevy unlinking success",
-        id: "discord_user_" + user.discordId,
+        id: "discord_user_" + discordUserId,
       });
       break;
 
