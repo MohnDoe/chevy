@@ -1,5 +1,3 @@
-import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
-import { User } from "../../../../../packages/database/generated/prisma";
 import { prisma } from "@repo/db";
 import client from "@/app";
 import { MessageFlags } from "discord.js";
@@ -8,35 +6,6 @@ import { HevyUserVerificationWithUser } from "../hevy/verification.types";
 import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
 import { getUserByDiscordId } from "../hevy/hevy.service";
 
-export const updateLastBotFollowRequest = async (user: User) => {
-  "use cache";
-  revalidateTag(`user:${user.discordId}:lastBotFollowRequestion`);
-  await prisma.user.update({
-    where: {
-      discordId: user.discordId,
-      id: user.id,
-    },
-    data: {
-      lastBotFollowRequest: new Date(),
-    },
-  });
-};
-
-export const getLastBotFollowRequest = async (user: User) => {
-  "use cache";
-  cacheTag(`user:${user.discordId}:lastBotFollowRequestion`);
-  cacheLife("30m");
-  return await prisma.user.findUnique({
-    where: {
-      discordId: user.discordId,
-      id: user.id,
-    },
-    select: {
-      lastBotFollowRequest: true,
-    },
-  });
-};
-
 export const sendSuccessfullVerificationDM = async (
   verification: HevyUserVerificationWithUser,
 ) => {
@@ -44,7 +13,7 @@ export const sendSuccessfullVerificationDM = async (
   if (user) {
     await user.send({
       flags: MessageFlags.IsComponentsV2,
-      components: await successfulyLinkedToHevy(verification.User, false),
+      components: await successfulyLinkedToHevy(verification, false),
     });
   }
 };
@@ -60,8 +29,8 @@ export const sendPrivateAccountInstructionsDM = async (
     await discordUser.send({
       flags: MessageFlags.IsComponentsV2,
       components: await generatePrivateFollowInstructionsComponents(
-        user,
-        user.isFollowedByHevyBot,
+        user.hevyVerification!,
+        user.hevyVerification!.followedByBot,
       ),
     });
   }
@@ -73,7 +42,6 @@ export const unlinkHevy = async (discordId: string) => {
       discordId,
     },
     data: {
-      hevyUsername: null,
       hevyVerification: {
         delete: {
           userDiscordId: discordId,

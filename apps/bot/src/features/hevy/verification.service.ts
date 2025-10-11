@@ -57,7 +57,7 @@ export const insertVerificationCode = async (
           verificationCode: verificationCode,
           workoutId: verificationConfig.workoutShortId,
           userDiscordId: discordId,
-          userHevyUsername: hevyUsername,
+          username: hevyUsername,
         },
       });
 
@@ -84,7 +84,7 @@ const markVerificationAsDone = async (
 ) => {
   await prisma.hevyVerification.updateMany({
     where: {
-      userHevyUsername: verification.userHevyUsername,
+      username: verification.username,
       userDiscordId: verification.userDiscordId,
       status: "pending",
     },
@@ -112,7 +112,7 @@ export const getUserLatestPendingVerification = async (
   return await prisma.hevyVerification.findUnique({
     where: {
       userDiscordId: discordId,
-      userHevyUsername: hevyUsername,
+      username: hevyUsername,
       status: "pending",
       createdAt: {
         gt: expiryDate,
@@ -171,7 +171,7 @@ export const getCorrespondingVerificationComment = async (
   const correspondingComment = comments.find(
     (comment) =>
       comment.comment.trim() === verification.verificationCode &&
-      comment.username === verification.userHevyUsername,
+      comment.username === verification.username,
   );
 
   if (!correspondingComment) return null;
@@ -195,7 +195,7 @@ export const executeVerificationTask = async () => {
 
   for await (const verification of pendingVerifications) {
     Logger.info(
-      `[verification] Handling verification : ${verification.userHevyUsername} - code: ${verification.verificationCode} - date: ${verification.createdAt}`,
+      `[verification] Handling verification : ${verification.username} - code: ${verification.verificationCode} - date: ${verification.createdAt}`,
     );
     const correspondingComment =
       await getCorrespondingVerificationComment(verification);
@@ -209,9 +209,9 @@ export const executeVerificationTask = async () => {
       await markVerificationAsDone(verification);
       await setUserHevyUsername(
         verification.userDiscordId,
-        verification.userHevyUsername,
+        verification.username,
       );
-      const hevyProfile = await getUserProfile(verification.userHevyUsername);
+      const hevyProfile = await getUserProfile(verification.username);
       await setIsHevyProfilePrivate(
         verification.userDiscordId,
         hevyProfile.private_profile,
@@ -224,7 +224,7 @@ export const executeVerificationTask = async () => {
           `[verification] #${verification.verificationCode} : private profile.`,
         );
 
-        await followUserOnHevy(verification.userHevyUsername);
+        await followUserOnHevy(verification.username);
         await sendPrivateAccountInstructionsDM(verification.userDiscordId);
       }
     }

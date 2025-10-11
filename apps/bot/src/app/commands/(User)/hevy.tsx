@@ -13,7 +13,6 @@ import { getUserProfile } from "@/features/hevy/hevy.api";
 import { getHevyUsernameOption } from "@/features/discord/utils.service";
 import {
   setIsFollowedByHevyBot,
-  setUserHevyUsername,
   upsertUser,
 } from "@/features/hevy/hevy.service";
 import { generateLinkingInstructions } from "@/features/hevy/verification.embeds";

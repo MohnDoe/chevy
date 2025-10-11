@@ -20,9 +20,9 @@ export async function beforeExecute(ctx: MiddlewareContext) {
 
     analytics.identify({
       id: "discord_user_" + userDiscordId,
-      hevyUsername: userVerification.User.hevyUsername,
-      hevyProfilePrivate: userVerification.User.hevyProfilePrivate,
-      isFollowedByHevyBot: userVerification.User.isFollowedByHevyBot,
+      hevyUsername: userVerification.username,
+      hevyProfilePrivate: userVerification.privateProfile,
+      isFollowedByHevyBot: userVerification.followedByBot,
     });
   }
 }

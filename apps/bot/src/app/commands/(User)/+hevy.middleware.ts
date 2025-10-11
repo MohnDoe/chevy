@@ -42,20 +42,20 @@ export async function beforeExecute(ctx: MiddlewareContext) {
           | ContainerBuilder
           | TextDisplayBuilder
           | SeparatorBuilder
-        )[] = await successfulyLinkedToHevy(userVerification.User, true);
+        )[] = await successfulyLinkedToHevy(userVerification, true);
 
-        if (userVerification.User.hevyProfilePrivate) {
+        if (userVerification.followedByBot) {
           const isFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
-            userVerification.User.hevyUsername!,
+            userVerification.username!,
           );
           if (!isFollowedByHevyBot) {
-            await followUserOnHevy(userVerification.User.hevyUsername!);
+            await followUserOnHevy(userVerification.username);
           }
 
           components = [
             ...components,
             ...(await generatePrivateFollowInstructionsComponents(
-              userVerification.User,
+              userVerification,
               isFollowedByHevyBot,
             )),
           ];

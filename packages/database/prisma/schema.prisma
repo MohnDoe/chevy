@@ -9,20 +9,14 @@ datasource db {
 }
 
 model User {
-  id                   String    @default(uuid()) @db.Uuid
-  discordId            String    @unique
-  hevyUsername         String?   @unique
-  hevyProfilePrivate   Boolean   @default(false)
-  isFollowedByHevyBot  Boolean   @default(false)
-  lastInteraction      DateTime  @default(now())
-  lastBotFollowRequest DateTime?
+  id        String @default(uuid()) @db.Uuid
+  discordId String @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastInteraction DateTime @default(now())
 
   hevyVerification HevyVerification?
-
-  @@unique([discordId, hevyUsername])
 }
 
 enum UserVerificationStatus {
@@ -39,7 +33,9 @@ model HevyVerification {
   status           UserVerificationStatus @default(pending)
   User             User                   @relation(fields: [userDiscordId], references: [discordId])
   userDiscordId    String                 @unique
-  userHevyUsername String
+  username         String
+  privateProfile   Boolean                @default(false)
+  followedByBot    Boolean                @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -7,16 +7,13 @@ import {
   subtext,
   TextDisplayBuilder,
 } from "discord.js";
-import {
-  HevyUserVerification,
-  User,
-} from "../../../../../packages/database/generated/prisma";
+import { HevyVerification } from "../../../../../packages/database/generated/prisma";
+import { commandMention } from "../discord/command.service";
 import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { setIsFollowedByHevyBot } from "./hevy.service";
-import { commandMention } from "../discord/command.service";
 
 export const generatePrivateFollowInstructionsComponents = async (
-  user: User,
+  userVerification: HevyVerification,
   isFollowedByHevyBot: boolean,
 ) => {
   let components: (ContainerBuilder | TextDisplayBuilder | SeparatorBuilder)[] =
@@ -49,7 +46,10 @@ A follow request was sent out to your account, you need to accept it to proceed.
                 getFollowedByHevyBotTextComponent(isFollowedByHevyBot),
               )
               .setButtonAccessory(
-                refreshFollowedStatusButtonComponent(user, isFollowedByHevyBot),
+                refreshFollowedStatusButtonComponent(
+                  userVerification,
+                  isFollowedByHevyBot,
+                ),
               ),
           ),
     ],
@@ -59,7 +59,7 @@ A follow request was sent out to your account, you need to accept it to proceed.
 };
 
 const refreshFollowedStatusButtonComponent = (
-  user: User,
+  userVerification: HevyVerification,
   isFollowed: boolean,
 ) => {
   return new ButtonKit()
@@ -74,7 +74,7 @@ const refreshFollowedStatusButtonComponent = (
       }
 
       const isFollowedNow = await checkIfUserUserIsFollowedByBot(
-        user.hevyUsername!,
+        userVerification.username!,
       );
 
       if (isFollowedNow) {
@@ -84,7 +84,7 @@ const refreshFollowedStatusButtonComponent = (
       context.dispose();
       await interaction.editReply({
         components: await generatePrivateFollowInstructionsComponents(
-          user,
+          userVerification,
           isFollowedNow,
         ),
       });
@@ -98,7 +98,7 @@ const getFollowedByHevyBotTextComponent = (done: boolean) =>
       `@${process.env.BOT_ON_HEVY_USERNAME}`,
   );
 export const generateLinkingInstructions = async (
-  userVerification: HevyUserVerification,
+  userVerification: HevyVerification,
 ) => {
   let components: (TextDisplayBuilder | ContainerBuilder | SeparatorBuilder)[] =
     [
@@ -108,7 +108,7 @@ export const generateLinkingInstructions = async (
       new ContainerBuilder().addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           [
-            `In order to link your Hevy account (@${userVerification.userHevyUsername}) to Chevy you need to follow these simple steps:`,
+            `In order to link your Hevy account (@${userVerification.username}) to Chevy you need to follow these simple steps:`,
             `1. Go to the comment section of ${hyperlink("this workout", `https://hevy.com/workout/${userVerification.workoutId}`)}.`,
             `2. Comment with \`${userVerification.verificationCode}\` **(nothing else, just that!)**`,
             `3. Wait for verification, bot will check for new verification every **5 minutes**.`,

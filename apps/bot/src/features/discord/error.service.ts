@@ -1,5 +1,4 @@
 import {
-  ChatInputCommandInteraction,
   Colors,
   ContainerBuilder,
   DiscordAPIError,
@@ -11,7 +10,7 @@ import {
 
 export const handleDiscordAPIError = async (
   error: DiscordAPIError,
-  interaction: MessageComponentInteraction
+  interaction: MessageComponentInteraction,
 ) => {
   if (!interaction.deferred) {
     await interaction.deferReply({
@@ -26,12 +25,12 @@ export const handleDiscordAPIError = async (
           .setAccentColor(Colors.Red)
           .addTextDisplayComponents([
             new TextDisplayBuilder().setContent(
-              "### ⚠ I do not have the permission to send messages here."
+              "### ⚠ I do not have the permission to send messages here.",
             ),
             new TextDisplayBuilder().setContent(
               subtext(
-                "Ask the admin to either add Chevy in this channel or give Chevy the permission to send messages here."
-              )
+                "Ask the admin to either add Chevy in this channel or give Chevy the permission to send messages here.",
+              ),
             ),
           ]),
       ],

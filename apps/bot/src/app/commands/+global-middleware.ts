@@ -1,4 +1,4 @@
-import { Logger, type MiddlewareContext } from "commandkit";
+import { type MiddlewareContext } from "commandkit";
 import { AnalyticsEvents, useAnalytics } from "commandkit/analytics";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
