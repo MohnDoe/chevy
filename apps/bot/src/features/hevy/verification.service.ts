@@ -8,6 +8,7 @@ import {
   sendSuccessfullVerificationDM,
 } from "../core/user.service";
 import {
+  deleteComment,
   followUserOnHevy,
   getUserProfile,
   getWorkoutComments,
@@ -162,7 +163,7 @@ export const getVerificationWorkoutComments = async () => {
   return await getWorkoutComments(verificationConfig.workoutShortId);
 };
 
-export const isVerificationCodePostedOnHevy = async (
+export const getCorrespondingVerificationComment = async (
   verification: HevyUserVerificationWithUser,
 ) => {
   const comments = await getVerificationWorkoutComments();
@@ -173,9 +174,9 @@ export const isVerificationCodePostedOnHevy = async (
       comment.username === verification.userHevyUsername,
   );
 
-  if (!correspondingComment) return false;
+  if (!correspondingComment) return null;
 
-  return true;
+  return correspondingComment;
 };
 
 export const executeVerificationTask = async () => {
@@ -196,15 +197,15 @@ export const executeVerificationTask = async () => {
     Logger.info(
       `[verification] Handling verification : ${verification.userHevyUsername} - code: ${verification.verificationCode} - date: ${verification.createdAt}`,
     );
-    const isVerificationDone =
-      await isVerificationCodePostedOnHevy(verification);
+    const correspondingComment =
+      await getCorrespondingVerificationComment(verification);
+    const isVerificationDone = correspondingComment != null;
 
     Logger.info(
       `[verification] Verification #${verification.verificationCode} done? ${isVerificationDone}`,
     );
 
     if (isVerificationDone) {
-      // TODO : delete comment
       await markVerificationAsDone(verification);
       await setUserHevyUsername(
         verification.userDiscordId,
@@ -216,14 +217,15 @@ export const executeVerificationTask = async () => {
         hevyProfile.private_profile,
       );
       await sendSuccessfullVerificationDM(verification);
+      await deleteComment(correspondingComment.id);
 
       if (hevyProfile.private_profile) {
         Logger.info(
           `[verification] #${verification.verificationCode} : private profile.`,
         );
 
-        followUserOnHevy(verification.userHevyUsername);
-        sendPrivateAccountInstructionsDM(verification.userDiscordId);
+        await followUserOnHevy(verification.userHevyUsername);
+        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
       }
     }
   }

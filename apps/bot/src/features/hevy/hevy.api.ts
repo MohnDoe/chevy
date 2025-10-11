@@ -110,3 +110,13 @@ export const getWorkoutComments = async (
 
   return [];
 };
+
+export const deleteComment = async (commentId: HevyWorkoutComment["id"]) => {
+  Logger.info(`[Hevy API] Deleting comment: ${commentId}`);
+  try {
+    await HevyBotAPIClient.delete(`/workout_comment/${commentId}`);
+    Logger.info(`[Hevy API] Comment deleted: ${commentId}`);
+  } catch (error) {
+    Logger.warn(`[Hevy API] Error deleting comment ${commentId} : ${error}`);
+  }
+};
