@@ -1,3 +1,4 @@
+import { commandMention } from "@/features/discord/command.service";
 import { getUserVerification } from "@/features/hevy/hevy.service";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { useAnalytics } from "commandkit/analytics";
@@ -8,14 +9,13 @@ export async function beforeExecute(ctx: MiddlewareContext) {
   const userVerification = await getUserVerification(userDiscordId);
 
   if (!userVerification || userVerification.status !== "verified") {
-    // TODO: add linking instructions here
     (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
-      content: "You are not linked to Hevy yet.",
+      content: `This command requires you to be linked to Hevy. Please use the command ${commandMention("hevy link")} and finish the linking process before trying again.`,
       flags: MessageFlags.Ephemeral,
     });
     stopMiddlewares();
   } else {
-    ctx.store.set("user", userVerification.User);
+    ctx.store.set("userVerification", userVerification);
     const analytics = useAnalytics();
 
     analytics.identify({
