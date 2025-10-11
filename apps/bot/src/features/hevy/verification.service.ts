@@ -2,23 +2,26 @@ import verificationConfig from "@/config/verification.config";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@repo/db";
 import { Logger } from "commandkit";
+import { track } from "commandkit/analytics";
 import dayjs from "dayjs";
 import {
   sendPrivateAccountInstructionsDM,
   sendSuccessfullVerificationDM,
 } from "../core/user.service";
+import { sendActivity } from "../liveActivity/liveActivity.service";
 import {
+  checkIfUserUserIsFollowedByBot,
   deleteComment,
   followUserOnHevy,
   getUserProfile,
   getWorkoutComments,
 } from "./hevy.api";
-import { setIsHevyProfilePrivate, setUserHevyUsername } from "./hevy.service";
+import {
+  setIsFollowedByHevyBot,
+  setIsHevyProfilePrivate,
+  setUserHevyUsername,
+} from "./hevy.service";
 import { HevyUserVerificationWithUser } from "./verification.types";
-import { sendActivity } from "../liveActivity/liveActivity.service";
-import { track } from "commandkit/analytics";
-import verification from "@/app/tasks/verification";
-import { HevyVerification } from "../../../../../packages/database/generated/prisma";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -267,11 +270,24 @@ export const executePrivateVerifications = async () => {
   for await (const verification of remainingPrivateVerifications) {
     Logger.info(`[private instructions] #${verification.username}`);
 
-    await followUserOnHevy(verification.username);
+    const isFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+      verification.username,
+    );
 
-    if (!verification.privateInstructionsSent) {
-      await sendPrivateAccountInstructionsDM(verification.userDiscordId);
-      await markPrivateInstructionsAsSent(verification.userDiscordId);
+    if (!isFollowedByHevyBot) {
+      await followUserOnHevy(verification.username);
+
+      if (!verification.privateInstructionsSent) {
+        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
+        await markPrivateInstructionsAsSent(verification.userDiscordId);
+      }
+    } else {
+      await setIsFollowedByHevyBot(verification.userDiscordId, true);
+      if (!verification.privateInstructionsSent) {
+        await sendPrivateAccountInstructionsDM(verification.userDiscordId);
+        // TODO : better way and text for validation ?
+        await markPrivateInstructionsAsSent(verification.userDiscordId); // TO SEND validation
+      }
     }
   }
 };
