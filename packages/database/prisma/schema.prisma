@@ -22,7 +22,6 @@ model User {
 enum UserVerificationStatus {
   verified
   pending
-  unlinked
 }
 
 model HevyVerification {

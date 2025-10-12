@@ -1,7 +1,7 @@
 import { ContainerBuilder, TextDisplayBuilder } from "discord.js";
 import { HevyVerification } from "../../../../../packages/database/generated/prisma";
 
-export const successfulyLinkedToHevy = async (
+export const successfulyLinkedToHevy = (
   userVerification: HevyVerification,
   already: boolean,
 ) => {

@@ -13,7 +13,7 @@ import { commandMention } from "../discord/command.service";
 import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { setIsFollowedByHevyBot } from "./hevy.service";
 
-export const generatePrivateFollowInstructionsComponents = async (
+export const generatePrivateFollowInstructionsComponents = (
   userVerification: HevyVerification,
   isFollowedByHevyBot: boolean,
 ) => {
@@ -84,7 +84,7 @@ const refreshFollowedStatusButtonComponent = (
 
       context.dispose();
       await interaction.editReply({
-        components: await generatePrivateFollowInstructionsComponents(
+        components: generatePrivateFollowInstructionsComponents(
           userVerification,
           isFollowedNow,
         ),
