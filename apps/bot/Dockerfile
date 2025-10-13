@@ -1,15 +1,34 @@
-FROM node:24
+FROM node:24-alpine AS base
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-COPY package.json ./ 
-COPY package-lock.json ./
-
-COPY apps/bot/package.json ./apps/bot/package.json
-
-RUN npm install
-
+FROM base AS builder
+RUN apk update
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+RUN npm install -g turbo@^2
 COPY . .
 
-CMD [ "npm", "start" ] 
+RUN turbo prune bot --docker
+
+FROM base AS installer
+RUN apk update
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+RUN npm install -g turbo
+
+# First install the dependencies (as they change less often)
+COPY --from=builder /app/out/json/ .
+RUN npm install
+
+# Build the project
+COPY --from=builder /app/out/full/ .
+RUN turbo run build
+
+FROM base AS runner
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 bot
+USER bot
+
+COPY --from=installer --chown=bot:nodejs /app ./
+CMD npm run bot:start
