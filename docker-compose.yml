@@ -5,4 +5,4 @@ services:
       dockerfile: apps/bot/Dockerfile
       restart: always
       env_file:
-        - path: .env
+        - path: apps/bot/.env
