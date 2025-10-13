@@ -1,7 +1,8 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { HevyWorkout } from "./hevy.types";
 import { cacheLife, cacheTag } from "@commandkit/cache";
+import { HevyWorkout, HevyWorkoutComment } from "./hevy.types";
+import { Logger } from "commandkit";
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ export const checkIfUserUserIsFollowedByBot = async (
 };
 
 export const followUserOnHevy = async (userHevyUsername: string) => {
+  Logger.info(`[Hevy API] Sending follow request to ${userHevyUsername}`);
   await HevyBotAPIClient.post(`/follow`, {
     username: userHevyUsername,
   });
@@ -104,5 +106,25 @@ export const getUserWorkouts = async (
   } catch (error) {
     console.error(error);
     return [];
+  }
+};
+
+export const getWorkoutComments = async (
+  workoutShortId: string,
+): Promise<HevyWorkoutComment[]> => {
+  const workout = await getWorkout(workoutShortId);
+
+  if (workout) return workout.comments;
+
+  return [];
+};
+
+export const deleteComment = async (commentId: HevyWorkoutComment["id"]) => {
+  Logger.info(`[Hevy API] Deleting comment: ${commentId}`);
+  try {
+    await HevyBotAPIClient.delete(`/workout_comment/${commentId}`);
+    Logger.info(`[Hevy API] Comment deleted: ${commentId}`);
+  } catch (error) {
+    Logger.warn(`[Hevy API] Error deleting comment ${commentId} : ${error}`);
   }
 };

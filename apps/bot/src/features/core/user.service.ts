@@ -1,6 +1,12 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
 import { prisma, User } from "@repo/db";
 
+import client from "@/app";
+import { MessageFlags } from "discord.js";
+import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
+import { HevyUserVerificationWithUser } from "../hevy/verification.types";
+import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
+import { getUserByDiscordId } from "../hevy/hevy.service";
 export const setAutoShareEnabledStatus = async (
   guildId: string,
   user: User,
@@ -68,31 +74,50 @@ export const getUserAutoShareConfig = async (
     },
   });
 };
-export const updateLastBotFollowRequest = async (user: User) => {
-  "use cache";
-  revalidateTag(`user:${user.discordId}:lastBotFollowRequestion`);
-  await prisma.user.update({
-    where: {
-      discordId: user.discordId,
-      id: user.id,
-    },
-    data: {
-      lastBotFollowRequest: new Date(),
-    },
-  });
+
 };
 
-export const getLastBotFollowRequest = async (user: User) => {
-  "use cache";
-  cacheTag(`user:${user.discordId}:lastBotFollowRequestion`);
-  cacheLife("30m");
-  return await prisma.user.findUnique({
+export const sendSuccessfullVerificationDM = async (
+  verification: HevyUserVerificationWithUser,
+) => {
+  const user = client.users.cache.get(verification.userDiscordId);
+  if (user) {
+    await user.send({
+      flags: MessageFlags.IsComponentsV2,
+      components: await successfulyLinkedToHevy(verification, false),
+    });
+  }
+};
+
+export const sendPrivateAccountInstructionsDM = async (
+  userDiscordId: string,
+) => {
+  const discordUser = client.users.cache.get(userDiscordId);
+
+  if (discordUser) {
+    const user = await getUserByDiscordId(userDiscordId);
+    if (!user) return;
+    await discordUser.send({
+      flags: MessageFlags.IsComponentsV2,
+      components: generatePrivateFollowInstructionsComponents(
+        user.hevyVerification!,
+        user.hevyVerification!.followedByBot,
+      ),
+    });
+  }
+};
+
+export const unlinkHevy = async (discordId: string) => {
+  return await prisma.user.update({
     where: {
-      discordId: user.discordId,
-      id: user.id,
+      discordId,
     },
-    select: {
-      lastBotFollowRequest: true,
+    data: {
+      hevyVerification: {
+        delete: {
+          userDiscordId: discordId,
+        },
+      },
     },
   });
 };

@@ -1,28 +1,28 @@
-import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
+import { commandMention } from "@/features/discord/command.service";
+import { getUserVerification } from "@/features/hevy/hevy.service";
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { useAnalytics } from "commandkit/analytics";
 import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const user = await isDiscordUserAlreadyLinked(userDiscordId);
+  const userVerification = await getUserVerification(userDiscordId);
 
-  if (!user) {
+  if (!userVerification || userVerification.status !== "verified") {
     (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
-      content: "You are not linked to Hevy yet.",
+      content: `This command requires you to be linked to Hevy. Please use the command ${await commandMention("hevy link")} and finish the linking process before trying again.`,
       flags: MessageFlags.Ephemeral,
     });
     stopMiddlewares();
   } else {
-    ctx.store.set("user", user);
+    ctx.store.set("userVerification", userVerification);
     const analytics = useAnalytics();
 
     analytics.identify({
       id: "discord_user_" + userDiscordId,
-      hevyUsername: user.hevyUsername,
-      hevyProfilePrivate: user.hevyProfilePrivate,
-      isFollowingHevyBot: user.isFollowingHevyBot,
-      isFollowedByHevyBot: user.isFollowedByHevyBot,
+      hevyUsername: userVerification.username,
+      hevyProfilePrivate: userVerification.privateProfile,
+      isFollowedByHevyBot: userVerification.followedByBot,
     });
   }
 }

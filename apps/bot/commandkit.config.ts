@@ -1,12 +1,9 @@
-import { defineConfig, Logger } from "commandkit";
-
-import { devtools } from "@commandkit/devtools";
-
 import { posthog } from "@commandkit/analytics/posthog";
 import { cache } from "@commandkit/cache";
-
+import { devtools } from "@commandkit/devtools";
 import { setDriver, tasks } from "@commandkit/tasks";
 import { BullMQDriver } from "@commandkit/tasks/bullmq";
+import { defineConfig, Logger } from "commandkit";
 
 import dotenv from "dotenv";
 dotenv.config();
