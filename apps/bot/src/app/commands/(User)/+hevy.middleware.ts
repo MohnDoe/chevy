@@ -1,13 +1,25 @@
 import { stopMiddlewares, type MiddlewareContext } from "commandkit";
 import { track } from "commandkit/analytics";
-import { ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  ContainerBuilder,
+  MessageFlags,
+  SeparatorBuilder,
+  TextDisplayBuilder,
+} from "discord.js";
 
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
-import { isDiscordUserAlreadyLinked } from "@/features/hevy/hevy.service";
+import { generatePrivateFollowInstructionsComponents } from "@/features/hevy/verification.embeds";
+import { getUserVerification } from "@/features/hevy/hevy.service";
+import {
+  checkIfUserUserIsFollowedByBot,
+  followUserOnHevy,
+} from "@/features/hevy/hevy.api";
+import { commandMention } from "@/features/discord/command.service";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const user = await isDiscordUserAlreadyLinked(userDiscordId);
+  const userVerification = await getUserVerification(userDiscordId);
   track({
     name: "hevy command used",
     id: "discord_user_" + ctx.interaction.user.id,
@@ -26,10 +38,33 @@ export async function beforeExecute(ctx: MiddlewareContext) {
     ).options.getSubcommand()
   ) {
     case "link":
-      if (user) {
+      if (userVerification?.status == "verified") {
+        let components: (
+          | ContainerBuilder
+          | TextDisplayBuilder
+          | SeparatorBuilder
+        )[] = successfulyLinkedToHevy(userVerification, true);
+
+        if (userVerification.privateProfile) {
+          const isFollowedByHevyBot = await checkIfUserUserIsFollowedByBot(
+            userVerification.username!,
+          );
+          if (!isFollowedByHevyBot) {
+            await followUserOnHevy(userVerification.username);
+          }
+
+          components = [
+            ...components,
+            ...generatePrivateFollowInstructionsComponents(
+              userVerification,
+              userVerification.followedByBot, // current status
+            ),
+          ];
+        }
+
         (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-          components: [successfulyLinkedToHevy(user.hevyUsername!)],
+          components,
         });
         track({
           name: "hevy account was already linked",
@@ -44,11 +79,13 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       }
       break;
     case "unlink":
-      if (!user) {
-        (ctx.interaction as unknown as ChatInputCommandInteraction).reply({
-          flags: MessageFlags.Ephemeral,
-          content: `Successfuly unlinked!`,
-        });
+      if (!userVerification || userVerification.status !== "verified") {
+        await (ctx.interaction as unknown as ChatInputCommandInteraction).reply(
+          {
+            flags: MessageFlags.Ephemeral,
+            content: `You are not linked to Hevy yet. Please use the command ${await commandMention("hevy link")} to link your account.`,
+          },
+        );
 
         track({
           name: "hevy account was already unlinked",

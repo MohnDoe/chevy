@@ -32,13 +32,14 @@ import {
   getWorkout,
 } from "@/features/hevy/hevy.api";
 import { getWorkoutShortIdFromUrl } from "@/features/workout/workout.embeds";
+import { HevyVerification } from "../../../../../../packages/database/generated/prisma";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
   .setDescription("See and share your workouts.")
   .setDefaultMemberPermissions(
     PermissionFlagsBits.SendMessages |
-      PermissionFlagsBits.UseApplicationCommands
+      PermissionFlagsBits.UseApplicationCommands,
   )
   .setContexts([
     InteractionContextType.BotDM,
@@ -46,12 +47,12 @@ export const command = new SlashCommandBuilder()
     InteractionContextType.PrivateChannel,
   ])
   .addSubcommand((sc) =>
-    sc.setName("latest").setDescription("Share your last finished workout.")
+    sc.setName("latest").setDescription("Share your last finished workout."),
   )
   .addSubcommand((sc) =>
     sc
       .setName("recent")
-      .setDescription("Select one from a list of recent workouts.")
+      .setDescription("Select one from a list of recent workouts."),
   )
   .addSubcommand((sc) =>
     sc
@@ -63,8 +64,8 @@ export const command = new SlashCommandBuilder()
           .setName("url")
           .setDescription("URL to your workout.")
           .setRequired(true)
-          .setMinLength(10)
-      )
+          .setMinLength(10),
+      ),
   );
 
 export async function chatInput({
@@ -74,7 +75,7 @@ export async function chatInput({
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
-  const user = store.get("user");
+  const userVerification = store.get("userVerification") as HevyVerification;
   const subcommand = interaction.options.getSubcommand();
 
   switch (subcommand) {
@@ -90,13 +91,13 @@ export async function chatInput({
           }
         }
       } else {
-        workout = await getUserLatestWorkout(user!.hevyUsername!);
+        workout = await getUserLatestWorkout(userVerification.username);
       }
 
       if (workout) {
         await followUpWithWorkoutEphemeral(
           interaction as unknown as ChatInputCommandInteraction,
-          workout
+          workout,
         );
       } else {
         interaction.followUp({
@@ -112,9 +113,9 @@ export async function chatInput({
     case "recent":
       const currentPage = 1;
       const workouts = await getUserWorkouts(
-        user!.hevyUsername!,
+        userVerification.username,
         currentPage,
-        5
+        5,
       );
 
       await interaction.editReply({
@@ -127,7 +128,7 @@ export async function chatInput({
                 handleWorkoutSelectMenuSelection(
                   i as unknown as StringSelectMenuInteraction,
                   c,
-                  interaction as unknown as ChatInputCommandInteraction
+                  interaction as unknown as ChatInputCommandInteraction,
                 )
               }
             >
@@ -136,7 +137,7 @@ export async function chatInput({
                   label={workout.name}
                   value={workout.short_id}
                   description={`${dayjs().to(workout.created_at)} - ${dayjs(
-                    workout.created_at
+                    workout.created_at,
                   ).format("llll")}`}
                 />
               ))}
