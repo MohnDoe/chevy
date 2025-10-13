@@ -1,4 +1,4 @@
-import { Prisma } from "../../../../../packages/database/generated/prisma";
+import { Prisma } from "@repo/db";
 
 export type HevyUserVerificationWithUser = Prisma.HevyVerificationGetPayload<{
   include: {

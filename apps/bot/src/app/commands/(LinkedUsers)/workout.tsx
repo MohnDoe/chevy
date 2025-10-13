@@ -32,7 +32,7 @@ import {
   getWorkout,
 } from "@/features/hevy/hevy.api";
 import { getWorkoutShortIdFromUrl } from "@/features/workout/workout.embeds";
-import { HevyVerification } from "../../../../../../packages/database/generated/prisma";
+import { HevyVerification } from "@repo/db";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")

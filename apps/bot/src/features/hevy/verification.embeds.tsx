@@ -1,3 +1,4 @@
+import { HevyVerification } from "@repo/db";
 import { ButtonKit } from "commandkit";
 import {
   bold,
@@ -8,7 +9,6 @@ import {
   subtext,
   TextDisplayBuilder,
 } from "discord.js";
-import { HevyVerification } from "../../../../../packages/database/generated/prisma";
 import { commandMention } from "../discord/command.service";
 import { checkIfUserUserIsFollowedByBot } from "./hevy.api";
 import { setIsFollowedByHevyBot } from "./hevy.service";

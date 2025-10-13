@@ -1,7 +1,6 @@
 import { revalidateTag } from "@commandkit/cache";
-import { prisma } from "@repo/db";
+import { prisma, Prisma } from "@repo/db";
 import { HevyUserVerificationWithUser } from "./verification.types";
-import { Prisma } from "../../../../../packages/database/generated/prisma";
 
 export type UserWithHevyVerification = Prisma.UserGetPayload<{
   include: {
