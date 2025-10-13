@@ -3,6 +3,9 @@ import { devtools } from "@commandkit/devtools";
 import { posthog } from "@commandkit/analytics/posthog";
 import dotenv from "dotenv";
 dotenv.config();
+
+console.debug(process.env);
+
 export default defineConfig({
   plugins: [
     ...(process.env.NODE_ENV === "development" ? [devtools()] : []),
