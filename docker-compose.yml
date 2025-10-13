@@ -3,10 +3,10 @@ services:
     build:
       context: .
       dockerfile: ./apps/bot/Dockerfile
-      args:
-        ENV_VARIABLE: ${ENV_VARIABLE}
+
     restart: always
-    env_file: .env
+    env_file:
+      - path: .env
     networks:
       - dokploy-network
 
