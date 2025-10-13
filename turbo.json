@@ -2,6 +2,15 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "globalDependencies": [".env"],
+  "globalEnv": [
+    "DISCORD_TOKEN",
+    "BOT_ON_HEVY_AUTH_TOKEN",
+    "BOT_ON_HEVY_USERNAME",
+    "DATABASE_URL",
+    "POSTHOG_API_KEY",
+    "POSTHOG_HOST",
+    "CHEVY_LIVE_ACTIVITY_WEBHOOK_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
