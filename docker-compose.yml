@@ -2,11 +2,10 @@ services:
   bot:
     build:
       context: .
-      dockerfile: ./apps/bot/Dockerfile
-
+      dockerfile: Dockerfile.bot
     restart: always
     env_file:
-      - path: .env
+      - ./.env
     networks:
       - dokploy-network
 
