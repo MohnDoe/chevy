@@ -1,31 +1,15 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalDependencies": [
-    ".env"
-  ],
-  "globalEnv": [
-    "DATABASE_URL"
-  ],
+  "globalDependencies": [".env"],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "check-types": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "outputs": [],
       "cache": true
     },
@@ -47,18 +31,14 @@
       "persistent": true
     },
     "start": {
-      "dependsOn": [
-        "^generate",
-        "^build"
-      ],
+      "dependsOn": ["^generate", "^build"],
       "cache": false,
       "persistent": true
     },
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ],
+      "dependsOn": ["^generate"],
       "cache": false
     }
   }
 }
+
