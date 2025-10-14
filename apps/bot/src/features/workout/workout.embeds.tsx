@@ -25,7 +25,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat.js";
 dayjs.extend(duration);
 dayjs.extend(localizedFormat);
 
-import { getUserByHevyUsername } from "@/features/hevy/hevy.service";
+import { getHevyVerifiedUserByHevyUsername } from "@/features/hevy/hevy.service";
 import { HevyExercise, HevySet, HevyWorkout } from "@/features/hevy/hevy.types";
 import { WorkoutFormat } from "@repo/db";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
@@ -175,7 +175,7 @@ ${subtext("Records")}`;
 
   let linkedUser;
   try {
-    linkedUser = await getUserByHevyUsername(workout.username);
+    linkedUser = await getHevyVerifiedUserByHevyUsername(workout.username);
   } catch (error) {
     Logger.error("Error fetching user by Hevy username.");
     Logger.error(error);

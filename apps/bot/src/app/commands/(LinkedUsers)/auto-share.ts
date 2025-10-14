@@ -16,14 +16,15 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 
+import { listServers } from "@/features/autoShare/autoShare.embeds";
+import { getAllAutoShareActiveServers } from "@/features/autoShare/autoShare.service";
 import {
   getUserAutoShareConfig,
   setAutoShareEnabledStatus,
   setAutoShareEnabledStatusInAllServers,
 } from "@/features/core/user.service";
-import { getAllAutoShareActiveServers } from "@/features/autoShare/autoShare.service";
 import { commandMention } from "@/features/discord/command.service";
-import { listServers } from "@/features/autoShare/autoShare.embeds";
+import { UserWithHevyVerification } from "@/features/hevy/hevy.service";
 
 export const metadata: CommandMetadata = {};
 
@@ -84,7 +85,9 @@ export async function chatInput({
 }: ChatInputCommandContext) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const user = store.get("user");
+  const user = store.get(
+    "userWithHevyVerification",
+  ) as UserWithHevyVerification;
   const guildId = interaction.guildId!;
   const subcommandGroup = interaction.options.getSubcommandGroup();
   const subcommand = interaction.options.getSubcommand();

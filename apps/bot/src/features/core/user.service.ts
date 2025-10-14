@@ -1,14 +1,17 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
-import { HevyVerification, prisma, User } from "@repo/db";
+import { HevyVerification, prisma } from "@repo/db";
 
 import client from "@/app";
 import { MessageFlags } from "discord.js";
 import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
+import {
+  getUserByDiscordId,
+  UserWithHevyVerification,
+} from "../hevy/hevy.service";
 import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
-import { getUserByDiscordId } from "../hevy/hevy.service";
 export const setAutoShareEnabledStatus = async (
   guildId: string,
-  user: User,
+  user: UserWithHevyVerification,
   enabled: boolean,
 ) => {
   await prisma.userAutoShareConfig.upsert({
@@ -32,7 +35,7 @@ export const setAutoShareEnabledStatus = async (
 };
 
 export const setAutoShareEnabledStatusInAllServers = async (
-  user: User,
+  user: UserWithHevyVerification,
   enabled: boolean,
   guildIdToUpsert?: string,
 ) => {
