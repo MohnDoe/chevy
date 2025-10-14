@@ -9,7 +9,7 @@ import {
   upsertServer,
 } from "@/features/core/server.service";
 import { commandMention } from "@/features/discord/command.service";
-import { AutoShareWorkoutFormat } from "@repo/db";
+import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import {
   ChatInputCommandContext,
   CommandData,
@@ -73,10 +73,17 @@ export const command: CommandData = {
   ],
 };
 
-export async function chatInput({ interaction }: ChatInputCommandContext) {
+export async function chatInput({
+  interaction,
+  store,
+}: ChatInputCommandContext) {
   const subcommandGroup = interaction.options.getSubcommandGroup();
   const subcommand = interaction.options.getSubcommand();
   const guildId = interaction.guildId!;
+
+  const serverAutoShareConfig = store.get(
+    "serverAutoShareConfig",
+  ) as ServerAutoShareConfig | null;
 
   if (subcommandGroup == "auto-share") {
     switch (subcommand) {
@@ -85,7 +92,6 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
           flags: MessageFlags.Ephemeral,
         });
 
-        const serverAutoShareConfig = await getAutoShareConfig(guildId);
         const participantCount = serverAutoShareConfig
           ? await getServerAutoShareParticipantsCount(guildId)
           : 0;
@@ -159,6 +165,7 @@ export async function chatInput({ interaction }: ChatInputCommandContext) {
               ],
             });
           },
+          serverAutoShareConfig,
         );
         await interaction.showModal(modal);
         break;

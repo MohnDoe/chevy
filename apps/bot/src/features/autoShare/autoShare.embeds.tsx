@@ -1,21 +1,5 @@
 import client from "@/app";
-import {
-  ChannelSelectMenuBuilder,
-  ChannelType,
-  Colors,
-  ContainerBuilder,
-  LabelBuilder,
-  MessageFlags,
-  ModalSubmitInteraction,
-  SeparatorSpacingSize,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
-  TextDisplayBuilder,
-  bold,
-  channelMention,
-  underline,
-} from "discord.js";
-import { ServerWithAutoShareConfig } from "./autoShare.types";
+import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import {
   CommandKitModalBuilderInteractionCollectorDispatch,
   Container,
@@ -24,10 +8,21 @@ import {
   Separator,
   TextDisplay,
 } from "commandkit";
-import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
-import handler from "@/app/events/clientReady/log";
-import { getServerAutoShareParticipantsCount } from "../core/server.service";
+import {
+  ChannelSelectMenuBuilder,
+  ChannelType,
+  Colors,
+  ContainerBuilder,
+  LabelBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  TextDisplayBuilder,
+  bold,
+  channelMention,
+  underline,
+} from "discord.js";
 import { commandMention } from "../discord/command.service";
+import { ServerWithAutoShareConfig } from "./autoShare.types";
 
 export const listServers = (
   servers: ServerWithAutoShareConfig[],
@@ -61,6 +56,7 @@ export const listServers = (
 export const configModal = (
   filter: ModalKitPredicate,
   onSubmit: CommandKitModalBuilderInteractionCollectorDispatch,
+  currentConfig: ServerAutoShareConfig | null,
 ) =>
   new ModalKit()
     .setCustomId("server-configure-modal")
@@ -81,11 +77,13 @@ export const configModal = (
               new StringSelectMenuOptionBuilder()
                 .setEmoji("✅")
                 .setLabel("Enabled")
-                .setValue("true"),
+                .setValue("true")
+                .setDefault(currentConfig?.enabled ?? false),
               new StringSelectMenuOptionBuilder()
                 .setEmoji("❌")
                 .setLabel("Disabled")
-                .setValue("false"),
+                .setValue("false")
+                .setDefault(!currentConfig?.enabled),
             ])
             .setCustomId("config-enabled-select"),
         ),
@@ -97,6 +95,7 @@ export const configModal = (
             .setRequired(true)
             .setMaxValues(1)
             .setMinValues(1)
+            .setDefaultChannels(currentConfig ? [currentConfig.channelId!] : [])
             .addChannelTypes([ChannelType.GuildText])
             .setCustomId("config-channel-select")
             .setPlaceholder("Select a channel"),
@@ -111,7 +110,8 @@ export const configModal = (
               Object.entries(AutoShareWorkoutFormat).map(([key, value]) =>
                 new StringSelectMenuOptionBuilder()
                   .setLabel(value)
-                  .setValue(key),
+                  .setValue(key)
+                  .setDefault(currentConfig?.workoutFormat == key),
               ),
             )
             .setCustomId("config-format-select"),
