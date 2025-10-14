@@ -1,31 +1,24 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
-  "globalDependencies": [
-    ".env"
-  ],
+  "globalDependencies": [".env"],
   "globalEnv": [
-    "DATABASE_URL"
+    "DISCORD_TOKEN",
+    "BOT_ON_HEVY_AUTH_TOKEN",
+    "BOT_ON_HEVY_USERNAME",
+    "DATABASE_URL",
+    "POSTHOG_API_KEY",
+    "POSTHOG_HOST",
+    "CHEVY_LIVE_ACTIVITY_WEBHOOK_URL"
   ],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "check-types": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "outputs": [],
       "cache": true
     },
@@ -47,18 +40,14 @@
       "persistent": true
     },
     "start": {
-      "dependsOn": [
-        "^generate",
-        "^build"
-      ],
+      "dependsOn": ["^generate", "^build"],
       "cache": false,
       "persistent": true
     },
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ],
+      "dependsOn": ["^generate"],
       "cache": false
     }
   }
 }
+
