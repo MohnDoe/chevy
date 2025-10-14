@@ -175,7 +175,7 @@ export async function chatInput({
                 ),
                 new TextDisplayBuilder().setContent(
                   subtext(
-                    `Activate it with ${await commandMention("auto-share enable")} any time.`,
+                    `Activate it with ${await commandMention("auto-share enable here")} any time.`,
                   ),
                 ),
               ),
@@ -190,7 +190,7 @@ export async function chatInput({
                 ),
                 new TextDisplayBuilder().setContent(
                   subtext(
-                    `You can disable it with ${await commandMention("auto-share disable")} any time.`,
+                    `You can disable it with ${await commandMention("auto-share disable here")} any time.`,
                   ),
                 ),
               ),
