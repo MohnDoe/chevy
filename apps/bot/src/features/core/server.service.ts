@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
-import { AutoShareWorkoutFormat, prisma } from "@repo/db";
+import { prisma, WorkoutFormat } from "@repo/db";
 import { TextChannel } from "discord.js";
 import { ServerWithAutoShareConfig } from "../autoShare/autoShare.types";
 
@@ -19,7 +19,7 @@ export const saveAutoShareConfig = async (
   guildId: string,
   enabled: boolean,
   channel: TextChannel,
-  format: AutoShareWorkoutFormat,
+  format: WorkoutFormat,
 ): Promise<ServerWithAutoShareConfig> => {
   await revalidateTag(`autoShare:enabledServers`);
   await revalidateTag(`autoShare:config:server:${guildId}`);

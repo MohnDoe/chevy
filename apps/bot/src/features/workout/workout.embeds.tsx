@@ -1,3 +1,4 @@
+import { Logger } from "commandkit";
 import {
   bold,
   ChatInputCommandInteraction,
@@ -16,7 +17,6 @@ import {
   TimestampStyles,
   userMention,
 } from "discord.js";
-import { Logger } from "commandkit";
 
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration.js";
@@ -27,7 +27,7 @@ dayjs.extend(localizedFormat);
 
 import { getUserByHevyUsername } from "@/features/hevy/hevy.service";
 import { HevyExercise, HevySet, HevyWorkout } from "@/features/hevy/hevy.types";
-import { WorkoutComponentFormat } from "./workout.types";
+import { WorkoutFormat } from "@repo/db";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
 
 const SUPERSETS_PREFIXES = [
@@ -60,7 +60,7 @@ const getExerciseVolume = (ex: HevyExercise) => {
 
 export const toComponent = async (
   workout: HevyWorkout,
-  format: WorkoutComponentFormat,
+  format: WorkoutFormat,
 ): Promise<ContainerBuilder> => {
   // TODO : make this better pls
   const setCount = workout.exercises.reduce(
@@ -108,7 +108,7 @@ export const toComponent = async (
       informationsText = `${informationsText}`;
       break;
 
-    case "simple":
+    case "compact":
       informationsText = `
 ${bold(workoutDuration.format("H[h] mm[m]"))}
 ${subtext("Duration")}
@@ -134,7 +134,7 @@ ${subtext("Records")}`;
     ),
   );
 
-  if (format == "simple") {
+  if (format == "compact") {
     container = container.addSeparatorComponents(
       new SeparatorBuilder().setDivider(false),
     );
@@ -142,7 +142,7 @@ ${subtext("Records")}`;
 
   switch (format) {
     case "detailed":
-    case "simple":
+    case "compact":
       container = container.addSectionComponents(
         new SectionBuilder()
           .addTextDisplayComponents(
@@ -165,7 +165,7 @@ ${subtext("Records")}`;
       break;
   }
 
-  if (format != "simple" && format != "line") {
+  if (format != "compact" && format != "line") {
     container = addExercises(container, workout.exercises, format);
   }
 
@@ -206,7 +206,7 @@ ${subtext("Records")}`;
 const addExercises = (
   container: ContainerBuilder,
   exercises: HevyExercise[],
-  format: WorkoutComponentFormat,
+  format: WorkoutFormat,
 ) => {
   for (const [_i, exercise] of exercises.entries()) {
     const exerciseVolume = getExerciseVolume(exercise);
@@ -226,7 +226,7 @@ const addExercises = (
 
     switch (format) {
       case "detailed":
-      case "simple":
+      case "compact":
       default:
         exerciseTitle = `${bold(exerciseTitle)}`;
 

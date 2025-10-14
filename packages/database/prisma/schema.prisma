@@ -69,9 +69,10 @@ model Server {
   createdAt DateTime @default(now())
 }
 
-enum AutoShareWorkoutFormat {
+enum WorkoutFormat {
   line
   compact
+  standard
   detailed
 }
 
@@ -79,11 +80,11 @@ model ServerAutoShareConfig {
   Server  Server @relation(fields: [guildId], references: [guildId])
   guildId String @id @unique
 
-  enabled       Boolean                @default(false)
+  enabled       Boolean       @default(false)
   channelId     String?
-  workoutFormat AutoShareWorkoutFormat
-  updatedAt     DateTime               @updatedAt
-  createdAt     DateTime               @default(now())
+  workoutFormat WorkoutFormat
+  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime      @default(now())
 }
 
 model UserAutoShareConfig {
@@ -116,7 +117,7 @@ model Share {
 
   channelId   String
   channelType Int
-  format      String
+  format      WorkoutFormat
   commandUsed String?
   reason      ShareReason
 

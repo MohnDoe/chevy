@@ -1,5 +1,4 @@
 import client from "@/app";
-import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import {
   CommandKitModalBuilderInteractionCollectorDispatch,
   Container,
@@ -23,6 +22,7 @@ import {
 } from "discord.js";
 import { commandMention } from "../discord/command.service";
 import { ServerWithAutoShareConfig } from "./autoShare.types";
+import { ServerAutoShareConfig, WorkoutFormat } from "@repo/db";
 
 export const listServers = (
   servers: ServerWithAutoShareConfig[],
@@ -107,11 +107,11 @@ export const configModal = (
           new StringSelectMenuBuilder()
             .setRequired(true)
             .addOptions(
-              Object.entries(AutoShareWorkoutFormat).map(([key, value]) =>
+              Object.entries(WorkoutFormat).map(([_, value]) =>
                 new StringSelectMenuOptionBuilder()
                   .setLabel(value)
-                  .setValue(key)
-                  .setDefault(currentConfig?.workoutFormat == key),
+                  .setValue(value)
+                  .setDefault(currentConfig?.workoutFormat == value),
               ),
             )
             .setCustomId("config-format-select"),

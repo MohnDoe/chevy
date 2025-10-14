@@ -8,7 +8,7 @@ import {
   upsertServer,
 } from "@/features/core/server.service";
 import { commandMention } from "@/features/discord/command.service";
-import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
+import { WorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import {
   ChatInputCommandContext,
   CommandData,
@@ -137,7 +137,7 @@ export async function chatInput({
               guildId,
               enabled,
               channel as unknown as TextChannel,
-              format as AutoShareWorkoutFormat,
+              format as WorkoutFormat,
             );
             const participantCount = enabled
               ? await getServerAutoShareParticipantsCount(guildId)

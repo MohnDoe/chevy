@@ -21,25 +21,20 @@ import { getWorkout } from "@/features/hevy/hevy.api";
 import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { handleDiscordAPIError } from "../discord/error.service";
-import { AutoShareWorkoutFormat, prisma, ShareReason } from "@repo/db";
-import { WorkoutComponentFormat } from "./workout.types";
+import { prisma, ShareReason, WorkoutFormat } from "@repo/db";
 
-// TODO: create line format
-export const AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT: Record<
-  AutoShareWorkoutFormat,
-  WorkoutComponentFormat
-> = {
-  line: "line",
-  compact: "simple",
-  detailed: "detailed",
-};
+export const AVAILABLE_AUTO_SHARE_FORMATS: WorkoutFormat[] = [
+  WorkoutFormat.line,
+  WorkoutFormat.compact,
+  WorkoutFormat.standard,
+];
 
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
   `${workout.short_id}-${new Date().toISOString()}-${extra}`;
 
 const sharableWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
-  format: WorkoutComponentFormat,
+  format: WorkoutFormat,
   originalInteraction?: ChatInputCommandInteraction,
 ): Promise<InteractionReplyOptions | InteractionEditReplyOptions> => {
   const workoutComponent = await toComponent(workout, format);
@@ -53,9 +48,9 @@ const sharableWorkoutEphemeralOptions = async (
         new ActionRowBuilder<ButtonBuilder>().setComponents([
           new ButtonKit()
             .setLabel("Compact")
-            .setDisabled(format == "simple")
+            .setDisabled(format == "compact")
             .setStyle(ButtonStyle.Secondary)
-            .setCustomId(`changeWorkoutFormat--simple--${customIdSuffix}`)
+            .setCustomId(`changeWorkoutFormat--compact--${customIdSuffix}`)
             .onClick(
               (i, c) =>
                 handleMessageClick(
@@ -81,21 +76,21 @@ const sharableWorkoutEphemeralOptions = async (
                 ),
               { once: true, time: 60_000 },
             ),
-          new ButtonKit()
-            .setLabel("Detailed")
-            .setDisabled(format == "detailed")
-            .setStyle(ButtonStyle.Secondary)
-            .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
-            .onClick(
-              (i, c) =>
-                handleMessageClick(
-                  i as unknown as ButtonInteraction,
-                  c,
-                  workout,
-                  originalInteraction,
-                ),
-              { once: true, time: 60_000 },
-            ),
+          // new ButtonKit()
+          //   .setLabel("Detailed")
+          //   .setDisabled(format == "detailed")
+          //   .setStyle(ButtonStyle.Secondary)
+          //   .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
+          //   .onClick(
+          //     (i, c) =>
+          //       handleMessageClick(
+          //         i as unknown as ButtonInteraction,
+          //         c,
+          //         workout,
+          //         originalInteraction,
+          //       ),
+          //     { once: true, time: 60_000 },
+          //   ),
         ]),
       ),
       new ActionRowBuilder<ButtonBuilder>().setComponents([
@@ -142,7 +137,7 @@ export const followUpWithWorkoutEphemeral = async (
 const changeWorkoutFormat = async (
   interaction: ButtonInteraction,
   workout: HevyWorkout,
-  format: WorkoutComponentFormat,
+  format: WorkoutFormat,
   originalInteraction?: ChatInputCommandInteraction,
 ) => {
   if (!interaction.deferred) await interaction.deferUpdate();
@@ -194,9 +189,7 @@ const handleMessageClick = async (
   originalInteraction?: ChatInputCommandInteraction,
 ) => {
   context.dispose();
-  const desiredFormat = interaction.customId.split(
-    "--",
-  )[1] as WorkoutComponentFormat;
+  const desiredFormat = interaction.customId.split("--")[1] as WorkoutFormat;
 
   if (interaction.customId.startsWith("sendInChat")) {
     let components = [];
@@ -294,7 +287,7 @@ export const saveWorkoutShare = async (
   discordUserId: string,
   channel: BaseInteraction["channel"],
   reason: ShareReason,
-  format: WorkoutComponentFormat,
+  format: WorkoutFormat,
   commandUsed?: string,
 ) => {
   return prisma.share.create({

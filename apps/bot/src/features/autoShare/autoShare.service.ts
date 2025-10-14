@@ -1,6 +1,6 @@
 import client from "@/app";
 import { cacheLife, cacheTag } from "@commandkit/cache";
-import { prisma, ServerAutoShareConfig, User } from "@repo/db";
+import { prisma, ServerAutoShareConfig, User, WorkoutFormat } from "@repo/db";
 import { Logger } from "commandkit";
 import {
   hyperlink,
@@ -15,7 +15,7 @@ import { UserWithHevyVerification } from "../hevy/hevy.service";
 import { HevyWorkout } from "../hevy/hevy.types";
 import { toComponent } from "../workout/workout.embeds";
 import {
-  AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT,
+  AVAILABLE_AUTO_SHARE_FORMATS,
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
@@ -45,10 +45,14 @@ const shareWorkoutToDiscordServer = async (
   user: UserWithHevyVerification,
   workout: HevyWorkout,
 ) => {
-  const format =
-    AUTO_SHARE_FORMAT_TO_COMPONENT_FORMAT[
-      server.ServerAutoShareConfig!.workoutFormat
-    ];
+  const desiredFormat: WorkoutFormat =
+    server.ServerAutoShareConfig!.workoutFormat;
+  const format: WorkoutFormat = AVAILABLE_AUTO_SHARE_FORMATS.includes(
+    desiredFormat,
+  )
+    ? desiredFormat
+    : WorkoutFormat.compact;
+
   const guild = client.guilds.cache.get(server.guildId);
   if (!guild) return;
 
