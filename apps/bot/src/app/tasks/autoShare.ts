@@ -8,7 +8,6 @@ export default task({
   schedule: autoShareConfig.task.schedule,
   async execute(_ctx) {
     // console.log("Executing autoShare task");
-    // TODO : uncommand
-    // await executeAutoShare();
+    await executeAutoShare();
   },
 });
