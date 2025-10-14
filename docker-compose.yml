@@ -1,0 +1,21 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.bot
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - BOT_ON_HEVY_AUTH_TOKEN=${BOT_ON_HEVY_AUTH_TOKEN}
+      - BOT_ON_HEVY_USERNAME=${BOT_ON_HEVY_USERNAME}
+      - DATABASE_URL=${DATABASE_URL}
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      - POSTHOG_HOST=${POSTHOG_HOST}
+      - CHEVY_LIVE_ACTIVITY_WEBHOOK_URL=${CHEVY_LIVE_ACTIVITY_WEBHOOK_URL}
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
