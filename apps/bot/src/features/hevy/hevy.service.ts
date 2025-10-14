@@ -1,105 +1,85 @@
+import { revalidateTag } from "@commandkit/cache";
+import { prisma, Prisma } from "@repo/db";
+import { HevyUserVerificationWithUser } from "./verification.types";
 
-import { prisma } from "@repo/db";
-
-export async function getUserByDiscordId(discordId: string) {
+export type UserWithHevyVerification = Prisma.UserGetPayload<{
+  include: {
+    hevyVerification: true;
+  };
+}>;
+export async function getUserByDiscordId(
+  discordId: string,
+): Promise<UserWithHevyVerification | null> {
   return await prisma.user.findUnique({
     where: {
       discordId,
+    },
+    include: {
+      hevyVerification: true,
     },
   });
 }
 
 export async function getUserByHevyUsername(hevyUsername: string) {
-  return await prisma.user.findUnique({
+  return await prisma.user.findFirst({
     where: {
-      hevyUsername,
-      OR: [
-        {
-          hevyProfilePrivate: true,
-          isFollowedByHevyBot: true,
-        },
-        {
-          hevyProfilePrivate: false,
-          isFollowingHevyBot: true,
-        },
-      ],
+      hevyVerification: {
+        username: hevyUsername,
+        status: "verified",
+      },
     },
   });
 }
 
-export async function isDiscordUserAlreadyLinked(discordId: string) {
-  return await prisma.user.findUnique({
+export async function getUserVerification(
+  discordId: string,
+): Promise<HevyUserVerificationWithUser | null> {
+  return await prisma.hevyVerification.findUnique({
     where: {
-      discordId,
-      OR: [
-        {
-          hevyUsername: {
-            not: null,
-          },
-          hevyProfilePrivate: true,
-          isFollowedByHevyBot: true,
-        },
-        {
-          hevyUsername: {
-            not: null,
-          },
-          hevyProfilePrivate: false,
-          isFollowingHevyBot: true,
-        },
-      ],
+      userDiscordId: discordId,
+    },
+    include: {
+      User: true,
     },
   });
 }
 
 export async function setUserHevyUsername(discordId: string, username: string) {
-  return await prisma.user.update({
+  return await prisma.hevyVerification.update({
     where: {
-      discordId,
+      userDiscordId: discordId,
     },
     data: {
-      hevyUsername: username,
+      username,
     },
   });
 }
-
 export async function setIsHevyProfilePrivate(
   discordId: string,
-  isPrivate: boolean
+  isPrivate: boolean,
 ) {
-  return await prisma.user.update({
+  return await prisma.hevyVerification.update({
     where: {
-      discordId,
+      userDiscordId: discordId,
     },
     data: {
-      hevyProfilePrivate: isPrivate,
-    },
-  });
-}
-
-export async function setIsFollowingHevyBot(
-  discordId: string,
-  follows: boolean
-) {
-  return await prisma.user.update({
-    where: {
-      discordId,
-    },
-    data: {
-      isFollowingHevyBot: follows,
+      privateProfile: isPrivate,
     },
   });
 }
 
 export async function setIsFollowedByHevyBot(
   discordId: string,
-  followed: boolean
+  followed: boolean,
 ) {
-  return await prisma.user.update({
+  "use cache";
+  revalidateTag(`user:${discordId}:lastBotFollowRequestion`);
+  return await prisma.hevyVerification.update({
     where: {
-      discordId,
+      userDiscordId: discordId,
     },
     data: {
-      isFollowedByHevyBot: followed,
+      followedByBot: followed,
     },
   });
 }
