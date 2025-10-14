@@ -1,10 +1,9 @@
 import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
-import { prisma, User } from "@repo/db";
+import { HevyVerification, prisma, User } from "@repo/db";
 
 import client from "@/app";
 import { MessageFlags } from "discord.js";
 import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
-import { HevyUserVerificationWithUser } from "../hevy/verification.types";
 import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
 import { getUserByDiscordId } from "../hevy/hevy.service";
 export const setAutoShareEnabledStatus = async (
@@ -75,16 +74,14 @@ export const getUserAutoShareConfig = async (
   });
 };
 
-};
-
 export const sendSuccessfullVerificationDM = async (
-  verification: HevyUserVerificationWithUser,
+  verification: HevyVerification,
 ) => {
   const user = client.users.cache.get(verification.userDiscordId);
   if (user) {
     await user.send({
       flags: MessageFlags.IsComponentsV2,
-      components: await successfulyLinkedToHevy(verification, false),
+      components: successfulyLinkedToHevy(verification, false),
     });
   }
 };
