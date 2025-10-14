@@ -108,8 +108,8 @@ export async function chatInput({
           ? "Auto-share enabled successfuly on this server."
           : "Auto-share disabled successfuly on this server.";
         const toggleText = enabled
-          ? `You can disable it with ${await commandMention("auto-share disable")} any time.`
-          : `You can re-enable it with ${await commandMention("auto-share enable")} any time.`;
+          ? `You can disable it with ${await commandMention("auto-share disable here")} any time.`
+          : `You can re-enable it with ${await commandMention("auto-share enable here")} any time.`;
 
         await interaction.followUp({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
