@@ -45,11 +45,11 @@ export const command: CommandData = {
           description: "Enable auto-share on this server !",
           type: ApplicationCommandOptionType.Subcommand,
         },
-        {
-          name: "all",
-          description: "Enable auto-share on all servers you are on !",
-          type: ApplicationCommandOptionType.Subcommand,
-        },
+        // {
+        //   name: "all",
+        //   description: "Enable auto-share on all servers you are on !",
+        //   type: ApplicationCommandOptionType.Subcommand,
+        // },
       ],
     },
     {
@@ -62,11 +62,11 @@ export const command: CommandData = {
           description: "Disable auto-share on this server !",
           type: ApplicationCommandOptionType.Subcommand,
         },
-        {
-          name: "all",
-          description: "Disable auto-share on all servers you are on !",
-          type: ApplicationCommandOptionType.Subcommand,
-        },
+        // {
+        //   name: "all",
+        //   description: "Disable auto-share on all servers you are on !",
+        //   type: ApplicationCommandOptionType.Subcommand,
+        // },
       ],
     },
     {
@@ -99,7 +99,6 @@ export async function chatInput({
   );
 
   if (subcommandGroup) {
-    // TODO : add status in the response : listing all servers and status.
     const enabled = subcommandGroup == "enable";
     switch (subcommand) {
       case "here": {
@@ -125,7 +124,7 @@ export async function chatInput({
         break;
       }
       case "all": {
-        await setAutoShareEnabledStatusInAllServers(user, enabled);
+        await setAutoShareEnabledStatusInAllServers(user, enabled, guildId);
 
         const newStatusText = enabled
           ? "Auto-share was enabled on all available servers."
