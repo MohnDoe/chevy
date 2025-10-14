@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
+import { UserWithHevyVerification } from "../hevy/hevy.service";
 import { HevyWorkout } from "../hevy/hevy.types";
 import { toComponent } from "../workout/workout.embeds";
 import {
@@ -39,7 +40,7 @@ const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
 
 const shareWorkoutToDiscordServer = async (
   server: ServerWithAutoShareConfig,
-  user: User,
+  user: UserWithHevyVerification,
   workout: HevyWorkout,
 ) => {
   const format =
@@ -78,40 +79,44 @@ const shareWorkoutToDiscordServer = async (
       saveWorkoutShare(workout, user.discordId, channel, "autoShared", format);
     } catch (error) {
       Logger.error(
-        `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Error sending message to channel ${serverConfig.channelId}: ${error}`,
+        `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Error sending message to channel ${serverConfig.channelId}: ${error}`,
       );
       Logger.error("[auto-share ]" + error);
     }
   } else {
     Logger.warn(
-      `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Channel ${serverConfig.channelId} is not sendable.`,
+      `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Channel ${serverConfig.channelId} is not sendable.`,
     );
   }
 };
 
 const processUserWorkouts = async (
-  user: User,
+  user: UserWithHevyVerification,
   server: ServerWithAutoShareConfig,
 ) => {
-  if (!user.hevyUsername) {
+  if (!user.hevyVerification!.username) {
     Logger.warn(
       `[auto-share] S:${server.guildId} - U:${user.discordId} | User does not have a Hevy username configured. Skipping.`,
     );
     return;
   }
 
-  const latestWorkouts = await getUserWorkouts(user.hevyUsername!, 1, 1);
+  const latestWorkouts = await getUserWorkouts(
+    user.hevyVerification!.username,
+    1,
+    1,
+  );
 
   if (latestWorkouts.length === 0) {
     Logger.warn(
-      `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | No workouts found for user ${user.hevyUsername}`,
+      `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | No workouts found for user ${user.hevyVerification!.username}`,
     );
     return;
   }
 
   const latestWorkout = await getWorkout(latestWorkouts[0].short_id);
   Logger.info(
-    `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | Latest workout for user ${user.hevyUsername}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
+    `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Latest workout for user ${user.hevyVerification!.username}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
   );
 
   const lastAutoSharesInServerChannel = await getUserLastAutoShares(
@@ -124,7 +129,7 @@ const processUserWorkouts = async (
 
     if (lastAutoShare.Workout.hevyWorkoutId === latestWorkout.id) {
       Logger.warn(
-        `[auto-share] S:${server.guildId} - U:${user.hevyUsername} | This workout was already shared in this server.`,
+        `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | This workout was already shared in this server.`,
       );
       return;
     }
@@ -162,7 +167,9 @@ const getUserLastAutoShares = async (
   });
 };
 
-const getEnabledUsers = async (guildId: string): Promise<User[]> => {
+const getEnabledUsers = async (
+  guildId: string,
+): Promise<UserWithHevyVerification[]> => {
   "use cache";
   cacheLife("1d");
   cacheTag(`autoShare:enabledUsers:server:${guildId}`);
@@ -175,8 +182,12 @@ const getEnabledUsers = async (guildId: string): Promise<User[]> => {
           enabled: true,
         },
       },
+      hevyVerification: {
+        status: "verified",
+      },
     },
     include: {
+      hevyVerification: true,
       UserAutoShareConfig: true,
     },
   });
@@ -225,7 +236,7 @@ export const executeAutoShare = async () => {
 
       for (const user of enabledUsers) {
         Logger.info(
-          `[auto-share] S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyUsername}`,
+          `[auto-share] S:${server.guildId} | Processing user ${user.discordId} - ${user.hevyVerification!.username}`,
         );
         await processUserWorkouts(user, server);
       }

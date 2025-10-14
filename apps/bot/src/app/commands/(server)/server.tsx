@@ -3,7 +3,6 @@ import {
   configModal,
 } from "@/features/autoShare/autoShare.embeds";
 import {
-  getAutoShareConfig,
   getServerAutoShareParticipantsCount,
   saveAutoShareConfig,
   upsertServer,
@@ -13,10 +12,8 @@ import { AutoShareWorkoutFormat, ServerAutoShareConfig } from "@repo/db";
 import {
   ChatInputCommandContext,
   CommandData,
-  CommandKitModalBuilderInteractionCollectorDispatch,
   CommandMetadata,
   Container,
-  ModalKit,
   Separator,
   TextDisplay,
 } from "commandkit";
@@ -24,22 +21,11 @@ import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ApplicationIntegrationType,
-  Awaitable,
-  bold,
-  channelMention,
-  ChannelSelectMenuBuilder,
-  ChannelType,
   Colors,
   InteractionContextType,
-  LabelBuilder,
   MessageFlags,
-  ModalBuilder,
-  ModalSubmitInteraction,
   SeparatorSpacingSize,
-  StringSelectMenuBuilder,
-  StringSelectMenuOptionBuilder,
   TextChannel,
-  underline,
 } from "discord.js";
 
 export const metadata: CommandMetadata = {
@@ -81,7 +67,7 @@ export async function chatInput({
   const subcommand = interaction.options.getSubcommand();
   const guildId = interaction.guildId!;
 
-  const serverAutoShareConfig = store.get(
+  const currentServerAutoShareConfig = store.get(
     "serverAutoShareConfig",
   ) as ServerAutoShareConfig | null;
 
@@ -92,13 +78,16 @@ export async function chatInput({
           flags: MessageFlags.Ephemeral,
         });
 
-        const participantCount = serverAutoShareConfig
+        const participantCount = currentServerAutoShareConfig
           ? await getServerAutoShareParticipantsCount(guildId)
           : 0;
         await interaction.followUp({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
           components: [
-            configInfosContainer(serverAutoShareConfig, participantCount),
+            configInfosContainer(
+              currentServerAutoShareConfig,
+              participantCount,
+            ),
             <Separator spacing={SeparatorSpacingSize.Small} divider={false} />,
             <Container accentColor={Colors.DarkButNotBlack}>
               <TextDisplay>### What is auto-share?</TextDisplay>
@@ -165,7 +154,7 @@ export async function chatInput({
               ],
             });
           },
-          serverAutoShareConfig,
+          currentServerAutoShareConfig,
         );
         await interaction.showModal(modal);
         break;
