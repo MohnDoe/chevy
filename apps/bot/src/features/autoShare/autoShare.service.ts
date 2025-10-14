@@ -9,6 +9,7 @@ import {
   TextDisplayBuilder,
   userMention,
 } from "discord.js";
+import { commandMention } from "../discord/command.service";
 import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
 import { UserWithHevyVerification } from "../hevy/hevy.service";
@@ -19,7 +20,6 @@ import {
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
-import { commandMention } from "../discord/command.service";
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   "use cache";
@@ -40,7 +40,7 @@ const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   });
 };
 
-const shareWorkoutToDiscordServer = async (
+const autoShareWorkoutToDiscordServer = async (
   server: ServerWithAutoShareConfig,
   user: UserWithHevyVerification,
   workout: HevyWorkout,
@@ -145,7 +145,7 @@ const processUserWorkouts = async (
     }
   }
 
-  await shareWorkoutToDiscordServer(server, user, latestWorkout);
+  await autoShareWorkoutToDiscordServer(server, user, latestWorkout);
 };
 
 const getUserLastAutoShares = async (

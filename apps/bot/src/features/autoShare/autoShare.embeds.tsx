@@ -1,4 +1,5 @@
 import client from "@/app";
+import { ServerAutoShareConfig } from "@repo/db";
 import {
   CommandKitModalBuilderInteractionCollectorDispatch,
   Container,
@@ -8,7 +9,6 @@ import {
   TextDisplay,
 } from "commandkit";
 import {
-  ChannelSelectMenuBuilder,
   ChannelType,
   Colors,
   ContainerBuilder,
@@ -18,11 +18,12 @@ import {
   TextDisplayBuilder,
   bold,
   channelMention,
+  subtext,
   underline,
 } from "discord.js";
 import { commandMention } from "../discord/command.service";
+import { AVAILABLE_AUTO_SHARE_FORMATS } from "../workout/workout.service";
 import { ServerWithAutoShareConfig } from "./autoShare.types";
-import { ServerAutoShareConfig, WorkoutFormat } from "@repo/db";
 
 export const listServers = (
   servers: ServerWithAutoShareConfig[],
@@ -90,16 +91,21 @@ export const configModal = (
       new LabelBuilder()
         .setLabel("Destination")
         .setDescription("Where the new workouts will be automatically shared.")
-        .setChannelSelectMenuComponent(
-          new ChannelSelectMenuBuilder()
+        .setChannelSelectMenuComponent((channelSelectMenuBuild) => {
+          channelSelectMenuBuild
             .setRequired(true)
             .setMaxValues(1)
             .setMinValues(1)
-            .setDefaultChannels(currentConfig ? [currentConfig.channelId!] : [])
             .addChannelTypes([ChannelType.GuildText])
             .setCustomId("config-channel-select")
-            .setPlaceholder("Select a channel"),
-        ),
+            .setPlaceholder("Select a channel");
+
+          if (currentConfig?.channelId) {
+            channelSelectMenuBuild.setDefaultChannels(currentConfig.channelId);
+          }
+
+          return channelSelectMenuBuild;
+        }),
       new LabelBuilder()
         .setLabel("Format")
         .setDescription("What format should the workout be in?")
@@ -107,11 +113,13 @@ export const configModal = (
           new StringSelectMenuBuilder()
             .setRequired(true)
             .addOptions(
-              Object.entries(WorkoutFormat).map(([_, value]) =>
+              AVAILABLE_AUTO_SHARE_FORMATS.map((format) =>
                 new StringSelectMenuOptionBuilder()
-                  .setLabel(value)
-                  .setValue(value)
-                  .setDefault(currentConfig?.workoutFormat == value),
+                  .setLabel(format.toString())
+                  .setValue(format.toString())
+                  .setDefault(
+                    currentConfig?.workoutFormat == format.toString(),
+                  ),
               ),
             )
             .setCustomId("config-format-select"),
@@ -134,7 +142,10 @@ export const configInfosContainer = async (
         <TextDisplay>
           {serverAutoShareConfig!.channelId
             ? `New workouts will be shared in: ${channelMention(serverAutoShareConfig!.channelId)}`
-            : `No destination channel for new workouts is set up.\nUse ${await commandMention("server auto-share configure")} to select a channel! ${bold("Auto-share won't work until you do.")}`}
+            : `⚠️No destination channel for new workouts is set up.\n` +
+              subtext(
+                `Use ${await commandMention("server auto-share configure")} to select a channel! ${bold("Auto-share won't work until you do.")}`,
+              )}
         </TextDisplay>
         <TextDisplay>
           {`Workouts will be shared in a the format: \`${serverAutoShareConfig?.workoutFormat}\`.`}

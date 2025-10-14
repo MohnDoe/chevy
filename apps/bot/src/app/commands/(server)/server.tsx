@@ -8,7 +8,7 @@ import {
   upsertServer,
 } from "@/features/core/server.service";
 import { commandMention } from "@/features/discord/command.service";
-import { WorkoutFormat, ServerAutoShareConfig } from "@repo/db";
+import { ServerAutoShareConfig, WorkoutFormat } from "@repo/db";
 import {
   ChatInputCommandContext,
   CommandData,
@@ -122,10 +122,12 @@ export async function chatInput({
 
             const enabled = statusValue === "true";
 
-            const channel = i.fields.getSelectedChannels(
+            const channels = i.fields.getSelectedChannels(
               "config-channel-select",
               true,
             );
+
+            const channel = channels.first() as unknown as TextChannel;
 
             const format = i.fields.getStringSelectValues(
               "config-format-select",
@@ -136,7 +138,7 @@ export async function chatInput({
             const newServer = await saveAutoShareConfig(
               guildId,
               enabled,
-              channel as unknown as TextChannel,
+              channel,
               format as WorkoutFormat,
             );
             const participantCount = enabled
@@ -156,6 +158,7 @@ export async function chatInput({
           },
           currentServerAutoShareConfig,
         );
+
         await interaction.showModal(modal);
         break;
 
