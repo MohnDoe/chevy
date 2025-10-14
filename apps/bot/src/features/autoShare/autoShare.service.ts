@@ -5,6 +5,7 @@ import { Logger } from "commandkit";
 import {
   hyperlink,
   MessageFlags,
+  subtext,
   TextDisplayBuilder,
   userMention,
 } from "discord.js";
@@ -18,6 +19,7 @@ import {
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
+import { commandMention } from "../discord/command.service";
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   "use cache";
@@ -63,6 +65,10 @@ const shareWorkoutToDiscordServer = async (
   const prefixComponent = new TextDisplayBuilder().setContent(
     `${userMention(user.discordId)} just finished a workout on Hevy.`,
   );
+
+  const autoShareYoursText = new TextDisplayBuilder().setContent(
+    subtext(`Share yours using ${await commandMention("auto-share enable")}.`),
+  );
   if (channel.isSendable()) {
     try {
       await channel.send({
@@ -73,7 +79,7 @@ const shareWorkoutToDiscordServer = async (
         components:
           format == "line"
             ? [lineComponent]
-            : [prefixComponent, workoutComponent],
+            : [prefixComponent, workoutComponent, autoShareYoursText],
       });
 
       saveWorkoutShare(workout, user.discordId, channel, "autoShared", format);
