@@ -13,6 +13,7 @@ import {
   Colors,
   ContainerBuilder,
   LabelBuilder,
+  SeparatorSpacingSize,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
   TextDisplayBuilder,
@@ -136,7 +137,7 @@ export const configInfosContainer = async (
     <TextDisplay>
       {`## ${serverAutoShareConfig?.enabled ? "✅" : "❌"} Auto-share is currently ${underline(serverAutoShareConfig?.enabled ? "enabled" : "disabled")} on this server.`}
     </TextDisplay>
-    <Separator />
+    <Separator divider={false} spacing={SeparatorSpacingSize.Large} />
     {serverAutoShareConfig?.enabled ? (
       <>
         <TextDisplay>
