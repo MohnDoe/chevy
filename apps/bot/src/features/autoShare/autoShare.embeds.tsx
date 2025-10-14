@@ -118,7 +118,7 @@ export const configModal = (
         ),
     ]);
 
-export const configInfosContainer = (
+export const configInfosContainer = async (
   serverAutoShareConfig: ServerAutoShareConfig | null,
   participantCount: number,
 ) => (
@@ -134,7 +134,7 @@ export const configInfosContainer = (
         <TextDisplay>
           {serverAutoShareConfig!.channelId
             ? `New workouts will be shared in: ${channelMention(serverAutoShareConfig!.channelId)}`
-            : `No destination channel new workouts is set up.\nUse ${commandMention("server auto-share configure")} to select a channel! ${bold("Auto-share won't work until you do.")}`}
+            : `No destination channel for new workouts is set up.\nUse ${await commandMention("server auto-share configure")} to select a channel! ${bold("Auto-share won't work until you do.")}`}
         </TextDisplay>
         <TextDisplay>
           {`Workouts will be shared in a the format: \`${serverAutoShareConfig?.workoutFormat}\`.`}
@@ -145,7 +145,7 @@ export const configInfosContainer = (
         </TextDisplay>
       </>
     ) : (
-      <TextDisplay>{`Use ${commandMention("server auto-share configure")} to set-up auto-share on this server.`}</TextDisplay>
+      <TextDisplay>{`Use ${await commandMention("server auto-share configure")} to set-up auto-share on this server.`}</TextDisplay>
     )}
   </Container>
 );

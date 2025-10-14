@@ -84,7 +84,7 @@ export async function chatInput({
         await interaction.followUp({
           flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
           components: [
-            configInfosContainer(
+            await configInfosContainer(
               currentServerAutoShareConfig,
               participantCount,
             ),
@@ -147,7 +147,7 @@ export async function chatInput({
               flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
               components: [
                 <TextDisplay>**Settings saved!**</TextDisplay>,
-                configInfosContainer(
+                await configInfosContainer(
                   newServer.ServerAutoShareConfig,
                   participantCount,
                 ),
