@@ -9,14 +9,19 @@ datasource db {
 }
 
 model User {
-  id        String @default(uuid()) @db.Uuid
-  discordId String @unique
-
+  id              String   @id @default(uuid()) @db.Uuid
+  discordId       String   @unique
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   lastInteraction DateTime @default(now())
 
   hevyVerification HevyVerification?
+
+  Shares Share[]
+
+  Workouts Workout[]
+
+  UserAutoShareConfig UserAutoShareConfig[]
 }
 
 enum UserVerificationStatus {
@@ -39,4 +44,85 @@ model HevyVerification {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Workout {
+  id String @id @default(uuid())
+
+  hevyWorkoutId      String   @unique
+  hevyWorkoutShortId String   @unique
+  createdAt          DateTime
+
+  User   User   @relation(fields: [userId], references: [id])
+  userId String @db.Uuid
+
+  Shares Share[]
+}
+
+model Server {
+  guildId String @id @unique
+
+  ServerAutoShareConfig ServerAutoShareConfig?
+  UserAutoShareConfig   UserAutoShareConfig[]
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+enum WorkoutFormat {
+  line
+  compact
+  standard
+  detailed
+}
+
+model ServerAutoShareConfig {
+  Server  Server @relation(fields: [guildId], references: [guildId])
+  guildId String @id @unique
+
+  enabled       Boolean       @default(false)
+  channelId     String?
+  workoutFormat WorkoutFormat
+  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime      @default(now())
+}
+
+model UserAutoShareConfig {
+  User    User   @relation(fields: [userId], references: [id])
+  userId  String @db.Uuid
+  Server  Server @relation(fields: [guildId], references: [guildId])
+  guildId String
+
+  enabled Boolean @default(false)
+
+  lastWorkoutCheck DateTime?
+  lastWorkoutId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, guildId])
+}
+
+enum ShareReason {
+  commandUsed
+  autoShared
+}
+
+model Share {
+  id String @id @default(uuid())
+
+  Workout   Workout @relation(fields: [workoutId], references: [id])
+  workoutId String
+
+  channelId   String
+  channelType Int
+  format      WorkoutFormat
+  commandUsed String?
+  reason      ShareReason
+
+  sharedBy User?   @relation(fields: [sharerId], references: [id]) // null if bot
+  sharerId String? @db.Uuid
+
+  createdAt DateTime @default(now())
 }

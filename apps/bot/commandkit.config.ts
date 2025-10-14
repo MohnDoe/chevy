@@ -23,7 +23,7 @@ setDriver(
 
 export default defineConfig({
   plugins: [
-    ...(process.env.NODE_ENV === "development" ? [devtools()] : []),
+    devtools(),
     posthog({
       posthogOptions: {
         apiKey: process.env.POSTHOG_API_KEY!,

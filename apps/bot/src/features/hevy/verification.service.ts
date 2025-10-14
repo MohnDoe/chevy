@@ -1,6 +1,6 @@
 import verificationConfig from "@/config/verification.config";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { prisma } from "@repo/db";
+import { HevyVerification, prisma } from "@repo/db";
 import { Logger } from "commandkit";
 import { track } from "commandkit/analytics";
 import {
@@ -20,7 +20,6 @@ import {
   setIsHevyProfilePrivate,
   setUserHevyUsername,
 } from "./hevy.service";
-import { HevyUserVerificationWithUser } from "./verification.types";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -83,9 +82,7 @@ export const insertVerificationCode = async (
   return userVerification;
 };
 
-const markVerificationAsDone = async (
-  verification: HevyUserVerificationWithUser,
-) => {
+const markVerificationAsDone = async (verification: HevyVerification) => {
   await prisma.hevyVerification.updateMany({
     where: {
       username: verification.username,
@@ -99,7 +96,7 @@ const markVerificationAsDone = async (
   sendActivity(`Someone **linked their Hevy account**.`);
   track({
     name: "hevy linking success",
-    id: "discord_user_" + verification.User.discordId,
+    id: "discord_user_" + verification.userDiscordId,
   });
 };
 
@@ -117,7 +114,7 @@ export const getUserLatestPendingVerification = async (
 };
 
 export const getRemainingPrivateVerifications = async (): Promise<
-  HevyUserVerificationWithUser[]
+  HevyVerification[]
 > => {
   return await prisma.hevyVerification.findMany({
     where: {
@@ -125,14 +122,11 @@ export const getRemainingPrivateVerifications = async (): Promise<
       privateProfile: true,
       followedByBot: false,
     },
-    include: {
-      User: true,
-    },
   });
 };
 
 export const getRemainingPendingVerifications = async (): Promise<
-  HevyUserVerificationWithUser[]
+  HevyVerification[]
 > => {
   return await prisma.hevyVerification.findMany({
     where: {
@@ -169,7 +163,7 @@ export const getVerificationWorkoutComments = async () => {
 };
 
 export const getCorrespondingVerificationComment = async (
-  verification: HevyUserVerificationWithUser,
+  verification: HevyVerification,
 ) => {
   const comments = await getVerificationWorkoutComments();
 

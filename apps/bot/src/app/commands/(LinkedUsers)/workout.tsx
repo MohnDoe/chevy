@@ -7,8 +7,8 @@ import {
 } from "commandkit";
 
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import relativeTime from "dayjs/plugin/relativeTime.js";
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 
@@ -23,16 +23,16 @@ import {
 } from "discord.js";
 
 import {
-  followUpWithWorkoutEphemeral,
-  handleWorkoutSelectMenuSelection,
-} from "@/features/workout/workout.service";
-import {
   getUserLatestWorkout,
   getUserWorkouts,
   getWorkout,
 } from "@/features/hevy/hevy.api";
+import { UserWithHevyVerification } from "@/features/hevy/hevy.service";
 import { getWorkoutShortIdFromUrl } from "@/features/workout/workout.embeds";
-import { HevyVerification } from "@repo/db";
+import {
+  followUpWithWorkoutEphemeral,
+  handleWorkoutSelectMenuSelection,
+} from "@/features/workout/workout.service";
 
 export const command = new SlashCommandBuilder()
   .setName("workout")
@@ -75,7 +75,9 @@ export async function chatInput({
   await interaction.deferReply({
     flags: MessageFlags.Ephemeral,
   });
-  const userVerification = store.get("userVerification") as HevyVerification;
+  const user = store.get(
+    "userWithHevyVerification",
+  ) as UserWithHevyVerification;
   const subcommand = interaction.options.getSubcommand();
 
   switch (subcommand) {
@@ -91,7 +93,7 @@ export async function chatInput({
           }
         }
       } else {
-        workout = await getUserLatestWorkout(userVerification.username);
+        workout = await getUserLatestWorkout(user.hevyVerification!.username);
       }
 
       if (workout) {
@@ -113,7 +115,7 @@ export async function chatInput({
     case "recent":
       const currentPage = 1;
       const workouts = await getUserWorkouts(
-        userVerification.username,
+        user.hevyVerification!.username,
         currentPage,
         5,
       );

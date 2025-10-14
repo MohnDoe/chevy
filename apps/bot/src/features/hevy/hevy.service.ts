@@ -1,6 +1,5 @@
 import { revalidateTag } from "@commandkit/cache";
 import { prisma, Prisma } from "@repo/db";
-import { HevyUserVerificationWithUser } from "./verification.types";
 
 export type UserWithHevyVerification = Prisma.UserGetPayload<{
   include: {
@@ -20,7 +19,7 @@ export async function getUserByDiscordId(
   });
 }
 
-export async function getUserByHevyUsername(hevyUsername: string) {
+export async function getHevyVerifiedUserByHevyUsername(hevyUsername: string) {
   return await prisma.user.findFirst({
     where: {
       hevyVerification: {
@@ -31,15 +30,18 @@ export async function getUserByHevyUsername(hevyUsername: string) {
   });
 }
 
-export async function getUserVerification(
+export async function getHevyVerifiedUserByDiscordId(
   discordId: string,
-): Promise<HevyUserVerificationWithUser | null> {
-  return await prisma.hevyVerification.findUnique({
+): Promise<UserWithHevyVerification | null> {
+  return await prisma.user.findUnique({
     where: {
-      userDiscordId: discordId,
+      discordId,
+      hevyVerification: {
+        status: "verified",
+      },
     },
     include: {
-      User: true,
+      hevyVerification: true,
     },
   });
 }

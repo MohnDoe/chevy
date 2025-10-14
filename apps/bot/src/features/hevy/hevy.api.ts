@@ -1,6 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import { HevyProfile, HevyWorkout, HevyWorkoutComment } from "./hevy.types";
+import { cacheLife, cacheTag } from "@commandkit/cache";
+import { HevyWorkout, HevyWorkoutComment } from "./hevy.types";
 import { Logger } from "commandkit";
 
 dotenv.config();
@@ -54,9 +55,10 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
   return;
 };
 
-export const getUserProfile = async (
-  username: string,
-): Promise<HevyProfile> => {
+export const getUserProfile = async (username: string) => {
+  "use cache";
+  cacheLife("1d");
+  cacheTag(`profile:username:${username}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/user_profile/${username}`,
@@ -71,6 +73,9 @@ export const getUserProfile = async (
 export const getWorkout = async (
   workoutShortId: string,
 ): Promise<HevyWorkout> => {
+  "use cache";
+  cacheLife("1h");
+  cacheTag(`workout:shortId:${workoutShortId}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `/workout/${workoutShortId}`,
@@ -85,8 +90,11 @@ export const getWorkout = async (
 export const getUserWorkouts = async (
   username: string,
   page = 1,
-  perPage = 50,
+  perPage = 10,
 ) => {
+  "use cache";
+  cacheLife("15m");
+  cacheTag(`workouts:user:username:${username}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
       `${HEVY_API_URL}/user_workouts_paged?username=${username.toLowerCase()}&limit=${perPage}&offset=${

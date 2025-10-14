@@ -16,6 +16,7 @@
   "packageManager": "npm@8.5.0",
   "scripts": {
     "bot:start": "turbo start --filter=bot",
+    "bot:dev": "turbo dev --filter=bot",
     "build": "turbo run build",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
     "db:migrate:dev": "turbo run db:migrate:dev",
@@ -28,7 +29,9 @@
   },
   "dependencies": {
     "@commandkit/analytics": "^1.2.0-rc.9",
-    "@prisma/client": "latest"
+    "@commandkit/tasks": "^1.2.0-rc.11",
+    "@prisma/client": "latest",
+    "bullmq": "^5.58.7"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
