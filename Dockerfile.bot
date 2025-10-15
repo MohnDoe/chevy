@@ -21,7 +21,7 @@ RUN npm install
 
 # Build the project
 COPY --from=builder /app/out/full/ .
-RUN turbo run build
+RUN npm run build
 
 FROM base AS runner
 WORKDIR /app
