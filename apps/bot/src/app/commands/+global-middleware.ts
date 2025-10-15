@@ -1,14 +1,20 @@
+import { upsertServer } from "@/features/core/server.service";
 import { Logger, type MiddlewareContext } from "commandkit";
 import { AnalyticsEvents, useAnalytics } from "commandkit/analytics";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
-  Logger.info("Setting up tracking filters and identifying user.");
+  Logger.info("Setting up tracking filters, identifying user and server.");
+
+  if (ctx.interaction.guildId && !ctx.store.has("server")) {
+    const server = await upsertServer(ctx.interaction.guildId);
+    ctx.store.set("server", server);
+  }
 
   const analytics = useAnalytics();
 
   // stop Commandkit from tracking "command_execution"
   analytics.setFilter(
-    (_, event) => event.name != AnalyticsEvents.COMMAND_EXECUTION
+    (_, event) => event.name != AnalyticsEvents.COMMAND_EXECUTION,
   );
   const userDiscordId = ctx.interaction.user.id;
 

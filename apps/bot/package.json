@@ -1,6 +1,6 @@
 {
   "name": "bot",
-  "version": "0.1.7c",
+  "version": "0.2.0",
   "description": "Discord bot.",
   "type": "module",
   "author": "MohnDoe",
@@ -15,11 +15,14 @@
   },
   "dependencies": {
     "@commandkit/analytics": "^1.2.0-rc.9",
+    "@commandkit/cache": "^1.2.0-rc.11",
     "@commandkit/devtools": "^1.2.0-rc.6",
+    "@commandkit/tasks": "^1.2.0-rc.11",
     "axios": "^1.11.0",
-    "commandkit": "^1.2.0-rc.6",
+    "bullmq": "^5.61.0",
+    "commandkit": "^1.2.0-rc.12",
     "dayjs": "^1.11.18",
-    "discord.js": "^14.22.1",
+    "discord.js": "^14.23.2",
     "dotenv": "^16.6.1",
     "posthog-node": "^5.8.4"
   },
