@@ -104,6 +104,16 @@ export async function chatInput({
       case "here": {
         await setAutoShareEnabledStatus(guildId, user, enabled);
 
+        if (enabled) {
+          allAutoShareActiveServers = allAutoShareActiveServers.map((server) =>
+            server.guildId == guildId ? { ...server, enabled } : server,
+          );
+        } else {
+          allAutoShareActiveServers = allAutoShareActiveServers.filter(
+            (server) => server.guildId != guildId,
+          );
+        }
+
         const newStatusText = enabled
           ? "Auto-share enabled successfuly on this server."
           : "Auto-share disabled successfuly on this server.";
