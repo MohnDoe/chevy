@@ -10,16 +10,18 @@ import {
 
 import { successfulyLinkedToHevy } from "@/features/hevy/hevy.embeds";
 import { generatePrivateFollowInstructionsComponents } from "@/features/hevy/verification.embeds";
-import { getUserVerification } from "@/features/hevy/hevy.service";
 import {
   checkIfUserUserIsFollowedByBot,
   followUserOnHevy,
 } from "@/features/hevy/hevy.api";
 import { commandMention } from "@/features/discord/command.service";
+import { getHevyVerifiedUserByDiscordId } from "@/features/hevy/hevy.service";
 
 export async function beforeExecute(ctx: MiddlewareContext) {
   const userDiscordId = ctx.interaction.user.id;
-  const userVerification = await getUserVerification(userDiscordId);
+  const user = await getHevyVerifiedUserByDiscordId(userDiscordId);
+  const userVerification = user?.hevyVerification;
+
   track({
     name: "hevy command used",
     id: "discord_user_" + ctx.interaction.user.id,
