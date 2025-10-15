@@ -1,6 +1,10 @@
 import { defineConfig } from "commandkit";
 import { devtools } from "@commandkit/devtools";
 import { posthog } from "@commandkit/analytics/posthog";
+import dotenv from "dotenv";
+dotenv.config();
+
+console.debug(process.env);
 
 export default defineConfig({
   plugins: [
