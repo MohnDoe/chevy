@@ -3,6 +3,8 @@ import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 dotenv.config();
 
+console.debug(process.env);
+
 // Create a new client instance
 const client = new Client({
   intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.Guilds],

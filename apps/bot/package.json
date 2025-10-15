@@ -5,6 +5,7 @@
   "type": "module",
   "author": "MohnDoe",
   "license": "MIT",
+  "packageManager": "npm@11.6.0",
   "scripts": {
     "commandkit": "npx commandkit",
     "dev": "npx commandkit dev",
@@ -26,4 +27,3 @@
     "@repo/db": "*"
   }
 }
-
