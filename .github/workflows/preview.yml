@@ -1,4 +1,4 @@
-name: Create/Delete Branch for Pull Request
+name: Pull request preview
 
 on:
   pull_request:
@@ -68,6 +68,30 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           compare_branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
+  # should push a new image to the registry with the pr number
+  build-and-push-dockerfile-image:
+    name: Create preview image and push to registry
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.bot
+          push: true
+          tags: |
+            mohndoe/chevy-bot:pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          platforms: linux/amd64
 
   delete_neon_branch:
     name: Delete Neon Branch
