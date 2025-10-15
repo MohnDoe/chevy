@@ -2,20 +2,6 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
   "globalDependencies": [".env"],
-  "globalEnv": [
-    "DISCORD_TOKEN",
-    "BOT_ON_HEVY_AUTH_TOKEN",
-    "BOT_ON_HEVY_USERNAME",
-    "DATABASE_URL",
-    "POSTHOG_API_KEY",
-    "POSTHOG_HOST",
-    "CHEVY_LIVE_ACTIVITY_WEBHOOK_URL",
-    "CHEVY_AUTO_SHARE_TASK_SCHEDULE",
-    "CHEVY_BULLMQ_REDIS_HOST",
-    "CHEVY_VERIFICATION_TASK_SCHEDULE",
-    "CHEVY_VERIFICATION_CODE_LENGTH",
-    "CHEVY_VERIFICATION_WORKOUT_SHORT_ID"
-  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
