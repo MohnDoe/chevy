@@ -74,7 +74,7 @@ export const getWorkout = async (
   workoutShortId: string,
 ): Promise<HevyWorkout> => {
   "use cache";
-  cacheLife("1h");
+  cacheLife("1m");
   cacheTag(`workout:shortId:${workoutShortId}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
