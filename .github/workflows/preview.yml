@@ -40,14 +40,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Create Neon Branch
-        id: create_neon_branch
-        uses: neondatabase/create-branch-action@v5
-        with:
-          project_id: ${{ vars.NEON_PROJECT_ID }}
-          branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -56,6 +48,14 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
+
+      - name: Create Neon Branch
+        id: create_neon_branch
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
 
       - name: Run Migrations
         run: npm run db:migrate:deploy
@@ -68,6 +68,7 @@ jobs:
           project_id: ${{ vars.NEON_PROJECT_ID }}
           compare_branch: preview/pr-${{ github.event.number }}-${{ needs.setup.outputs.branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
+
   # should push a new image to the registry with the pr number
   build-and-push-dockerfile-image:
     name: Create preview image and push to registry
