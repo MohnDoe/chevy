@@ -1,5 +1,6 @@
 import { revalidateTag } from "@commandkit/cache";
 import { prisma, Prisma } from "@repo/db";
+import { track } from "commandkit/analytics";
 
 export type UserWithHevyVerification = Prisma.UserGetPayload<{
   include: {
@@ -74,15 +75,17 @@ export async function setIsFollowedByHevyBot(
   discordId: string,
   followed: boolean,
 ) {
-  "use cache";
-  revalidateTag(`user:${discordId}:lastBotFollowRequestion`);
-  return await prisma.hevyVerification.update({
+  await prisma.hevyVerification.update({
     where: {
       userDiscordId: discordId,
     },
     data: {
       followedByBot: followed,
     },
+  });
+  track({
+    name: "followed by hevy bot",
+    id: "discord_user_" + discordId,
   });
 }
 
