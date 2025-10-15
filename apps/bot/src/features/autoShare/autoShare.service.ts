@@ -20,6 +20,9 @@ import {
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
+import dayjs from "dayjs";
+
+const MAX_WORKOUT_AGE_IN_MINS = 60;
 
 const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
   "use cache";
@@ -128,6 +131,16 @@ const processUserWorkouts = async (
   Logger.info(
     `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Latest workout for user ${user.hevyVerification!.username}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
   );
+
+  if (
+    dayjs().diff(dayjs(latestWorkout.created_at), "minute") >
+    MAX_WORKOUT_AGE_IN_MINS
+  ) {
+    Logger.warn(
+      `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Workout is too old. Skipping.`,
+    );
+    return;
+  }
 
   const lastAutoSharesInServerChannel = await getUserLastAutoShares(
     user,
