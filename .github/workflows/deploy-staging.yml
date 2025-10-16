@@ -1,8 +1,8 @@
-name: Build Prodcution Docker images
+name: Build Staging Docker images
 
 on:
   push:
-    branches: ["main"]
+    branches: ["staging"]
 
 jobs:
   bot:
@@ -26,5 +26,5 @@ jobs:
           file: Dockerfile.bot
           push: true
           tags: |
-            mohndoe/chevy-bot:latest
+            mohndoe/chevy-bot:next
           platforms: linux/amd64
