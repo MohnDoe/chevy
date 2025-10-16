@@ -22,9 +22,15 @@ import { HevyWorkout } from "@/features/hevy/hevy.types";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { handleDiscordAPIError } from "../discord/error.service";
 import { prisma, ShareReason, WorkoutFormat } from "@repo/db";
+import { capitalizeFirstLetter } from "../core/utils";
 
 export const AVAILABLE_AUTO_SHARE_FORMATS: WorkoutFormat[] = [
   WorkoutFormat.line,
+  WorkoutFormat.compact,
+  WorkoutFormat.standard,
+];
+
+export const AVAILABLE_USER_SHARABLE_FORMATS: WorkoutFormat[] = [
   WorkoutFormat.compact,
   WorkoutFormat.standard,
 ];
@@ -45,53 +51,25 @@ const sharableWorkoutEphemeralOptions = async (
     components: [
       workoutComponent,
       new ContainerBuilder().addActionRowComponents(
-        new ActionRowBuilder<ButtonBuilder>().setComponents([
-          new ButtonKit()
-            .setLabel("Compact")
-            .setDisabled(format == "compact")
-            .setStyle(ButtonStyle.Secondary)
-            .setCustomId(`changeWorkoutFormat--compact--${customIdSuffix}`)
-            .onClick(
-              (i, c) =>
-                handleMessageClick(
-                  i as unknown as ButtonInteraction,
-                  c,
-                  workout,
-                  originalInteraction,
-                ),
-              { once: true, time: 60_000 },
-            ),
-          new ButtonKit()
-            .setLabel(`Standard`)
-            .setCustomId(`changeWorkoutFormat--standard--${customIdSuffix}`)
-            .setDisabled(format == "standard")
-            .setStyle(ButtonStyle.Secondary)
-            .onClick(
-              (i, c) =>
-                handleMessageClick(
-                  i as unknown as ButtonInteraction,
-                  c,
-                  workout,
-                  originalInteraction,
-                ),
-              { once: true, time: 60_000 },
-            ),
-          // new ButtonKit()
-          //   .setLabel("Detailed")
-          //   .setDisabled(format == "detailed")
-          //   .setStyle(ButtonStyle.Secondary)
-          //   .setCustomId(`changeWorkoutFormat--detailed--${customIdSuffix}`)
-          //   .onClick(
-          //     (i, c) =>
-          //       handleMessageClick(
-          //         i as unknown as ButtonInteraction,
-          //         c,
-          //         workout,
-          //         originalInteraction,
-          //       ),
-          //     { once: true, time: 60_000 },
-          //   ),
-        ]),
+        new ActionRowBuilder<ButtonBuilder>().setComponents(
+          AVAILABLE_USER_SHARABLE_FORMATS.map((f) =>
+            new ButtonKit()
+              .setLabel(capitalizeFirstLetter(f))
+              .setDisabled(format == f)
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId(`changeWorkoutFormat--${f}--${customIdSuffix}`)
+              .onClick(
+                (i, c) =>
+                  handleMessageClick(
+                    i as unknown as ButtonInteraction,
+                    c,
+                    workout,
+                    originalInteraction,
+                  ),
+                { once: true, time: 60_000 },
+              ),
+          ),
+        ),
       ),
       new ActionRowBuilder<ButtonBuilder>().setComponents([
         new ButtonKit()
@@ -249,7 +227,7 @@ const handleMessageClick = async (
       }
     }
   } else if (interaction.customId.startsWith("changeWorkoutFormat")) {
-    if (["simple", "standard", "detailed"].includes(desiredFormat)) {
+    if (AVAILABLE_USER_SHARABLE_FORMATS.includes(desiredFormat)) {
       await changeWorkoutFormat(
         interaction as unknown as ButtonInteraction,
         workout,
