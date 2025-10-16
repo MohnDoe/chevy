@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.bot
-    # restart: unless-stopped
+    restart: always
     env_file: ".env"
     depends_on:
       - redis
