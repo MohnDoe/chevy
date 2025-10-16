@@ -27,4 +27,4 @@ jobs:
           push: true
           tags: |
             mohndoe/chevy-bot:latest
-          platforms: linux/amd64
+          platforms: linux/arm64
