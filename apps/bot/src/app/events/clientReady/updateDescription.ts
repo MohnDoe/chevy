@@ -2,13 +2,16 @@ import { commandMention } from "@/features/discord/command.service";
 import type { EventHandler } from "commandkit";
 export const once = true;
 
+import dotenv from "dotenv";
+dotenv.config();
+
 const handler: EventHandler<"clientReady"> = async (client) => {
   let botVersion = process.env.npm_package_version;
 
-  if (process.env.NODE_ENV === "development") {
-    botVersion += "-dev";
+  if (process.env.NODE_ENV !== "production") {
+    botVersion += "-" + process.env.NODE_ENV;
     client.application.edit({
-      description: `Chevy development build - \`v${botVersion}\`  ${await commandMention("hevy link")} `,
+      description: `\`v${botVersion}\`  ${await commandMention("hevy link")} `,
     });
   } else {
     client.application.edit({

@@ -1,11 +1,11 @@
-name: Build Prodcution Docker images
+name: Build Staging Docker images
 
 on:
   push:
-    branches: ["main"]
+    branches: ["staging"]
 
 jobs:
-  bot:
+  build_bot_image:
     name: Build and push bot image
     runs-on: ubuntu-latest
 
@@ -26,5 +26,20 @@ jobs:
           file: Dockerfile.bot
           push: true
           tags: |
-            mohndoe/chevy-bot:latest
+            mohndoe/chevy-bot:next
           platforms: linux/amd64
+
+  build_db:
+    name: Deploy Neon DB (Staging)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Prisma
+        run: npm install prisma
+
+      - name: Run Migrations
+        run: npm run db:migrate:deploy
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
