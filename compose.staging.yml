@@ -3,6 +3,7 @@ services:
     image: mohndoe/chevy-bot:next
     restart: always
     env_file: ".env"
+    pull_policy: always
     depends_on:
       - redis
   redis:

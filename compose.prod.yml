@@ -1,6 +1,7 @@
 services:
   bot:
     image: mohndoe/chevy-bot:latest
+    pull_policy: always
     restart: always
     env_file: ".env"
     depends_on:
