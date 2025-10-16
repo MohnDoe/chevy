@@ -74,7 +74,9 @@ const autoShareWorkoutToDiscordServer = async (
   );
 
   const autoShareYoursText = new TextDisplayBuilder().setContent(
-    subtext(`Share yours using ${await commandMention("auto-share enable")}.`),
+    subtext(
+      `Share yours using ${await commandMention("auto-share enable here")}.`,
+    ),
   );
   if (channel.isSendable()) {
     try {
