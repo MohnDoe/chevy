@@ -15,8 +15,8 @@
   },
   "packageManager": "npm@8.5.0",
   "scripts": {
-    "bot:start": "turbo start --filter=bot --env-mode=loose",
-    "bot:dev": "turbo dev --filter=bot --env-mode=loose",
+    "bot:start": "dotenv-run -r ./.env turbo start --filter=bot --env-mode=loose",
+    "bot:dev": "dotenv-run -r ./.env turbo dev --filter=bot --env-mode=loose",
     "build": "turbo run build --env-mode=loose --summarize",
     "db:migrate:deploy": "turbo run db:migrate:deploy --env-mode=loose",
     "db:migrate:dev": "turbo run db:migrate:dev --env-mode=loose",
