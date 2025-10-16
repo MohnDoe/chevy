@@ -1,0 +1,17 @@
+services:
+  bot:
+    image: mohndoe/chevy-bot:latest
+    restart: always
+    env_file: ".env"
+    depends_on:
+      - redis
+  redis:
+    container_name: redis
+    image: redis:alpine
+    restart: always
+    volumes:
+      - redis:/data
+    command: "redis-server --save 60 1 --loglevel warning"
+
+volumes:
+  redis:
