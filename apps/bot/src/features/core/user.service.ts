@@ -2,13 +2,14 @@ import { cacheLife, cacheTag, revalidateTag } from "@commandkit/cache";
 import { HevyVerification, prisma } from "@repo/db";
 
 import client from "@/app";
-import { MessageFlags } from "discord.js";
+import { MessageFlags, TextChannel, User } from "discord.js";
 import { successfulyLinkedToHevy } from "../hevy/hevy.embeds";
 import {
   getUserByDiscordId,
   UserWithHevyVerification,
 } from "../hevy/hevy.service";
 import { generatePrivateFollowInstructionsComponents } from "../hevy/verification.embeds";
+import { Logger } from "commandkit";
 export const setAutoShareEnabledStatus = async (
   guildId: string,
   user: UserWithHevyVerification,
@@ -77,16 +78,56 @@ export const getUserAutoShareConfig = async (
   });
 };
 
-export const sendSuccessfullVerificationDM = async (
+export const sendSuccessfullVerificationMessage = async (
   verification: HevyVerification,
 ) => {
   const user = client.users.cache.get(verification.userDiscordId);
   if (user) {
-    await user.send({
-      flags: MessageFlags.IsComponentsV2,
-      components: successfulyLinkedToHevy(verification, false),
-    });
+    Logger.info(`Sending verification DM`);
+    try {
+      await sendSuccessfullVerificationDM(user, verification);
+    } catch (error) {
+      Logger.warn(error);
+      Logger.warn(
+        `Failed to send verification DM. Replying to original interaction.`,
+      );
+      await sendSuccessfullVerificationViaInteraction(verification);
+    }
   }
+};
+
+export const sendSuccessfullVerificationDM = async (
+  user: User,
+  verification: HevyVerification,
+) => {
+  await user.send({
+    flags: MessageFlags.IsComponentsV2,
+    components: successfulyLinkedToHevy(verification, false),
+  });
+};
+
+export const sendSuccessfullVerificationViaInteraction = async (
+  verification: HevyVerification,
+) => {
+  if (
+    verification.originalInteractionChannelId == null ||
+    verification.originalInteractionId == null
+  )
+    return;
+  const channel = (await client.channels.fetch(
+    verification.originalInteractionChannelId,
+  )) as TextChannel;
+  if (!channel) return;
+
+  const interaction = await channel.messages.fetch(
+    verification.originalInteractionId,
+  );
+
+  await interaction.reply({
+    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
+
+    components: successfulyLinkedToHevy(verification, false),
+  });
 };
 
 export const sendPrivateAccountInstructionsDM = async (

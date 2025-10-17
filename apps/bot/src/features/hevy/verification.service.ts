@@ -5,7 +5,7 @@ import { Logger } from "commandkit";
 import { track } from "commandkit/analytics";
 import {
   sendPrivateAccountInstructionsDM,
-  sendSuccessfullVerificationDM,
+  sendSuccessfullVerificationMessage,
 } from "../core/user.service";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import {
@@ -20,6 +20,7 @@ import {
   setIsHevyProfilePrivate,
   setUserHevyUsername,
 } from "./hevy.service";
+import { ChatInputCommandInteraction } from "discord.js";
 
 const MAX_CODE_GENERATION_ATTEMPTS = 10;
 
@@ -38,6 +39,7 @@ export const generateVerificationCode = (length: number) => {
 export const insertVerificationCode = async (
   discordId: string,
   hevyUsername: string,
+  interaction?: ChatInputCommandInteraction,
 ) => {
   Logger.info(`Inserting verification code: ${discordId} - ${hevyUsername}`);
   let verificationCode = "";
@@ -61,6 +63,8 @@ export const insertVerificationCode = async (
           workoutId: verificationConfig.workoutShortId,
           userDiscordId: discordId,
           username: hevyUsername,
+          originalInteractionId: interaction?.id,
+          originalInteractionChannelId: interaction?.channelId,
         },
       });
 
@@ -141,6 +145,7 @@ export const getRemainingPendingVerifications = async (): Promise<
 export const findOrCreateUserVerification = async (
   discordId: string,
   hevyUsername: string,
+  interaction?: ChatInputCommandInteraction,
 ) => {
   let hevyVerification = await getUserLatestPendingVerification(
     discordId,
@@ -150,7 +155,8 @@ export const findOrCreateUserVerification = async (
   if (hevyVerification == null) {
     Logger.info(`No verification for this user. Creating one.`);
     hevyVerification =
-      (await insertVerificationCode(discordId, hevyUsername)) ?? null;
+      (await insertVerificationCode(discordId, hevyUsername, interaction)) ??
+      null;
   } else {
     Logger.info(`User verification already exists. Returning it.`);
   }
@@ -215,7 +221,7 @@ export const executeVerificationTask = async () => {
         verification.userDiscordId,
         hevyProfile.private_profile,
       );
-      await sendSuccessfullVerificationDM(verification);
+      await sendSuccessfullVerificationMessage(verification);
       await deleteComment(correspondingComment.id);
     }
   }
