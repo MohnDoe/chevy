@@ -1,4 +1,5 @@
 import { commandMention } from "@/features/discord/command.service";
+import chevyConfig from "@/config/core/chevy.config";
 import type { EventHandler } from "commandkit";
 export const once = true;
 
@@ -19,7 +20,7 @@ const handler: EventHandler<"clientReady"> = async (client) => {
 
 Use ${await commandMention("hevy link")} to get started !
 
-https://chevy.fit/add-bot
+${chevyConfig.addBotLink} - ${chevyConfig.mainDiscordInviteLink}
 
 (Chevy is not affiliated with Hevy) - \`v${botVersion}\`
 `,
