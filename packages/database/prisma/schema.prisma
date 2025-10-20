@@ -126,3 +126,137 @@ model Share {
 
   createdAt DateTime @default(now())
 }
+
+enum SetIndicator {
+  normal
+  warmup
+  dropset
+  failure
+}
+
+enum PRType {
+  best_volume
+  best_1rm
+  best_distance
+  best_weight
+}
+
+// MODELS
+
+model HevyWorkout {
+  id                    String   @id @default(uuid())
+  name                  String
+  index                 Int
+  media                 Json // ANY[]
+  user_id               String
+  end_time              Int
+  short_id              String
+  username              String
+  verified              Boolean
+  created_at            DateTime
+  image_urls            Json // STRING[]
+  is_private            Boolean
+  like_count            Int
+  routine_id            String?
+  start_time            Int
+  updated_at            DateTime
+  apple_watch           Boolean
+  description           String
+  like_images           Json // STRING[]
+  nth_workout           Int
+  wearos_watch          Boolean
+  comment_count         Int
+  profile_image         String
+  estimated_volume_kg   Float
+  include_warmup_sets   Boolean
+  is_biometrics_public  Boolean
+  preview_workout_likes Json // [{ username, profile_pic }]
+  is_liked_by_user      Boolean
+
+  exercises HevyExercise[]
+  comments  HevyWorkoutComment[]
+}
+
+model HevyExercise {
+  id                        String  @id @default(uuid())
+  url                       String?
+  index                     Int
+  notes                     String
+  exercise_template_id      String
+  supersets_id              Int?
+  title                     String
+  de_title                  String?
+  es_title                  String?
+  fr_title                  String?
+  it_title                  String?
+  ja_title                  String?
+  ko_title                  String?
+  pt_title                  String?
+  ru_title                  String?
+  tr_title                  String?
+  zh_cn_title               String?
+  zh_tw_title               String?
+  priority                  Int
+  media_type                String?
+  superset_id               Int?
+  muscle_group              String
+  rest_seconds              Int
+  exercise_type             String
+  other_muscles             Json // STRING[]
+  thumbnail_url             String?
+  equipment_category        String
+  volume_doubling_enabled   Boolean
+  custom_exercise_image_url String?
+
+  workout   HevyWorkout @relation(fields: [workoutId], references: [id])
+  workoutId String
+
+  sets HevySet[]
+}
+
+model HevySet {
+  id               String        @id @default(uuid())
+  rpe              Float?
+  reps             Int
+  index            Int
+  indicator        SetIndicator?
+  weight_kg        Float?
+  completed_at     DateTime
+  custom_metric    Json?
+  distance_meters  Float?
+  duration_seconds Float?
+
+  exercise   HevyExercise @relation(fields: [exerciseId], references: [id])
+  exerciseId String
+
+  prs             HevyPR[] @relation("SetPRs")
+  personalRecords HevyPR[] @relation("SetPRPersonalRecords")
+}
+
+model HevyPR {
+  id    String @id @default(uuid())
+  type  PRType
+  value Float
+
+  // Link to HevySet via two relations (ordinary PRs vs personalRecords)
+  hevySet_prs   HevySet? @relation("SetPRs", fields: [hevySet_prsId], references: [id])
+  hevySet_prsId String?
+
+  hevySet_personalRecords   HevySet? @relation("SetPRPersonalRecords", fields: [hevySet_personalRecordsId], references: [id])
+  hevySet_personalRecordsId String?
+}
+
+model HevyWorkoutComment {
+  id               Int      @id @default(autoincrement())
+  comment          String
+  username         String
+  verified         Boolean
+  full_name        String
+  created_at       DateTime
+  like_count       Int
+  profile_pic      String
+  is_liked_by_user Boolean
+
+  workout   HevyWorkout @relation(fields: [workoutId], references: [id])
+  workoutId String
+}
