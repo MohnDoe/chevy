@@ -12,9 +12,17 @@ export async function beforeExecute(ctx: MiddlewareContext) {
 
   const analytics = useAnalytics();
 
-  // stop Commandkit from tracking "command_execution"
+  // dont track these events
   analytics.setFilter(
-    (_, event) => event.name != AnalyticsEvents.COMMAND_EXECUTION,
+    (_, event) =>
+      !(
+        [
+          AnalyticsEvents.COMMAND_EXECUTION,
+          AnalyticsEvents.CACHE_HIT,
+          AnalyticsEvents.CACHE_MISS,
+          AnalyticsEvents.CACHE_REVALIDATED,
+        ] as string[]
+      ).includes(event.name),
   );
   const userDiscordId = ctx.interaction.user.id;
 
