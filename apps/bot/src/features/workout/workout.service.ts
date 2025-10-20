@@ -275,21 +275,9 @@ export const saveWorkoutShare = async (
       reason: reason,
       format,
       commandUsed,
-      Workout: {
-        connectOrCreate: {
-          where: {
-            hevyWorkoutId: workout.id,
-          },
-          create: {
-            createdAt: workout.created_at,
-            hevyWorkoutId: workout.id,
-            hevyWorkoutShortId: workout.short_id,
-            User: {
-              connect: {
-                discordId: discordUserId,
-              },
-            },
-          },
+      HevyWorkout: {
+        connect: {
+          id: workout.id,
         },
       },
       sharedBy:

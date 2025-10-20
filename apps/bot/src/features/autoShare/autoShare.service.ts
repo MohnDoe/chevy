@@ -152,7 +152,7 @@ const processUserWorkouts = async (
   if (lastAutoSharesInServerChannel.length > 0) {
     const lastAutoShare = lastAutoSharesInServerChannel[0];
 
-    if (lastAutoShare.Workout.hevyWorkoutId === latestWorkout.id) {
+    if (lastAutoShare.HevyWorkout!.id === latestWorkout.id) {
       Logger.warn(
         `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | This workout was already shared in this server.`,
       );
@@ -172,7 +172,7 @@ const getUserLastAutoShares = async (
       sharedBy: {
         is: null,
       },
-      Workout: {
+      HevyWorkout: {
         User: {
           is: {
             discordId: user.discordId,
@@ -186,7 +186,7 @@ const getUserLastAutoShares = async (
       createdAt: "desc",
     },
     include: {
-      Workout: true,
+      HevyWorkout: true,
     },
     take: 30,
   });

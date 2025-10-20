@@ -13,5 +13,5 @@ export type ServerWithAutoShareConfig = Prisma.ServerGetPayload<{
 }>;
 
 export type ShareWithWorkout = Prisma.ShareGetPayload<{
-  include: { Workout: true };
+  include: { HevyWorkout: true };
 }>;
