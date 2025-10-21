@@ -1,6 +1,6 @@
-export interface HevySet {
+export interface RemoteHevySet {
   id: string;
-  prs: HevyPR[];
+  prs: RemoteHevyPR[];
   rpe: number | null;
   reps: number;
   index: number;
@@ -9,18 +9,18 @@ export interface HevySet {
   completed_at: Date;
   custom_metric: any | null;
   distance_meters: number | null;
-  personalRecords: HevyPR[];
+  personalRecords: RemoteHevyPR[];
   duration_seconds: number | null;
 }
 
-export interface HevyExercise {
+export interface RemoteHevyExercise {
   id: string;
   url?: string;
   index: number;
   notes: string;
   exercise_template_id: string;
   supersets_id?: number | null;
-  sets: HevySet[];
+  sets: RemoteHevySet[];
   title: string;
   de_title?: string;
   es_title?: string;
@@ -46,23 +46,23 @@ export interface HevyExercise {
   custom_exercise_image_url?: string | null;
 }
 
-export interface HevyPR {
+export interface RemoteHevyPR {
   type: "best_volume" | "best_1rm" | "best_distance" | "best_weight";
   value: number;
 }
 
-export interface HevyWorkout {
+export interface RemoteHevyWorkout {
   id: string;
   name: string;
   index: number;
   media: any[];
   user_id: string;
-  comments: HevyWorkoutComment[];
+  comments: RemoteHevyWorkoutComment[];
   end_time: number;
   short_id: string;
   username: string;
   verified: boolean;
-  exercises: HevyExercise[];
+  exercises: RemoteHevyExercise[];
   created_at: Date;
   image_urls: string[];
   is_private: boolean;
@@ -84,7 +84,7 @@ export interface HevyWorkout {
   is_liked_by_user: boolean;
 }
 
-export interface HevyWorkoutComment {
+export interface RemoteHevyWorkoutComment {
   id: number;
   comment: string;
   username: string;
@@ -96,7 +96,7 @@ export interface HevyWorkoutComment {
   is_liked_by_user: boolean;
 }
 
-export interface HevyProfile {
+export interface RemoteHevyProfile {
   username: string;
   verified: boolean;
   subscribed: boolean;

@@ -1,7 +1,7 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import { cacheLife, cacheTag } from "@commandkit/cache";
-import { HevyWorkout, HevyWorkoutComment } from "./hevy.types";
+import { RemoteHevyWorkout, RemoteHevyWorkoutComment } from "./hevy.types";
 import { Logger } from "commandkit";
 
 dotenv.config();
@@ -72,7 +72,7 @@ export const getUserProfile = async (username: string) => {
 
 export const getWorkout = async (
   workoutShortId: string,
-): Promise<HevyWorkout> => {
+): Promise<RemoteHevyWorkout> => {
   "use cache";
   cacheLife("1m");
   cacheTag(`workout:shortId:${workoutShortId}`);
@@ -102,7 +102,7 @@ export const getUserWorkouts = async (
       }`,
     );
 
-    return hevyResponse.data.workouts as HevyWorkout[];
+    return hevyResponse.data.workouts as RemoteHevyWorkout[];
   } catch (error) {
     console.error(error);
     return [];
@@ -111,7 +111,7 @@ export const getUserWorkouts = async (
 
 export const getWorkoutComments = async (
   workoutShortId: string,
-): Promise<HevyWorkoutComment[]> => {
+): Promise<RemoteHevyWorkoutComment[]> => {
   const workout = await getWorkout(workoutShortId);
 
   if (workout) return workout.comments;
@@ -119,7 +119,9 @@ export const getWorkoutComments = async (
   return [];
 };
 
-export const deleteComment = async (commentId: HevyWorkoutComment["id"]) => {
+export const deleteComment = async (
+  commentId: RemoteHevyWorkoutComment["id"],
+) => {
   Logger.info(`[Hevy API] Deleting comment: ${commentId}`);
   try {
     await HevyBotAPIClient.delete(`/workout_comment/${commentId}`);
