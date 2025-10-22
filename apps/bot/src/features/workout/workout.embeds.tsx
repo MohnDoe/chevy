@@ -63,17 +63,29 @@ export const toComponent = async (
   format: WorkoutFormat,
 ): Promise<ContainerBuilder> => {
   // TODO : make this better pls
-  const setCount = workout.exercises.reduce(
+
+  const exercises = workout.exercises
+    .map((e) => {
+      return {
+        ...e,
+        sets: workout.include_warmup_sets
+          ? e.sets
+          : e.sets.filter((s) => s.indicator !== "warmup"),
+      };
+    })
+    .filter((e) => e.sets.length > 0);
+
+  const setCount = exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
     0,
   );
 
-  const prCount = workout.exercises.reduce(
+  const prCount = exercises.reduce(
     (acc, ex) => acc + ex.sets.reduce((a, s) => a + s.prs.length, 0),
     0,
   );
 
-  const volume = workout.exercises.reduce(
+  const volume = exercises.reduce(
     (acc, exercise) => acc + getExerciseVolume(exercise),
     0,
   );
@@ -116,7 +128,7 @@ ${subtext("Duration")}
 ${bold(`${new Intl.NumberFormat("en-US").format(volume)} Kg`)}
 ${subtext("Volume")}
 
-${bold(workout.exercises.length.toString())}
+${bold(exercises.length.toString())}
 ${subtext("Exercises")}`;
       if (prCount > 0) {
         informationsText += `
@@ -166,7 +178,7 @@ ${subtext("Records")}`;
   }
 
   if (format != "compact" && format != "line") {
-    container = addExercises(container, workout.exercises, format);
+    container = addExercises(container, exercises, format);
   }
 
   container = container.addSeparatorComponents(
@@ -269,37 +281,37 @@ const addExercises = (
   return container;
 };
 
-const exerciseToEmbedField = (exercise: HevyExercise) => {
-  let title = "";
-
-  if (exercise.superset_id) {
-    title += SUPERSETS_PREFIXES[exercise.superset_id]
-      ? `${SUPERSETS_PREFIXES[exercise.superset_id]} `
-      : "";
-  }
-
-  title += exercise.title;
-  const volume = getExerciseVolume(exercise);
-  const showSetNumber = exercise.sets.length > 1;
-  if (volume > 0) {
-    title += ` [${new Intl.NumberFormat("en-US").format(volume)} kg]`;
-  }
-
-  let value = "";
-
-  if (exercise.notes) {
-    value += `*${exercise.notes}*\n`;
-  }
-
-  return {
-    name: title,
-    value:
-      value +
-      exercise.sets
-        .map((s, i) => setToString(s, i + 1, showSetNumber))
-        .join("\n"),
-  };
-};
+// const exerciseToEmbedField = (exercise: HevyExercise) => {
+//   let title = "";
+//
+//   if (exercise.superset_id) {
+//     title += SUPERSETS_PREFIXES[exercise.superset_id]
+//       ? `${SUPERSETS_PREFIXES[exercise.superset_id]} `
+//       : "";
+//   }
+//
+//   title += exercise.title;
+//   const volume = getExerciseVolume(exercise);
+//   const showSetNumber = exercise.sets.length > 1;
+//   if (volume > 0) {
+//     title += ` [${new Intl.NumberFormat("en-US").format(volume)} kg]`;
+//   }
+//
+//   let value = "";
+//
+//   if (exercise.notes) {
+//     value += `*${exercise.notes}*\n`;
+//   }
+//
+//   return {
+//     name: title,
+//     value:
+//       value +
+//       exercise.sets
+//         .map((s, i) => setToString(s, i + 1, showSetNumber))
+//         .join("\n"),
+//   };
+// };
 
 const setToTextDisplay = (
   set: HevySet,
@@ -430,82 +442,82 @@ const integerToPositionString = (number: number) => {
   );
 };
 
-export const embedWorkout = (workout: HevyWorkout) => {
-  const setCount = workout.exercises.reduce(
-    (acc, exercise) => acc + exercise.sets.length,
-    0,
-  );
-
-  const prCount = workout.exercises.reduce(
-    (acc, ex) =>
-      acc + ex.sets.reduce((a, s) => a + s.personalRecords.length, 0),
-    0,
-  );
-
-  const volume = workout.exercises.reduce(
-    (acc, exercise) => acc + getExerciseVolume(exercise),
-    0,
-  );
-
-  const workoutDuration = dayjs.duration(
-    workout.end_time - workout.start_time,
-    "seconds",
-  );
-
-  const embed = new EmbedBuilder()
-    .setTitle(workout.name)
-    .setURL(`https://hevy.com/workout/${workout.short_id}`)
-    .setAuthor({
-      name: workout.username,
-      iconURL: workout.profile_image,
-      url: `https://hevy.com/user/${workout.username}`,
-    })
-    .setDescription(
-      workout.description
-        ? workout.description.trim().length != 0
-          ? workout.description
-          : null
-        : null,
-    )
-    .addFields({
-      name: "Duration",
-      value: `${workoutDuration.format("H[h] mm[m]")}`,
-      inline: true,
-    });
-
-  if (volume > 0) {
-    embed.addFields({
-      name: "Volume",
-      value: `${new Intl.NumberFormat("en-US").format(volume)} Kg`,
-      inline: true,
-    });
-  }
-  if (setCount > 0) {
-    embed.addFields({
-      name: "Sets",
-      value: setCount + "",
-      inline: true,
-    });
-  }
-
-  if (prCount > 0) {
-    embed.addFields({
-      name: "Records",
-      value: prCount + " 🏆",
-      inline: true,
-    });
-  }
-
-  embed
-    .setThumbnail(workout.image_urls.length ? workout.image_urls[0] : null)
-    .addFields(workout.exercises.map((e) => exerciseToEmbedField(e)))
-    .setTimestamp(workout.start_time * 1000)
-    .setFooter({
-      text: `${integerToPositionString(workout.nth_workout)} workout`,
-    });
-
-  return embed;
-};
+// export const embedWorkout = (workout: HevyWorkout) => {
+//   const setCount = workout.exercises.reduce(
+//     (acc, exercise) => acc + exercise.sets.length,
+//     0,
+//   );
+//
+//   const prCount = workout.exercises.reduce(
+//     (acc, ex) =>
+//       acc + ex.sets.reduce((a, s) => a + s.personalRecords.length, 0),
+//     0,
+//   );
+//
+//   const volume = workout.exercises.reduce(
+//     (acc, exercise) => acc + getExerciseVolume(exercise),
+//     0,
+//   );
+//
+//   const workoutDuration = dayjs.duration(
+//     workout.end_time - workout.start_time,
+//     "seconds",
+//   );
+//
+//   const embed = new EmbedBuilder()
+//     .setTitle(workout.name)
+//     .setURL(`https://hevy.com/workout/${workout.short_id}`)
+//     .setAuthor({
+//       name: workout.username,
+//       iconURL: workout.profile_image,
+//       url: `https://hevy.com/user/${workout.username}`,
+//     })
+//     .setDescription(
+//       workout.description
+//         ? workout.description.trim().length != 0
+//           ? workout.description
+//           : null
+//         : null,
+//     )
+//     .addFields({
+//       name: "Duration",
+//       value: `${workoutDuration.format("H[h] mm[m]")}`,
+//       inline: true,
+//     });
+//
+//   if (volume > 0) {
+//     embed.addFields({
+//       name: "Volume",
+//       value: `${new Intl.NumberFormat("en-US").format(volume)} Kg`,
+//       inline: true,
+//     });
+//   }
+//   if (setCount > 0) {
+//     embed.addFields({
+//       name: "Sets",
+//       value: setCount + "",
+//       inline: true,
+//     });
+//   }
+//
+//   if (prCount > 0) {
+//     embed.addFields({
+//       name: "Records",
+//       value: prCount + " 🏆",
+//       inline: true,
+//     });
+//   }
+//
+//   embed
+//     .setThumbnail(workout.image_urls.length ? workout.image_urls[0] : null)
+//     .addFields(workout.exercises.map((e) => exerciseToEmbedField(e)))
+//     .setTimestamp(workout.start_time * 1000)
+//     .setFooter({
+//       text: `${integerToPositionString(workout.nth_workout)} workout`,
+//     });
+//
+//   return embed;
+// };
 
 export const getWorkoutShortIdFromUrl = (url: string) => {
   // Get shortId from URL like these:
