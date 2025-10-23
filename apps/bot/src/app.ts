@@ -1,7 +1,5 @@
 import { setDriver } from "@commandkit/tasks";
-import { BullMQDriver } from "@commandkit/tasks/bullmq";
 import { SQLiteDriver } from "@commandkit/tasks/sqlite";
-import { Logger } from "commandkit";
 import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 dotenv.config();
