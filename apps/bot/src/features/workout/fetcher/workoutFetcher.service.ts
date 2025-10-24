@@ -57,11 +57,14 @@ export const usersNeedingWorkoutsCheck = async (): Promise<
   });
 };
 
-export const updateUserLastWorkoutsCheck = async (user: User) =>
+export const updateUserLastWorkoutsCheck = async (
+  user: User,
+  newDate = new Date(),
+) =>
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      lastHevyWorkoutsCheck: new Date(),
+      lastHevyWorkoutsCheck: newDate,
     },
   });
 
