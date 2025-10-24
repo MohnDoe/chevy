@@ -2,11 +2,11 @@ import { executeWorkoutFetcherTask } from "@/features/workout/fetcher/workoutFet
 import { task } from "@commandkit/tasks";
 
 export default task({
-  name: "workout-fetcher",
+  name: "new-workout-fetcher",
   schedule: "*/1 * * * *",
   immediate: true,
   async execute(_ctx) {
-    console.log(`Executing task: workout-fetcher`);
+    console.log(`Executing task: new-workout-fetcher`);
 
     await executeWorkoutFetcherTask();
   },

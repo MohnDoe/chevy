@@ -65,11 +65,14 @@ export const updateUserLastWorkoutsCheck = async (user: User) =>
     },
   });
 
-export const setUserNextWorkoutCheck = async (user: User) =>
+export const setUserNextWorkoutCheck = async (
+  user: User,
+  mostRecentWorkout: RemoteHevyWorkout,
+) =>
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      nextWorkoutFetch: dayjs()
+      nextWorkoutFetch: dayjs(mostRecentWorkout.created_at)
         .add(NEXT_WORKOUT_FETCH_INTERVAL_MINS, "minute")
         .toDate(),
     },
@@ -121,12 +124,17 @@ export const executeWorkoutFetcherTask = async () => {
       `Found ${latestWorkouts.length} recent workouts for user ${user.id}`,
     );
 
+    if (latestWorkouts.length === 0) {
+      Logger.info(`No workouts found for user ${user.id}. Stopping.`);
+      return;
+    }
+
     for await (const workout of latestWorkouts) {
       await upsertHevyWorkout(workout, user);
     }
 
     // when it's done
     await updateUserLastWorkoutsCheck(user);
-    await setUserNextWorkoutCheck(user);
+    await setUserNextWorkoutCheck(user, latestWorkouts[0]);
   }
 };
