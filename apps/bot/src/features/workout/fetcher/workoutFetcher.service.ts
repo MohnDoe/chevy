@@ -102,6 +102,10 @@ export const upsertHevyWorkout = async (
   });
 };
 
+export const shouldUpdateWorkout = (workout: RemoteHevyWorkout) =>
+  dayjs().subtract(MAX_WORKOUT_AGE_IN_DAYS, "day").toDate() <
+  new Date(workout.created_at);
+
 export const executeWorkoutFetcherTask = async () => {
   Logger.info("Executing workout fetcher task");
   const users = await usersNeedingWorkoutsCheck();
@@ -117,10 +121,8 @@ export const executeWorkoutFetcherTask = async () => {
     );
 
     latestWorkouts = latestWorkouts.filter((workout) => {
-      const shouldDelete =
-        dayjs().subtract(MAX_WORKOUT_AGE_IN_DAYS, "day").toDate() <
-        new Date(workout.created_at);
-      return shouldDelete;
+      // should skip workouts older than MAX_WORKOUT_AGE_IN_DAYS
+      return shouldUpdateWorkout(workout);
     });
 
     Logger.info(
