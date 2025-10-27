@@ -1,4 +1,5 @@
 import { upsertServer } from "@/features/core/server.service";
+import { upsertUser } from "@/features/hevy/hevy.service";
 import { Logger, type MiddlewareContext } from "commandkit";
 import { AnalyticsEvents, useAnalytics } from "commandkit/analytics";
 
@@ -25,6 +26,8 @@ export async function beforeExecute(ctx: MiddlewareContext) {
       ).includes(event.name),
   );
   const userDiscordId = ctx.interaction.user.id;
+
+  await upsertUser(userDiscordId);
 
   analytics.identify({
     id: "discord_user_" + userDiscordId,
