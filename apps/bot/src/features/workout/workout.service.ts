@@ -17,12 +17,17 @@ import { track } from "commandkit/analytics";
 
 import { ButtonKit, StringSelectMenuKit } from "commandkit";
 import { commandPrefix, toComponent } from "./workout.embeds";
-import { getWorkout } from "@/features/hevy/hevy.api";
-import { HevyWorkout } from "@/features/hevy/hevy.types";
+import * as HevyAPI from "@/features/hevy/hevy.api";
 import { sendActivity } from "../liveActivity/liveActivity.service";
 import { handleDiscordAPIError } from "../discord/error.service";
-import { prisma, ShareReason, WorkoutFormat } from "@repo/db";
+import { HevyWorkout, prisma, ShareReason, WorkoutFormat } from "@repo/db";
 import { capitalizeFirstLetter } from "../core/utils";
+import {
+  upsertHevyWorkout,
+  WORKOUT_STALENESS_IN_MINS,
+} from "./fetcher/workoutFetcher.service";
+import dayjs from "dayjs";
+import { UserWithHevyVerification } from "../hevy/hevy.service";
 
 export const AVAILABLE_AUTO_SHARE_FORMATS: WorkoutFormat[] = [
   WorkoutFormat.line,
@@ -36,7 +41,7 @@ export const AVAILABLE_USER_SHARABLE_FORMATS: WorkoutFormat[] = [
 ];
 
 const generateButtonCustomIdSuffix = (workout: HevyWorkout, extra: string) =>
-  `${workout.short_id}-${new Date().toISOString()}-${extra}`;
+  `${workout.shortId}-${new Date().toISOString()}-${extra}`;
 
 const sharableWorkoutEphemeralOptions = async (
   workout: HevyWorkout,
@@ -152,12 +157,60 @@ export const handleWorkoutSelectMenuSelection = async (
 ) => {
   const selection = interaction.values[0];
   const workout = await getWorkout(selection);
+
+  if (!workout) {
+    // TODO: handle error
+    return;
+  }
+
   await handleSelectWorkout(
     interaction as unknown as StringSelectMenuInteraction,
     context,
     workout,
     originalInteraction,
   );
+};
+
+export const getWorkout = async (
+  workoutShortId: string,
+): Promise<HevyWorkout | null> => {
+  //check if workout exists and is not stale
+  let workout;
+
+  workout = await prisma.hevyWorkout.findUnique({
+    where: {
+      shortId: workoutShortId,
+      updatedAt: {
+        gte: dayjs().subtract(WORKOUT_STALENESS_IN_MINS, "minute").toDate(),
+      },
+    },
+  });
+
+  console.log(workout);
+
+  if (workout) return workout;
+
+  workout = await HevyAPI.getWorkout(workoutShortId);
+
+  if (workout === null) return null;
+
+  workout = await upsertHevyWorkout(workout);
+
+  return workout;
+};
+
+export const getUserLatestWorkout = async (
+  user: UserWithHevyVerification,
+): Promise<HevyWorkout | null> => {
+  const workout = await prisma.hevyWorkout.findFirst({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  if (workout) return workout;
+
+  return null;
 };
 
 const handleMessageClick = async (

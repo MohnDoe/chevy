@@ -10,13 +10,13 @@ import {
   userMention,
 } from "discord.js";
 import { commandMention } from "../discord/command.service";
-import { getUserWorkouts, getWorkout } from "../hevy/hevy.api";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
 import { UserWithHevyVerification } from "../hevy/hevy.service";
-import { HevyWorkout } from "../hevy/hevy.types";
+import { RemoteHevyWorkout } from "../hevy/hevy.types";
 import { toComponent } from "../workout/workout.embeds";
 import {
   AVAILABLE_AUTO_SHARE_FORMATS,
+  getUserLatestWorkout,
   saveWorkoutShare,
 } from "../workout/workout.service";
 import { ServerWithAutoShareConfig, ShareWithWorkout } from "./autoShare.types";
@@ -46,7 +46,7 @@ const getEnabledServers = async (): Promise<ServerWithAutoShareConfig[]> => {
 const autoShareWorkoutToDiscordServer = async (
   server: ServerWithAutoShareConfig,
   user: UserWithHevyVerification,
-  workout: HevyWorkout,
+  workout: RemoteHevyWorkout,
 ) => {
   const desiredFormat: WorkoutFormat =
     server.ServerAutoShareConfig!.workoutFormat;
@@ -116,20 +116,15 @@ const processUserWorkouts = async (
     return;
   }
 
-  const latestWorkouts = await getUserWorkouts(
-    user.hevyVerification!.username,
-    1,
-    1,
-  );
+  const latestWorkout = await getUserLatestWorkout(user);
 
-  if (latestWorkouts.length === 0) {
+  if (latestWorkout === null) {
     Logger.warn(
-      `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | No workouts found for user ${user.hevyVerification!.username}`,
+      `[auto-share] S:${server.guildId} - U:${user.discordId} | No workout found for user ${user.hevyVerification!.username}`,
     );
     return;
   }
 
-  const latestWorkout = await getWorkout(latestWorkouts[0].short_id);
   Logger.info(
     `[auto-share] S:${server.guildId} - U:${user.hevyVerification!.username} | Latest workout for user ${user.hevyVerification!.username}: ${latestWorkout.name} - ${latestWorkout.created_at}`,
   );

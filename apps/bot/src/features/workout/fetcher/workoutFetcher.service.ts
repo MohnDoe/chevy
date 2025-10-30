@@ -1,22 +1,22 @@
-import { getUserWorkouts } from "@/features/hevy/hevy.api";
+import * as HevyAPI from "@/features/hevy/hevy.api";
 import { UserWithHevyVerification } from "@/features/hevy/hevy.service";
 import { RemoteHevyWorkout } from "@/features/hevy/hevy.types";
-import { Prisma, prisma, User } from "@repo/db";
+import { prisma, User } from "@repo/db";
 import { Logger } from "commandkit";
 import dayjs from "dayjs";
+import { parseWorkout } from "./workoutFetcher.parser";
 
 const MAX_USERS_FOR_WORKOUTS_CHECK = 10;
 const MIN_LAST_WORKOUTS_CHECK_AGE_IN_MINS = 5;
-const MAX_WORKOUT_AGE_IN_DAYS = 7;
+const MAX_WORKOUT_AGE_FOR_BATCH_UPDATE_IN_DAYS = 7;
+
+export const WORKOUT_STALENESS_IN_MINS = 1 * 60; // 1 hour
 
 const NEXT_WORKOUT_FETCH_INTERVAL_MINS = 4 * 60; // 4 hours
 
 export const usersNeedingWorkoutsCheck = async (): Promise<
   UserWithHevyVerification[]
 > => {
-  console.log(
-    dayjs().subtract(MIN_LAST_WORKOUTS_CHECK_AGE_IN_MINS, "minute").toDate(),
-  );
   return prisma.user.findMany({
     take: MAX_USERS_FOR_WORKOUTS_CHECK,
     orderBy: {
@@ -83,41 +83,47 @@ export const setUserNextWorkoutCheck = async (
 
 export const upsertHevyWorkout = async (
   workout: RemoteHevyWorkout,
-  user: User,
+  user?: User,
 ) => {
-  Logger.info(`Upserting hevy workout ${workout.id}`);
+  Logger.info(`[workout-fetcher] Upserting hevy workout ${workout.id}`);
   return await prisma.hevyWorkout.upsert({
     where: {
       id: workout.id,
     },
     create: {
-      id: workout.id,
-      data: workout as unknown as Prisma.JsonObject,
-      userId: user.id,
+      ...parseWorkout(workout),
+      userId: user?.id,
     },
     update: {
-      data: workout as unknown as Prisma.JsonObject,
-      updatedAt: new Date(),
+      ...parseWorkout(workout),
+      lastFetch: new Date(),
+      userId: user?.id,
     },
   });
 };
 
 export const shouldUpdateWorkout = (workout: RemoteHevyWorkout) =>
-  dayjs().subtract(MAX_WORKOUT_AGE_IN_DAYS, "day").toDate() <
+  dayjs().subtract(MAX_WORKOUT_AGE_FOR_BATCH_UPDATE_IN_DAYS, "day").toDate() <
   new Date(workout.created_at);
 
 export const executeWorkoutFetcherTask = async () => {
-  Logger.info("Executing workout fetcher task");
+  Logger.info("[workout-fetcher] Executing workout fetcher task");
   const users = await usersNeedingWorkoutsCheck();
 
-  Logger.info(`Found ${users.length} users needing workouts check`);
+  Logger.info(
+    `[workout-fetcher] Found ${users.length} users needing workouts check`,
+  );
 
   for await (const user of users) {
-    Logger.info(`Checking user ${user.id}`);
-    let latestWorkouts = await getUserWorkouts(
+    Logger.info(`[workout-fetcher] Checking user ${user.id}`);
+    let latestWorkouts = await HevyAPI.getUserWorkouts(
       user.hevyVerification!.username,
       1,
       5,
+    );
+
+    Logger.info(
+      `[workout-fetcher] Found ${latestWorkouts.length} workouts for user ${user.id}`,
     );
 
     latestWorkouts = latestWorkouts.filter((workout) => {
@@ -125,15 +131,16 @@ export const executeWorkoutFetcherTask = async () => {
       return shouldUpdateWorkout(workout);
     });
 
-    Logger.info(
-      `Found ${latestWorkouts.length} recent workouts for user ${user.id}`,
-    );
-
     if (latestWorkouts.length === 0) {
-      Logger.info(`No workouts found for user ${user.id}. Stopping.`);
+      Logger.info(
+        `[workout-fetcher] No recent workouts found for user ${user.id}. Stopping.`,
+      );
       return;
     }
 
+    Logger.info(
+      `[workout-fetcher] Found ${latestWorkouts.length} recent workouts for user ${user.id}`,
+    );
     for await (const workout of latestWorkouts) {
       await upsertHevyWorkout(workout, user);
     }

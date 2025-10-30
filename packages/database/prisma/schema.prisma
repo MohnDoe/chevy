@@ -115,15 +115,34 @@ model Share {
 }
 
 model HevyWorkout {
-  id String @id @unique @default(cuid())
-
-  data Json
-
   User   User?   @relation(fields: [userId], references: [id])
   userId String? @db.Uuid
 
   fetchedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  lastFetch DateTime @updatedAt
 
   Shares Share[]
+
+  id                 String   @id @unique
+  name               String
+  index              Int
+  media              Json
+  endTime            Int
+  shortId            String   @unique
+  verified           Boolean
+  createdAt          DateTime
+  imageUrls          Json[]
+  isPrivate          Boolean
+  routineId          String?
+  startTime          Int
+  updatedAt          DateTime
+  appleWatch         Boolean
+  description        String
+  nthWorkout         Int
+  wearosWatch        Boolean
+  estimatedVolumeKg  Float
+  includeWarmupSets  Boolean
+  isBiometricsPublic Boolean
+
+  exercises Json[]
 }

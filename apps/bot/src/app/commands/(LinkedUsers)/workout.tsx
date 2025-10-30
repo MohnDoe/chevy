@@ -22,15 +22,12 @@ import {
   TextDisplayBuilder,
 } from "discord.js";
 
-import {
-  getUserLatestWorkout,
-  getUserWorkouts,
-  getWorkout,
-} from "@/features/hevy/hevy.api";
 import { UserWithHevyVerification } from "@/features/hevy/hevy.service";
 import { getWorkoutShortIdFromUrl } from "@/features/workout/workout.embeds";
 import {
   followUpWithWorkoutEphemeral,
+  getUserLatestWorkout,
+  getWorkout,
   handleWorkoutSelectMenuSelection,
 } from "@/features/workout/workout.service";
 
@@ -93,7 +90,7 @@ export async function chatInput({
           }
         }
       } else {
-        workout = await getUserLatestWorkout(user.hevyVerification!.username);
+        workout = await getUserLatestWorkout(user);
       }
 
       if (workout) {

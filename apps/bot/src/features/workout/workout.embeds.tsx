@@ -26,9 +26,10 @@ dayjs.extend(duration);
 dayjs.extend(localizedFormat);
 
 import { getHevyVerifiedUserByHevyUsername } from "@/features/hevy/hevy.service";
-import { HevyExercise, HevySet, HevyWorkout } from "@/features/hevy/hevy.types";
-import { WorkoutFormat } from "@repo/db";
+import { RemoteHevyExercise, RemoteHevySet } from "@/features/hevy/hevy.types";
+import { HevyWorkout, WorkoutFormat } from "@repo/db";
 import { getWorkoutUrl } from "../hevy/hevy.parser";
+import { LocalHevyWorkout } from "./workout.types";
 
 const SUPERSETS_PREFIXES = [
   "🟪",
@@ -51,7 +52,7 @@ const SUPERSETS_PREFIXES = [
   "⚪",
 ];
 
-const getExerciseVolume = (ex: HevyExercise) => {
+const getExerciseVolume = (ex: RemoteHevyExercise) => {
   return ex.sets.reduce(
     (a, set) => a + (set.weight_kg || 0) * (set.reps || 1),
     0,
@@ -59,9 +60,10 @@ const getExerciseVolume = (ex: HevyExercise) => {
 };
 
 export const toComponent = async (
-  workout: HevyWorkout,
+  w: HevyWorkout,
   format: WorkoutFormat,
 ): Promise<ContainerBuilder> => {
+  const workout = w as unknown as LocalHevyWorkout;
   // TODO : make this better pls
   const setCount = workout.exercises.reduce(
     (acc, exercise) => acc + exercise.sets.length,
@@ -79,7 +81,7 @@ export const toComponent = async (
   );
 
   const workoutDuration = dayjs.duration(
-    workout.end_time - workout.start_time,
+    workout.endTime - workout.startTime,
     "seconds",
   );
   let informationsText;
@@ -141,22 +143,22 @@ ${subtext("Records")}`;
   }
 
   switch (format) {
-    case "detailed":
-    case "compact":
-      container = container.addSectionComponents(
-        new SectionBuilder()
-          .addTextDisplayComponents(
-            new TextDisplayBuilder().setContent(informationsText),
-          )
-          .setThumbnailAccessory(
-            new ThumbnailBuilder().setURL(
-              workout.image_urls.length
-                ? workout.image_urls[0]
-                : workout.profile_image,
-            ),
-          ),
-      );
-      break;
+    // case "detailed":
+    // case "compact":
+    //   container = container.addSectionComponents(
+    //     new SectionBuilder()
+    //       .addTextDisplayComponents(
+    //         new TextDisplayBuilder().setContent(informationsText),
+    //       )
+    //       .setThumbnailAccessory(
+    //         new ThumbnailBuilder().setURL(
+    //           workout.imageUrls.length
+    //             ? (workout.imageUrls[0] as string)
+    //             : null,
+    //         ),
+    //       ),
+    //   );
+    //   break;
     case "standard":
     default:
       container = container.addTextDisplayComponents(
@@ -296,7 +298,7 @@ const exerciseToEmbedField = (exercise: HevyExercise) => {
     value:
       value +
       exercise.sets
-        .map((s, i) => setToString(s, i + 1, showSetNumber))
+        .map((s: HevySet, i: number) => setToString(s, i + 1, showSetNumber))
         .join("\n"),
   };
 };
