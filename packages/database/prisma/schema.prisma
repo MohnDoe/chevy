@@ -30,17 +30,19 @@ enum UserVerificationStatus {
 }
 
 model HevyVerification {
-  id                      String                 @id @unique @default(cuid())
-  lastCheck               DateTime?
-  workoutId               String
-  verificationCode        String                 @unique
-  status                  UserVerificationStatus @default(pending)
-  User                    User                   @relation(fields: [userDiscordId], references: [discordId])
-  userDiscordId           String                 @unique
-  username                String
-  privateProfile          Boolean                @default(false)
-  followedByBot           Boolean                @default(false)
-  privateInstructionsSent Boolean                @default(false)
+  id                           String                 @id @unique @default(cuid())
+  lastCheck                    DateTime?
+  workoutId                    String
+  verificationCode             String                 @unique
+  status                       UserVerificationStatus @default(pending)
+  User                         User                   @relation(fields: [userDiscordId], references: [discordId])
+  userDiscordId                String                 @unique
+  username                     String
+  privateProfile               Boolean                @default(false)
+  followedByBot                Boolean                @default(false)
+  privateInstructionsSent      Boolean                @default(false)
+  originalInteractionId        String?
+  originalInteractionChannelId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

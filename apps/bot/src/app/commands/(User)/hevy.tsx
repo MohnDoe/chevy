@@ -69,6 +69,7 @@ export const chatInput: ChatInputCommand = async ({ interaction }) => {
       const pendingUserVerification = await findOrCreateUserVerification(
         discordUserId,
         hevyUsername,
+        interaction as unknown as ChatInputCommandInteraction,
       );
 
       if (!pendingUserVerification) {
