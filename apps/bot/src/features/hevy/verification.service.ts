@@ -35,7 +35,7 @@ export const generateVerificationCode = (length: number) => {
   return result;
 };
 
-export const insertVerificationCode = async (
+export const upsertVerificationCode = async (
   discordId: string,
   hevyUsername: string,
 ) => {
@@ -55,11 +55,17 @@ export const insertVerificationCode = async (
       `${discordId} - Attemping inserting code : ${verificationCode}`,
     );
     try {
-      userVerification = await prisma.hevyVerification.create({
-        data: {
+      userVerification = await prisma.hevyVerification.upsert({
+        where: {
+          userDiscordId: discordId,
+        },
+        create: {
           verificationCode: verificationCode,
           workoutId: verificationConfig.workoutShortId,
           userDiscordId: discordId,
+          username: hevyUsername,
+        },
+        update: {
           username: hevyUsername,
         },
       });
@@ -150,7 +156,7 @@ export const findOrCreateUserVerification = async (
   if (hevyVerification == null) {
     Logger.info(`No verification for this user. Creating one.`);
     hevyVerification =
-      (await insertVerificationCode(discordId, hevyUsername)) ?? null;
+      (await upsertVerificationCode(discordId, hevyUsername)) ?? null;
   } else {
     Logger.info(`User verification already exists. Returning it.`);
   }
