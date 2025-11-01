@@ -7,6 +7,7 @@ import { UserList } from "@/app/dashboard/users/list";
 
 import { LoginPage } from "@/components/admin/login-page";
 import { UserShow } from "./dashboard/users/show";
+import { ServerList } from "./dashboard/servers/list";
 
 const AdminApp = () => (
   <Admin
@@ -15,7 +16,8 @@ const AdminApp = () => (
     loginPage={LoginPage}
   >
     <Resource name="User" list={UserList} show={UserShow} />
-    <Resource name="HevyVerification" show={ShowGuesser} />
+    <Resource name="Share" list={ListGuesser} />
+    <Resource name="Server" list={ServerList} />
   </Admin>
 );
 
