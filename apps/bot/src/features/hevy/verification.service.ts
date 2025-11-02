@@ -221,7 +221,10 @@ export const executeVerificationTask = async () => {
         verification.userDiscordId,
         hevyProfile.private_profile,
       );
-      await sendSuccessfullVerificationDM(verification);
+
+      if (!hevyProfile.private_profile) {
+        await sendSuccessfullVerificationDM(verification);
+      }
       await deleteComment(correspondingComment.id);
     }
   }
@@ -269,6 +272,9 @@ export const executePrivateVerifications = async () => {
     } else {
       await setIsFollowedByHevyBot(verification.userDiscordId, true);
       if (!verification.privateInstructionsSent) {
+        // TODO : make this clearer
+        // currently this send also a "yay you did it message" after checking the verification
+        // this function name is not explicit
         await sendPrivateAccountInstructionsDM(verification.userDiscordId);
         // TODO : better way and text for validation ?
         await markPrivateInstructionsAsSent(verification.userDiscordId); // TO SEND validation
