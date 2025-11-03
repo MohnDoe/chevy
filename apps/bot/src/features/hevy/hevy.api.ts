@@ -45,10 +45,23 @@ export const checkIfUserUserIsFollowedByBot = async (
 
   return userProfile.following_status == "following";
 };
-
 export const followUserOnHevy = async (userHevyUsername: string) => {
   Logger.info(`[Hevy API] Sending follow request to ${userHevyUsername}`);
+  const userProfile = await getUserProfile(userHevyUsername);
 
+  if (!userProfile) return;
+
+  if (
+    userProfile.following_status == "following" ||
+    userProfile.following_status == "requested"
+  ) {
+    Logger.info(
+      `[Hevy API] User ${userHevyUsername} is already followed or request is pending.`,
+    );
+    return;
+  }
+
+  // TODO: add rate limit
   try {
     await HevyBotAPIClient.post(`/follow`, {
       username: userHevyUsername,
@@ -64,7 +77,7 @@ export const followUserOnHevy = async (userHevyUsername: string) => {
 
 export const getUserProfile = async (username: string) => {
   "use cache";
-  cacheLife("1d");
+  cacheLife("5m");
   cacheTag(`profile:username:${username}`);
   try {
     const hevyResponse = await HevyBotAPIClient.get(
